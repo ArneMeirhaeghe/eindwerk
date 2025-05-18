@@ -12,6 +12,7 @@ builder.Services.AddCors(o => o.AddPolicy("AllowFrontend", p =>
 builder.Services.AddSingleton<MongoService>();
 builder.Services.AddSingleton<UserService>();
 builder.Services.AddSingleton<AuthService>();
+builder.Services.AddSingleton<InventoryService>();
 builder.Services.AddControllers();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
