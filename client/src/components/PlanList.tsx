@@ -10,12 +10,12 @@ function PlanList({ plans }: Props) {
     <ul className="space-y-4">
       {plans.map(plan => (
         <li
-          key={plan._id}
+          key={plan.id}
           className="border p-4 rounded shadow bg-white flex justify-between items-center"
         >
           <span className="font-semibold">{plan.title}</span>
           <Link
-            to={`/plans/${plan._id}`}
+            to={`/plans/${plan.id}`}
             className="text-blue-500 underline"
           >
             ➤ Bekijk

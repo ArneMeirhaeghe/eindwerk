@@ -13,7 +13,7 @@ function Builder() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const isNew = id === undefined || id === "new"
-  const { plan, loading, savePlan, createNew } = usePlan(isNew ? undefined : id)
+  const { plan, loading,  createNew } = usePlan(isNew ? undefined : id)
   const [title, setTitle] = useState("Nuevo plan")
   const [blocks, setBlocks] = useState<BlockData[]>([])
   const [preview, setPreview] = useState(false)
@@ -60,7 +60,7 @@ function Builder() {
         const created = await createNew(payload.ownerId, payload)
         navigate(`/plans/${created.id}`)
       } else if (plan) {
-        const updated = await savePlan({ ...plan, title, blocks })
+        // const updated = await savePlan({ ...plan, title, blocks })
         alert("Opgeslagen!")
       }
     } catch (err) {

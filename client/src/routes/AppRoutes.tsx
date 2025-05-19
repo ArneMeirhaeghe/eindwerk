@@ -11,7 +11,7 @@ import PrivateRoute from "./PrivateRoute"
 import RoleRoute from "./RoleRoute"
 import NotFound from "../pages/NotFound"
 import Builder from "../pages/Builder"
-import InventoryManager from "../pages/InventoryManager"
+// import InventoryManager from "../pages/InventoryManager"
 
 function AppRoutes() {
   return (
@@ -76,14 +76,14 @@ function AppRoutes() {
         }
       />
      {/* Inventory: master‐detail op één pagina */}
-      <Route
+      {/* <Route
         path="/inventory"
         element={
           <PrivateRoute>
             <InventoryManager />
           </PrivateRoute>
         }
-      />
+      /> */}
       {/* Publieke preview */}
       <Route path="/preview/:publicId" element={<PlanPreview />} />
 
