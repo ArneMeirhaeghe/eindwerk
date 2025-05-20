@@ -38,3 +38,4 @@ obj
 publish_output
 
 venv
+appsetting.json
