@@ -1,101 +1,66 @@
-import { useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
-import { register as registerApi } from "../api/auth"
-import { useAuth } from "../context/AuthContext"
-import FloatingInput from "../components/FloatingInput"
+import { useState } from 'react';
+import { registerUser } from '../api/auth';
+import { Link } from 'react-router-dom';
 
-function Register() {
-  const { login } = useAuth()
-  const navigate = useNavigate()
-
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [remember, setRemember] = useState(false)
-  const [error, setError] = useState("")
+export default function Register() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-
-    if (!email.includes("@") || !email.includes(".")) {
-      return setError("Voer een geldig e-mailadres in.")
-    }
-
-    if (password.length < 6) {
-      return setError("Wachtwoord moet minstens 6 tekens bevatten.")
-    }
-
-    if (password !== confirmPassword) {
-      return setError("Wachtwoorden komen niet overeen.")
-    }
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
     try {
-      const { token } = await registerApi({ email, password })
-      login(token, remember)
-      navigate("/plans")
-    } catch (err) {
-      console.error(err)
-      setError("Registratie mislukt. Mogelijk bestaat dit e-mailadres al.")
+      await registerUser(email, password);
+      setSuccess('Registratie gelukt. Je wordt doorgestuurd...');
+      setTimeout(() => (window.location.href = '/login'), 1500);
+    } catch (err: any) {
+      setError(err.response?.data || 'Registratie mislukt');
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 bg-white shadow rounded space-y-6">
-      <h1 className="text-2xl font-bold text-center">🆕 Registreren</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <FloatingInput
-          type="email"
-          name="email"
-          label="E-mailadres"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-
-        <FloatingInput
-          type="password"
-          name="password"
-          label="Wachtwoord"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-
-        <FloatingInput
-          type="password"
-          name="confirmPassword"
-          label="Bevestig wachtwoord"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-        />
-
-        <label className="text-sm flex items-center space-x-2">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="bg-white rounded-xl shadow-md p-8 w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-6 text-center">Registreren</h2>
+        {error && <p className="text-red-600 mb-4 text-center">{error}</p>}
+        {success && <p className="text-green-600 mb-4 text-center">{success}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            type="checkbox"
-            checked={remember}
-            onChange={(e) => setRemember(e.target.checked)}
+            type="email"
+            placeholder="E-mailadres"
+            className="w-full px-4 py-2 border border-gray-300 rounded"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
           />
-          <span>Blijf ingelogd</span>
-        </label>
-
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-
-        <button type="submit" className="w-full bg-green-600 text-white py-2 rounded">
-          Maak account aan
-        </button>
-      </form>
-
-      <div className="text-center text-sm">
-        Al een account?{" "}
-        <Link to="/login" className="text-blue-600 underline">
-          Log in
-        </Link>
+          <input
+            type="password"
+            placeholder="Wachtwoord"
+            className="w-full px-4 py-2 border border-gray-300 rounded"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-500 disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? 'Even geduld...' : 'Registreren'}
+          </button>
+        </form>
+        <p className="text-center mt-4 text-sm">
+          Al een account?{' '}
+          <Link to="/login" className="text-blue-600 hover:underline">
+            Log hier in
+          </Link>
+        </p>
       </div>
     </div>
-  )
+  );
 }
-
-export default Register

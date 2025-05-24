@@ -1,99 +1,88 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react"
-import { jwtDecode } from "jwt-decode"
+// src/context/AuthContext.tsx
 
-interface AuthData {
-  token: string | null
-  userId: string | null
-  email: string | null
-  role: "user" | "admin" | null
-  loading: boolean
-  login: (token: string, remember: boolean) => void
-  logout: () => void
+import { createContext, useContext, useEffect, useState } from 'react';
+
+interface JwtPayload {
+  exp?: number;
+  role?: string;
 }
 
-const AuthContext = createContext<AuthData>({
-  token: null,
-  userId: null,
-  email: null,
-  role: null,
-  loading: true,
-  login: () => {},
-  logout: () => {},
-})
+interface AuthContextType {
+  token: string | null;
+  role: string | null;
+  login: (token: string, remember?: boolean) => void;
+  logout: () => void;
+  loading: boolean;
+}
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setToken] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
-  const [email, setEmail] = useState<string | null>(null)
-  const [role, setRole] = useState<"user" | "admin" | null>(null)
-  const [loading, setLoading] = useState(true)
+const AuthContext = createContext<AuthContextType | null>(null);
 
+function decodeToken(token: string): JwtPayload | null {
+  try {
+    const payload = token.split('.')[1];
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+}
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [token, setToken] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Bij opstart: token uit storage, decoderen en expiry-check
   useEffect(() => {
-    const stored = localStorage.getItem("token") || sessionStorage.getItem("token")
-    const expiry = sessionStorage.getItem("tokenExpiry")
+    const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
+    const storedToken = storage.getItem('token');
+    const storedRole = storage.getItem('role');
 
-    if (stored && (!expiry || Date.now() < Number(expiry))) {
-      applyToken(stored)
-    } else {
-      logout()
+    if (storedToken) {
+      const payload = decodeToken(storedToken);
+      const now = Date.now().valueOf() / 1000;
+
+      if (payload?.exp && payload.exp < now) {
+        // verlopen of ongeldig
+        storage.clear();
+      } else {
+        setToken(storedToken);
+        setRole(payload?.role || storedRole || null);
+      }
     }
 
-    setLoading(false)
-  }, [])
+    setLoading(false);
+  }, []);
 
-  const applyToken = (jwt: string) => {
-    try {
-      const decoded: any = jwtDecode(jwt)
+  const login = (jwt: string, remember: boolean = true) => {
+    const payload = decodeToken(jwt);
+    if (!payload) return console.error('Invalid JWT');
 
-      const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
-      const email = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]
-      const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+    setToken(jwt);
+    setRole(payload.role || null);
 
-      if (!id || !role || !email) throw new Error("Ongeldige token payload")
-
-      setToken(jwt)
-      setUserId(id)
-      setEmail(email)
-      setRole(role)
-    } catch (err) {
-      logout()
-    }
-  }
-
-  const login = (jwt: string, remember: boolean) => {
-    applyToken(jwt)
-    if (remember) {
-      localStorage.setItem("token", jwt)
-    } else {
-      sessionStorage.setItem("token", jwt)
-      const expiry = Date.now() + 60 * 60 * 1000
-      sessionStorage.setItem("tokenExpiry", expiry.toString())
-    }
-  }
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem('token', jwt);
+    if (payload.role) storage.setItem('role', payload.role);
+  };
 
   const logout = () => {
-    setToken(null)
-    setUserId(null)
-    setEmail(null)
-    setRole(null)
-    localStorage.removeItem("token")
-    sessionStorage.removeItem("token")
-    sessionStorage.removeItem("tokenExpiry")
-  }
+    setToken(null);
+    setRole(null);
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = '/login';
+  };
 
   return (
-    <AuthContext.Provider
-      value={{ token, userId, email, role, loading, login, logout }}
-    >
+    <AuthContext.Provider value={{ token, role, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};
 
-export const useAuth = () => useContext(AuthContext)
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
+};

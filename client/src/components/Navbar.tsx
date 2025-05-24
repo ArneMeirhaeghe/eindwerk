@@ -1,37 +1,36 @@
-import { Link } from "react-router-dom"
-import { useAuth } from "../context/AuthContext"
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { FaHome } from 'react-icons/fa';
 
-function Navbar() {
-  const { email, role, logout, loading } = useAuth()
+const NavBar: React.FC = () => {
+  const { logout, token } = useAuth();
 
-  if (loading || !email) return null
+  if (!token) return null; // Niet ingelogd? Geen NavBar
+
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  const email = payload?.email || 'gebruiker';
+  const id = payload?.id || 'onbekend';
 
   return (
-    <nav className="bg-gray-900 text-white px-4 py-3 flex justify-between items-center shadow">
-      <div className="text-lg font-semibold">
-        <Link to="/">🏠 Mijn Rondleidingen</Link>
+    <nav className="bg-white shadow p-4 flex justify-between items-center">
+      <div className="flex items-center gap-3">
+        <Link to="/" className="text-xl text-blue-600 hover:text-blue-800">
+          <FaHome />
+        </Link>
       </div>
-      <div className="flex items-center space-x-6">
-        {role === "admin" && (
-          <Link
-            to="/admin/users"
-            className="text-sm underline underline-offset-2 text-yellow-300 hover:text-yellow-400"
-          >
-            👑 Gebruikers
-          </Link>
-        )}
-        <div className="text-sm">
-          👋 {email} — <span className="uppercase text-yellow-400">{role}</span>
-        </div>
+
+      <div className="flex flex-col items-end gap-1 text-right">
+        <span className="text-gray-700">Hallo, <strong>{email}</strong></span>
+        <span className="text-xs text-gray-400">ID: {id}</span>
         <button
           onClick={logout}
-          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+          className="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-500 mt-1"
         >
           Logout
         </button>
       </div>
     </nav>
-  )
-}
+  );
+};
 
-export default Navbar
+export default NavBar;
