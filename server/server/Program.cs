@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
+using Microsoft.AspNetCore.Http.Features;
 using System.Text;
 using server.Helpers;
 using server.Services;
@@ -20,13 +21,20 @@ builder.Services.AddSingleton<JwtHandler>();
 builder.Services.AddSingleton<UserService>();
 builder.Services.AddSingleton<EmailService>();
 
-//  MongoDB Client registreren
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
-    var config = builder.Configuration.GetSection("MongoSettings");
-    return new MongoClient(config["ConnectionString"]);
+    var cfg = builder.Configuration.GetSection("MongoSettings");
+    return new MongoClient(cfg["ConnectionString"]);
 });
 
+// === form upload limits ===
+builder.Services.Configure<FormOptions>(options =>
+{
+    // onbeperkte grootte of pas aan naar wens
+    options.MultipartBodyLengthLimit = long.MaxValue;
+});
+
+// controllers, swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -36,7 +44,6 @@ builder.Services.AddSwaggerGen();
 // =======================
 var jwt = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 var key = Encoding.ASCII.GetBytes(jwt.Key);
-
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -76,7 +83,9 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+// Zorg dat CORS *voor* auth en controllers komt
 app.UseCors("CorsPolicy");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
