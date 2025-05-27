@@ -1,5 +1,4 @@
 // src/components/ComponentPalette.tsx
-
 import type { ComponentType } from "../types/types";
 
 interface Props {
@@ -17,6 +16,7 @@ export default function ComponentPalette({ onAdd }: Props) {
     "button",
     "checklist",
     "divider",
+    "checkbox-list", // nieuwe checkbox lijst
   ];
 
   return (
@@ -29,7 +29,7 @@ export default function ComponentPalette({ onAdd }: Props) {
             onClick={() => onAdd(type)}
             className="text-left px-3 py-2 bg-gray-100 rounded hover:bg-gray-200"
           >
-            + {type}
+            + {type === "checkbox-list" ? "checkbox lijst" : type}
           </button>
         ))}
       </div>

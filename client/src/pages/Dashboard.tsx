@@ -7,7 +7,8 @@ export default function Dashboard() {
 
   const cards = [
     { label: 'tours', to: '/tours' },
-    { label: 'InventoryManager', to: '/InventoryManager' },
+    { label: 'InventoryManager', to: '/inventory' },
+    { label: 'Upload zone', to: '/upload-zone' },
      { label: 'verhuur overzicht', to: '/verhuur' },
     ...(isAdmin ? [{ label: 'Gebruikersbeheer', to: '/users' }] : [])
   ];

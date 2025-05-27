@@ -10,8 +10,10 @@ import VerhuurPage from "../pages/VerhuurPage"
 import GroepDetailPage from "../pages/GroepDetailPage"
 import SessiePage from "../pages/SessiePage"
 import ToursPage from "../pages/ToursPage"
-import TourDetailPage from "../pages/TourDetailPage"
 import TourBuilderPage from "../pages/TourBuilderPage"
+import TestUploadPage from "../pages/TestUploadPage"
+import UploadZone from "../pages/UploadZone"
+import InventoryPage from "../pages/InventoryPage"
 
 function AppRoutes() {
   return (
@@ -90,7 +92,33 @@ function AppRoutes() {
           </RoleRoute>
         }
       />
-
+       {/* Test upload pagina */}
+      <Route
+        path="/upload-zone"
+        element={
+          <PrivateRoute>
+            <UploadZone />
+          </PrivateRoute>
+        }
+      />
+      {/* Inventory */}
+      <Route
+        path="/inventory"
+        element={
+          <PrivateRoute>
+            <InventoryPage />
+          </PrivateRoute>
+        }
+      />
+ {/* Test upload pagina */}
+      <Route
+        path="/test-upload"
+        element={
+          <PrivateRoute>
+            <TestUploadPage />
+          </PrivateRoute>
+        }
+      />
       {/* Fallback */}
       <Route path="*" element={<NotFound />} />
     </Routes>

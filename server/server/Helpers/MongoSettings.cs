@@ -1,7 +1,9 @@
-﻿namespace server.Helpers;
-
-public class MongoSettings
+﻿namespace server.Helpers
 {
-    public string ConnectionString { get; set; }
-    public string Database { get; set; }
+    public class MongoSettings
+    {
+        public string ConnectionString { get; set; } = null!;
+        public string Database { get; set; } = null!;
+        public string MediaCollectionName { get; set; } = "media";
+    }
 }

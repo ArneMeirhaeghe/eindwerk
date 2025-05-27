@@ -8,12 +8,18 @@ export type ComponentType =
   | "video"
   | "button"
   | "checklist"
-  | "divider";
+  | "divider"
+  | "checkbox-list"; // nieuw component voor checkbox lijst
+
+export interface CheckboxListItem {
+  label: string;   // tekst van het item
+  good: boolean;   // true = goed, false = slecht
+}
 
 export interface ComponentItem {
   id: string;
   type: ComponentType;
-  props: any;
+  props: Record<string, any>; // props per componenttype
 }
 
 export interface Section {

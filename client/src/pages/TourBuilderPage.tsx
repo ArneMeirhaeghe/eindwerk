@@ -1,5 +1,5 @@
 // src/pages/TourBuilderPage.tsx
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getTour, updateTour, type Tour } from "../api/tours";
 import { v4 as uuidv4 } from "uuid";
@@ -9,7 +9,6 @@ import SettingsPanel from "../components/SettingsPanel";
 import BottomNav from "../components/BottomNav";
 import { ToastContainer, toast } from "react-toastify";
 import type { DropResult } from "@hello-pangea/dnd";
-import "react-toastify/dist/ReactToastify.css";
 import type {
   ComponentItem,
   ComponentType,
@@ -20,30 +19,36 @@ import type {
 
 export default function TourBuilderPage() {
   const { id } = useParams<{ id: string }>();
-  const nav = useNavigate();
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [naamLocatie, setNaamLocatie] = useState("");
-  const [previewMode, setPreviewMode] = useState(false);
-
-  const fasesList: Fase[] = ["voor","aankomst","terwijl","vertrek","na"];
+  const fasesList: Fase[] = ["voor", "aankomst", "terwijl", "vertrek", "na"];
   const [sectionsByFase, setSectionsByFase] = useState<FaseSections>(() =>
-    fasesList.reduce((acc, f) => { acc[f] = []; return acc; }, {} as FaseSections)
+    fasesList.reduce((acc, f) => {
+      acc[f] = [];
+      return acc;
+    }, {} as FaseSections)
   );
   const [activeFase, setActiveFase] = useState<Fase>("voor");
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
-  const [selectedComp, setSelectedComp] = useState<ComponentItem|null>(null);
+  const [selectedComp, setSelectedComp] = useState<ComponentItem | null>(null);
+  const [previewMode, setPreviewMode] = useState(false);
 
+  // laad tour uit API
   useEffect(() => {
     (async () => {
-      if (!id) return nav("/tours");
+      if (!id) return navigate("/tours");
       setLoading(true);
       try {
         const tour: Tour = await getTour(id);
-        setNaamLocatie(tour.naamLocatie);
-        const init = fasesList.reduce((acc,f) => {
-          acc[f] = [{ id: uuidv4(), title: "Sectie 1", components: tour.fases[f]||[] }];
+        setNaamLocatie(tour.naamLocatie ?? "");
+        const init = fasesList.reduce((acc, f) => {
+          const comps = tour.fases?.[f] ?? [];
+          acc[f] = comps.length
+            ? [{ id: uuidv4(), title: "Sectie 1", components: comps }]
+            : [{ id: uuidv4(), title: "Nieuwe sectie", components: [] }];
           return acc;
         }, {} as FaseSections);
         setSectionsByFase(init);
@@ -53,139 +58,223 @@ export default function TourBuilderPage() {
         setLoading(false);
       }
     })();
-  },[id,nav]);
+  }, [id, navigate]);
 
-  if (loading) return <div className="p-6 animate-pulse">Laden…</div>;
-  const sec = sectionsByFase[activeFase][activeSectionIndex]!;
-
-  const addSection = () => {
-    const newSec: Section = { id: uuidv4(), title: "Nieuwe sectie", components: [] };
-    setSectionsByFase(prev => ({ ...prev, [activeFase]: [...prev[activeFase], newSec] }));
-    setActiveSectionIndex(i=>i+1);
-    setSelectedComp(null);
-  };
-  const updateSectionTitle = (title:string) => {
-    setSectionsByFase(prev => ({
-      ...prev,
-      [activeFase]: prev[activeFase].map((s,i)=> i===activeSectionIndex?{...s,title}:s)
-    }));
-  };
-
-  const addComponent = (type:ComponentType) => {
-    const comp:ComponentItem = { id: uuidv4(), type, props:{} };
-    // initialize comp.props here...
-    setSectionsByFase(prev => ({
-      ...prev,
-      [activeFase]: prev[activeFase].map((s,i)=>
-        i===activeSectionIndex?{...s,components:[...s.components,comp]}:s
-      )
-    }));
-    setSelectedComp(comp);
-  };
-  const updateComponent = (c:ComponentItem) => {
-    setSectionsByFase(prev => ({
-      ...prev,
-      [activeFase]: prev[activeFase].map((s,i)=>
-        i===activeSectionIndex?{...s,components:s.components.map(x=>x.id===c.id?c:x)}:s
-      )
-    }));
-    setSelectedComp(c);
-  };
-  const deleteComponent = (cid:string) => {
-    setSectionsByFase(prev => ({
-      ...prev,
-      [activeFase]: prev[activeFase].map((s,i)=>
-        i===activeSectionIndex?{...s,components:s.components.filter(x=>x.id!==cid)}:s
-      )
-    }));
-    if(selectedComp?.id===cid) setSelectedComp(null);
-  };
-  const onDragEnd = (res:DropResult) => {
-    if(!res.destination) return;
-    const comps = Array.from(sec.components);
-    const [m] = comps.splice(res.source.index,1);
-    comps.splice(res.destination.index,0,m);
-    setSectionsByFase(prev=>({
-      ...prev,
-      [activeFase]: prev[activeFase].map((s,i)=>
-        i===activeSectionIndex?{...s,components:comps}:s
-      )
-    }));
-  };
-
-  const save = async() => {
+  // opslaan functie (stuurt nu 'fases' mee)
+  const saveTour = useCallback(async () => {
     setSaving(true);
     try {
-      const payload = fasesList.reduce((acc,f)=> {
-        acc[f] = sectionsByFase[f].flatMap(s=>s.components);
+      const payload = fasesList.reduce((acc, f) => {
+        acc[f] = sectionsByFase[f].flatMap((s) => s.components);
         return acc;
-      },{} as Record<Fase,ComponentItem[]>);
-      await updateTour(id!,{naamLocatie,fases:payload});
-      toast.success("Opgeslagen!");
+      }, {} as Record<Fase, ComponentItem[]>);
+      await updateTour(id!, { naamLocatie, fases: payload });
+      toast.success("Opgeslagen");
     } catch {
-      toast.error("Fout bij opslaan");
+      toast.error("Opslaan mislukt");
     } finally {
       setSaving(false);
     }
+  }, [id, naamLocatie, sectionsByFase]);
+
+  // auto-save bij tab wissel of sluiten
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") saveTour();
+    };
+    window.addEventListener("beforeunload", saveTour);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.removeEventListener("beforeunload", saveTour);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [saveTour]);
+
+  if (loading) return <div className="p-4 animate-pulse">Laden…</div>;
+
+  // zorg altijd voor een geldige sectie
+  const currentFaseSections = sectionsByFase[activeFase]!;
+  if (currentFaseSections.length === 0) {
+    currentFaseSections.push({
+      id: uuidv4(),
+      title: "Nieuwe sectie",
+      components: [],
+    });
+    setSectionsByFase((prev) => ({ ...prev, [activeFase]: currentFaseSections }));
+  }
+  const current =
+    currentFaseSections[activeSectionIndex] ?? currentFaseSections[0];
+
+  // sectie manipulaties
+  const addSection = () => {
+    const sec: Section = { id: uuidv4(), title: "Nieuwe sectie", components: [] };
+    setSectionsByFase((prev) => ({
+      ...prev,
+      [activeFase]: [...prev[activeFase], sec],
+    }));
+    setActiveSectionIndex((prev) => prev + 1);
+    setSelectedComp(null);
+  };
+  const renameSection = (idx: number, title: string) =>
+    setSectionsByFase((prev) => ({
+      ...prev,
+      [activeFase]: prev[activeFase].map((s, i) => (i === idx ? { ...s, title } : s)),
+    }));
+  const deleteSection = (idx: number) => {
+    setSectionsByFase((prev) => ({
+      ...prev,
+      [activeFase]: prev[activeFase].filter((_, i) => i !== idx),
+    }));
+    setActiveSectionIndex(0);
+    setSelectedComp(null);
+  };
+
+  // component manipulaties
+  const addComponent = (type: ComponentType) => {
+    const baseText = {
+      text: "Tekst",
+      fontFamily: "sans-serif",
+      fontSize: 16,
+      color: "#000000",
+      bg: "#ffffff",
+      align: "left",
+      bold: false,
+      italic: false,
+      underline: false,
+      lineHeight: 1.5,
+    };
+    const props =
+      type === "checklist"
+        ? { items: [""], fontSize: 16, color: "#000000", bg: "#ffffff", spacing: 8 }
+        : type === "checkbox-list"
+        ? { items: [{ label: "", good: false }], color: "#000000", bg: "#ffffff" }
+        : type === "divider"
+        ? { color: "#000000", thickness: 1 }
+        : type === "button"
+        ? {
+            label: "Knop",
+            fontSize: 16,
+            color: "#ffffff",
+            bg: "#007bff",
+            radius: 4,
+            bold: false,
+            italic: false,
+            underline: false,
+          }
+        : baseText;
+    const comp: ComponentItem = { id: uuidv4(), type, props };
+    setSectionsByFase((prev) => ({
+      ...prev,
+      [activeFase]: prev[activeFase].map((s, i) =>
+        i === activeSectionIndex
+          ? { ...s, components: [...s.components, comp] }
+          : s
+      ),
+    }));
+    setSelectedComp(comp);
+  };
+  const deleteComponent = (cid: string) => {
+    setSectionsByFase((prev) => ({
+      ...prev,
+      [activeFase]: prev[activeFase].map((s, i) =>
+        i === activeSectionIndex
+          ? { ...s, components: s.components.filter((c) => c.id !== cid) }
+          : s
+      ),
+    }));
+    setSelectedComp(null);
+  };
+  const updateComponent = (c: ComponentItem) => {
+    setSectionsByFase((prev) => ({
+      ...prev,
+      [activeFase]: prev[activeFase].map((s, i) =>
+        i === activeSectionIndex
+          ? { ...s, components: s.components.map((x) => (x.id === c.id ? c : x)) }
+          : s
+      ),
+    }));
+    setSelectedComp(c);
+  };
+  const onDragEnd = (res: DropResult) => {
+    const { source, destination } = res;
+    if (!destination) return;
+    setSectionsByFase((prev) => ({
+      ...prev,
+      [activeFase]: prev[activeFase].map((s, i) => {
+        if (i !== activeSectionIndex) return s;
+        const comps = Array.from(s.components);
+        const [moved] = comps.splice(source.index, 1);
+        comps.splice(destination.index, 0, moved);
+        return { ...s, components: comps };
+      }),
+    }));
   };
 
   return (
-    <div className="h-screen flex flex-col">
-      <header className="flex justify-between items-center p-4 border-b">
+    <div className="flex flex-col h-full">
+      <header className="flex items-center justify-between p-4 border-b">
         <input
           value={naamLocatie}
-          onChange={e=>setNaamLocatie(e.target.value)}
-          className="text-2xl font-bold border-b px-2 py-1"
+          onChange={(e) => setNaamLocatie(e.target.value)}
+          className="text-2xl font-semibold border-b px-2 py-1"
         />
-        <div className="flex items-center space-x-2">
+        <div className="space-x-2">
           <button
-            onClick={()=>setPreviewMode(pm=>!pm)}
-            className="px-4 py-2 bg-gray-200 rounded"
-          >
-            {previewMode?"Terug":"Preview"}
-          </button>
-          <button
-            onClick={save}
+            onClick={saveTour}
             disabled={saving}
             className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
           >
-            {saving?"Opslaan...":"Opslaan"}
+            {saving ? "Opslaan…" : "Opslaan"}
+          </button>
+          <button
+            onClick={() => setPreviewMode((v) => !v)}
+            className="px-4 py-2 bg-gray-200 rounded"
+          >
+            {previewMode ? "Bewerken" : "Voorbeeld"}
           </button>
         </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {!previewMode && <ComponentPalette onAdd={addComponent}/>}
+        {!previewMode && <ComponentPalette onAdd={addComponent} />}
 
         <BuilderCanvas
-          components={sec.components}
+          components={current.components}
+          sectionTitle={current.title}
           onDragEnd={onDragEnd}
           onSelect={setSelectedComp}
           onDelete={deleteComponent}
+          onSectionTitleChange={(title) =>
+            renameSection(activeSectionIndex, title)
+          }
           preview={previewMode}
         />
 
-        {!previewMode && selectedComp && (
-          <SettingsPanel
-            comp={selectedComp}
-            onUpdate={updateComponent}
-            sectionTitle={sec.title}
-            onSectionTitleChange={updateSectionTitle}
-          />
+        {!previewMode && (
+          <SettingsPanel comp={selectedComp} onUpdate={updateComponent} />
         )}
+
+        <BottomNav
+          fases={fasesList}
+          sectionsByFase={sectionsByFase}
+          activeFase={activeFase}
+          activeSectionIndex={activeSectionIndex}
+          onFaseChange={(f) => {
+            setActiveFase(f);
+            setActiveSectionIndex(0);
+            setSelectedComp(null);
+          }}
+          onSectionChange={(i) => {
+            setActiveSectionIndex(i);
+            setSelectedComp(null);
+          }}
+          onAddSection={addSection}
+          onRenameSection={renameSection}
+          onDeleteSection={deleteSection}
+        />
+
+        <ToastContainer position="bottom-right" autoClose={3000} />
       </div>
-
-      <BottomNav
-        fases={fasesList}
-        sectionsByFase={sectionsByFase}
-        activeFase={activeFase}
-        activeSectionIndex={activeSectionIndex}
-        onFaseChange={f=>{ setActiveFase(f); setActiveSectionIndex(0); setSelectedComp(null); }}
-        onSectionChange={i=>{ setActiveSectionIndex(i); setSelectedComp(null); }}
-        onAddSection={addSection}
-      />
-
-      <ToastContainer position="bottom-right" autoClose={3000}/>
     </div>
   );
 }
