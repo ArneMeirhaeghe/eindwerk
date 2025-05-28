@@ -9,7 +9,8 @@ export type ComponentType =
   | "button"
   | "checklist"
   | "divider"
-  | "checkbox-list"; // nieuw component voor checkbox lijst
+  | "checkbox-list"
+  | "grid"; // nieuw component voor checkbox lijst
 
 export interface CheckboxListItem {
   label: string;   // tekst van het item
@@ -30,3 +31,42 @@ export interface Section {
 
 export type Fase = "voor" | "aankomst" | "terwijl" | "vertrek" | "na";
 export type FaseSections = Record<Fase, Section[]>;
+
+// Single-image props
+export interface ImageProps {
+  url: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+  borderWidth?: number;
+  borderColor?: string;
+  radius?: number;
+  shadow?: boolean;
+  objectFit?: "cover" | "contain";
+}
+
+// Single-video props
+export interface VideoProps {
+  url: string;
+  alt?: string;
+  controls?: boolean;
+  autoplay?: boolean;
+  loop?: boolean;
+  width?: number;
+  height?: number;
+  radius?: number;
+  shadow?: boolean;
+  objectFit?: "cover" | "contain";
+}
+
+// Grid (multi-image) props
+export interface GridProps {
+  images: string[];
+  columns: number;
+  gap: number;
+  borderWidth: number;
+  borderColor: string;
+  radius: number;
+  shadow: boolean;
+  objectFit: "cover" | "contain";
+}

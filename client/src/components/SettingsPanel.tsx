@@ -1,12 +1,14 @@
 // src/components/SettingsPanel.tsx
 import React, { type FC } from "react";
 import type { ComponentItem } from "../types/types";
-import TextSettings from "./settings/TextSettings";
-import MediaSettings from "./settings/MediaSettings";
-import ChecklistSettings from "./settings/ChecklistSettings";
-import CheckboxListSettings from "./settings/CheckboxListSettings";
-import DividerSettings from "./settings/DividerSettings";
 import ButtonSettings from "./settings/ButtonSettings";
+import ChecklistSettings from "./settings/ChecklistSettings";
+import DividerSettings from "./settings/DividerSettings";
+import CheckboxListSettings from "./settings/CheckboxListSettings";
+import TextSettings from "./settings/TextSettings";
+import ImageSettings from "./settings/ImageSettings";
+import VideoSettings from "./settings/VideoSettings";
+import GridSettings from "./settings/GridSettings";
 
 interface Props {
   comp: ComponentItem | null;
@@ -14,25 +16,44 @@ interface Props {
 }
 
 const SettingsPanel: FC<Props> = ({ comp, onUpdate }) => {
-  if (!comp) return <div className="p-4 text-gray-500">Selecteer een component</div>;
-
   return (
     <aside className="w-72 border-l p-4 overflow-auto">
-      <h3 className="font-semibold mb-4">Instellingen: {comp.type}</h3>
-      {["title", "subheading", "paragraph", "quote"].includes(comp.type) && (
-        <TextSettings comp={comp} onUpdate={onUpdate} />
-      )}
-      {["image", "video"].includes(comp.type) && (
-        <MediaSettings comp={comp} onUpdate={onUpdate} />
-      )}
-      {comp.type === "checklist" && <ChecklistSettings comp={comp} onUpdate={onUpdate} />}
-    
-      {comp.type === "divider" && <DividerSettings comp={comp} onUpdate={onUpdate} />}
-   {comp.type === "checkbox-list" && (
-         <CheckboxListSettings comp={comp} onUpdate={onUpdate} />
-       )}
-      {comp.type === "button" && (
-        <ButtonSettings comp={comp} onUpdate={onUpdate} />
+      {!comp ? (
+        <div className="h-full flex items-center justify-center text-gray-500">
+          Klik op een component
+        </div>
+      ) : (
+        <>
+          {(() => {
+            switch (comp.type) {
+              case "title":
+              case "subheading":
+              case "paragraph":
+              case "quote":
+                return <TextSettings comp={comp} onUpdate={onUpdate} />;
+              case "button":
+                return <ButtonSettings comp={comp} onUpdate={onUpdate} />;
+              case "checklist":
+                return <ChecklistSettings comp={comp} onUpdate={onUpdate} />;
+              case "checkbox-list":
+                return <CheckboxListSettings comp={comp} onUpdate={onUpdate} />;
+              case "divider":
+                return <DividerSettings comp={comp} onUpdate={onUpdate} />;
+              case "image":
+                return <ImageSettings comp={comp} onUpdate={onUpdate} />;
+              case "video":
+                return <VideoSettings comp={comp} onUpdate={onUpdate} />;
+              case "grid":
+                return <GridSettings comp={comp} onUpdate={onUpdate} />;
+              default:
+                return (
+                  <div className="text-red-500">
+                    Geen instellingen voor {comp.type}
+                  </div>
+                );
+            }
+          })()}
+        </>
       )}
     </aside>
   );

@@ -16,7 +16,8 @@ export default function ComponentPalette({ onAdd }: Props) {
     "button",
     "checklist",
     "divider",
-    "checkbox-list", // nieuwe checkbox lijst
+    "checkbox-list",
+    "grid", // nieuwe grid component
   ];
 
   return (
@@ -29,7 +30,12 @@ export default function ComponentPalette({ onAdd }: Props) {
             onClick={() => onAdd(type)}
             className="text-left px-3 py-2 bg-gray-100 rounded hover:bg-gray-200"
           >
-            + {type === "checkbox-list" ? "checkbox lijst" : type}
+            +{" "}
+            {type === "checkbox-list"
+              ? "Checkbox lijst"
+              : type === "grid"
+              ? "Grid"
+              : type}
           </button>
         ))}
       </div>

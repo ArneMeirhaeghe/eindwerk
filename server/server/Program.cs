@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using server.Helpers;    // MongoSettings, JwtSettings, AzureSettings
 using server.Services;   // InventoryService, UserService, EmailService, MediaService, AzureBlobService
+using System;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,13 +61,20 @@ builder.Services.AddSingleton<InventoryService>();
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
     var cfg = sp.GetRequiredService<IOptions<MongoSettings>>().Value;
+    if (string.IsNullOrWhiteSpace(cfg.ConnectionString))
+        throw new InvalidOperationException("MongoSettings:ConnectionString is niet geconfigureerd.");
     return new MongoClient(cfg.ConnectionString);
 });
 
 // 6) AZURE BLOB STORAGE
 builder.Services.AddSingleton<IMediaService, MediaService>();
 builder.Services.AddSingleton(sp =>
-    new BlobServiceClient(builder.Configuration["AzureSettings:ConnectionString"]!));
+{
+    var azure = sp.GetRequiredService<IOptions<AzureSettings>>().Value;
+    if (string.IsNullOrWhiteSpace(azure.ConnectionString))
+        throw new InvalidOperationException("AzureSettings:ConnectionString is niet geconfigureerd.");
+    return new BlobServiceClient(azure.ConnectionString);
+});
 builder.Services.AddSingleton<IAzureBlobService, AzureBlobService>();
 
 // 7) UPLOAD LIMITS
