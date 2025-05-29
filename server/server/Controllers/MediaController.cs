@@ -1,137 +1,144 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using server.Helpers;
-using server.Models;
-using server.Services;
+﻿// File: MediaController.cs
 using System;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using server.Helpers;
+using server.Models;
+using server.Services;
 
-namespace server.Controllers
+[ApiController]
+[Route("api/[controller]")]
+public class MediaController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Authorize]
-    public class MediaController : ControllerBase
+    private readonly IAzureBlobService _blobSvc;
+    private readonly IMediaService _mediaSvc;
+    private readonly AzureSettings _azureSettings;
+
+    public MediaController(
+        IAzureBlobService blobSvc,
+        IMediaService mediaSvc,
+        IOptions<AzureSettings> azureOptions)
     {
-        private readonly IAzureBlobService _blobSvc;
-        private readonly IMediaService _mediaSvc;
-        private readonly AzureSettings _azureCfg;
+        _blobSvc = blobSvc;
+        _mediaSvc = mediaSvc;
+        _azureSettings = azureOptions.Value;
+    }
 
-        public MediaController(
-            IAzureBlobService blobSvc,
-            IMediaService mediaSvc,
-            IOptions<AzureSettings> azureOptions)
+    // POST api/media/upload
+    [HttpPost("upload")]
+    [DisableRequestSizeLimit]
+    [Authorize]
+    public async Task<IActionResult> Upload(
+        IFormFile file,
+        [FromForm] string? alt,
+        [FromForm] string? styles,
+        [FromForm] string? type)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("Geen bestand geüpload");
+
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        // 1) Kies subfolder op basis van het type
+        var folder = type switch
         {
-            _blobSvc = blobSvc;
-            _mediaSvc = mediaSvc;
-            _azureCfg = azureOptions.Value;
-        }
+            "img" => "img",
+            "video" => "video",
+            "files" => "file",
+            _ => "file"  // default
+        };
 
-        [HttpPost("upload")]
-        [DisableRequestSizeLimit]
-        public async Task<IActionResult> Upload(
-            IFormFile file,
-            [FromForm] string? alt,
-            [FromForm] string? styles)
+        // 2) Blobnaam met folder-prefix en originele extensie
+        var blobName = $"{folder}/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+
+        // 3) Upload naar Azure Blob
+        await using var stream = file.OpenReadStream();
+        await _blobSvc.UploadBlobAsync(stream, file.ContentType, blobName);
+
+        // 4) Wegschrijven metadata naar MongoDB
+        var media = new MediaItem
         {
-            if (file == null || file.Length == 0)
-                return BadRequest("Geen bestand geüpload");
+            FileName = file.FileName,
+            ContentType = file.ContentType,
+            Alt = string.IsNullOrEmpty(alt) ? file.FileName : alt,
+            Styles = string.IsNullOrEmpty(styles) ? "" : styles,
+            UserId = userId,
+            Timestamp = DateTime.UtcNow,
+            BlobName = blobName
+        };
+        await _mediaSvc.CreateAsync(media);
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+        // 5) Response DTO met SAS-url
+        var dto = new
+        {
+            id = media.Id.ToString(),
+            filename = media.FileName,
+            contentType = media.ContentType,
+            alt = media.Alt,
+            styles = media.Styles,
+            timestamp = media.Timestamp,
+            url = _blobSvc
+                            .GetBlobSasUri(media.BlobName, _azureSettings.SasExpiryHours)
+                            .ToString()
+        };
 
-            var blobName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-            await using var stream = file.OpenReadStream();
-            await _blobSvc.UploadBlobAsync(stream, file.ContentType, blobName);
+        return Ok(dto);
+    }
 
-            var media = new MediaItem
+    // GET api/media
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> List()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var items = await _mediaSvc.GetByUserAsync(userId);
+        var dto = items
+            .OrderByDescending(m => m.Timestamp)
+            .Select(m => new
             {
-                FileName = file.FileName,
-                ContentType = file.ContentType,
-                Alt = string.IsNullOrEmpty(alt) ? file.FileName : alt,
-                Styles = styles ?? "",
-                UserId = userId,
-                Timestamp = DateTime.UtcNow,
-                BlobName = blobName
-            };
-
-            await _mediaSvc.CreateAsync(media);
-
-            return Ok(new
-            {
-                id = media.Id.ToString(),
-                filename = media.FileName,
-                contentType = media.ContentType,
-                alt = media.Alt,
-                styles = media.Styles,
-                timestamp = media.Timestamp
+                id = m.Id.ToString(),
+                filename = m.FileName,
+                contentType = m.ContentType,
+                alt = m.Alt,
+                styles = m.Styles,
+                timestamp = m.Timestamp,
+                url = _blobSvc
+                                .GetBlobSasUri(m.BlobName, _azureSettings.SasExpiryHours)
+                                .ToString()
             });
-        }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+        return Ok(dto);
+    }
 
-            var list = await _mediaSvc.GetByUserAsync(userId);
-            var dto = list.Select(i => new {
-                id = i.Id.ToString(),
-                filename = i.FileName,
-                contentType = i.ContentType,
-                alt = i.Alt,
-                styles = i.Styles,
-                timestamp = i.Timestamp,
-                url = _blobSvc.GetBlobSasUri(i.BlobName, _azureCfg.SasExpiryHours).ToString()
-            });
-            return Ok(dto);
-        }
+    // DELETE api/media/{id}
+    [HttpDelete("{id:length(24)}")]
+    [Authorize]
+    public async Task<IActionResult> Delete(string id)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(string id)
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+        var media = await _mediaSvc.GetByIdAsync(id);
+        if (media == null || media.UserId != userId)
+            return NotFound();
 
-            var item = await _mediaSvc.GetByIdAsync(id);
-            if (item == null || item.UserId != userId)
-                return NotFound();
+        await _blobSvc.DeleteBlobAsync(media.BlobName);
+        var removed = await _mediaSvc.DeleteAsync(id);
+        if (!removed)
+            return StatusCode(StatusCodes.Status500InternalServerError, "Verwijderen mislukt");
 
-            return Ok(new
-            {
-                id = item.Id.ToString(),
-                filename = item.FileName,
-                contentType = item.ContentType,
-                alt = item.Alt,
-                styles = item.Styles,
-                timestamp = item.Timestamp,
-                url = _blobSvc.GetBlobSasUri(item.BlobName, _azureCfg.SasExpiryHours).ToString()
-            });
-        }
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id)
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var item = await _mediaSvc.GetByIdAsync(id);
-            if (item == null || item.UserId != userId)
-                return NotFound();
-
-            // 1) Verwijder blob
-            await _blobSvc.DeleteBlobAsync(item.BlobName);
-            // 2) Verwijder metadata
-            var ok = await _mediaSvc.DeleteAsync(id);
-            if (!ok)
-                return StatusCode(500, "Kon metadata niet verwijderen");
-
-            return NoContent();
-        }
-
+        return NoContent();
     }
 }

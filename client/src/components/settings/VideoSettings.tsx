@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, type FC, type ChangeEvent } from "react";
-import { uploadFile, getUploads, type MediaResponse } from "../../api/uploads";
+// /src/components/settings/VideoSettings.tsx
+import React, { useState, useEffect, type FC, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 import type { ComponentItem, VideoProps } from "../../types/types";
+import { getUploads, uploadFile, deleteUpload, type MediaResponse } from "../../api/uploads";
 
 interface Props {
   comp: ComponentItem;
@@ -9,14 +10,7 @@ interface Props {
 }
 
 const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
-  const [tab, setTab] = useState<"upload" | "browse" | "camera">("upload");
-  const [uploads, setUploads] = useState<MediaResponse[]>([]);
-  const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [capturing, setCapturing] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  const p: VideoProps = {
+  const defaults: Required<VideoProps> = {
     url: "",
     alt: "",
     controls: true,
@@ -27,32 +21,53 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
     radius: 0,
     shadow: false,
     objectFit: "cover",
-    ...(comp.props as Partial<VideoProps>),
+    showAlt: false,
   };
-  const update = (k: keyof VideoProps, v: any) =>
-    onUpdate({ ...comp, props: { ...p, [k]: v } });
+  const p = { ...defaults, ...(comp.props as VideoProps) };
+
+  const [uploads, setUploads] = useState<MediaResponse[]>([]);
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const upd = (key: keyof VideoProps, value: unknown) =>
+    onUpdate({ ...comp, props: { ...p, [key]: value } });
+
+  // fetch only mp4 videos
+  const fetchVideos = async () => {
+    try {
+      const all = await getUploads();
+      setUploads(all.filter(m => m.contentType.startsWith("video/")));
+    } catch {
+      toast.error("Media laden mislukt");
+    }
+  };
 
   useEffect(() => {
-    if (tab === "browse") {
-      getUploads()
-        .then(setUploads)
-        .catch(() => toast.error("Kon media niet laden"));
+    fetchVideos();
+  }, []);
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const chosen = e.target.files?.[0] ?? null;
+    setFile(chosen);
+    if (chosen) {
+      upd("url", URL.createObjectURL(chosen));
+      upd("alt", chosen.name);
     }
-    setFile(null);
-  }, [tab]);
+  };
 
-  const onFileChange = (e: ChangeEvent<HTMLInputElement>) =>
-    setFile(e.target.files?.[0] ?? null);
-
-  const doUpload = async () => {
-    if (!file) return toast.error("Selecteer eerst een bestand");
+  const handleUpload = async () => {
+    if (!file) {
+      toast.error("Selecteer eerst een video");
+      return;
+    }
     setLoading(true);
     try {
-      const res = await uploadFile(file, file.name);
-      update("url", res.url);
-      update("alt", res.alt);
-      toast.success("Upload geslaagd");
+      const res = await uploadFile(file, file.name, "video");
+      upd("url", res.url);
+      upd("alt", res.alt);
       setFile(null);
+      await fetchVideos();
+      toast.success("Upload geslaagd");
     } catch {
       toast.error("Upload mislukt");
     } finally {
@@ -60,182 +75,97 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
     }
   };
 
-  // Camera snapshot (zelfde als ImageSettings)
-  const startCamera = async () => {
+  const handleDelete = async (id: string) => {
     try {
-      const s = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      if (videoRef.current) videoRef.current.srcObject = s;
-      setCapturing(true);
+      await deleteUpload(id);
+      await fetchVideos();
+      toast.success("Verwijderd");
     } catch {
-      toast.error("Kon camera niet openen");
+      toast.error("Verwijderen mislukt");
     }
-  };
-  const capturePhoto = () => {
-    if (!videoRef.current) return;
-    const v = videoRef.current;
-    const c = document.createElement("canvas");
-    c.width = v.videoWidth;
-    c.height = v.videoHeight;
-    c.getContext("2d")!.drawImage(v, 0, 0);
-    c.toBlob((blob) => {
-      if (blob) setFile(new File([blob], `photo.png`, { type: "image/png" }));
-    }, "image/png");
-    (v.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
-    setCapturing(false);
   };
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Tabs */}
-      <div className="flex space-x-2">
-        {(["upload", "browse", "camera"] as const).map((t) => (
+    <div className="space-y-4">
+      {/* Upload Zone */}
+      <div className="p-4 border-2 border-dashed border-gray-400 rounded">
+        <input type="file" accept="video/mp4" onChange={handleFileChange} className="w-full" />
+        {file && (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-1 rounded ${
-              tab === t ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
+            onClick={handleUpload}
+            disabled={loading}
+            className="mt-2 px-4 py-2 bg-green-500 text-white rounded"
           >
-            {t === "upload" ? "Upload" : t === "browse" ? "Bladeren" : "Camera"}
+            {loading ? "Bezig..." : "Uploaden"}
           </button>
-        ))}
+        )}
       </div>
 
-      {/* Upload */}
-      {tab === "upload" && (
-        <div className="space-y-2">
-          <input
-            type="file"
-            accept="video/*"
-            onChange={onFileChange}
-            disabled={loading}
-            className="w-full border rounded px-2 py-1"
-          />
-          {file && (
-            <>
+      {/* Browse Zone */}
+      <div>
+        <div className="block mb-1 font-semibold">Beschikbare video’s</div>
+        <div className="grid grid-cols-2 gap-2 max-h-40 overflow-auto">
+          {uploads.map(item => (
+            <div key={item.id} className="relative">
               <video
-                src={URL.createObjectURL(file)}
-                controls
-                className="h-24 w-auto rounded mb-2"
+                src={item.url}
+                onClick={() => upd("url", item.url)}
+                className={`h-24 w-full rounded cursor-pointer border ${
+                  p.url === item.url ? "ring-4 ring-blue-500" : "hover:ring-2"
+                }`}
+                muted
               />
               <button
-                onClick={doUpload}
-                disabled={loading}
-                className="bg-green-600 text-white px-3 py-1 rounded"
+                onClick={() => handleDelete(item.id)}
+                className="absolute top-1 right-1 text-red-500 bg-white rounded-full p-1"
               >
-                {loading ? "Uploaden..." : "Voeg toe"}
+                ×
               </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Browse */}
-      {tab === "browse" && (
-        <div className="grid grid-cols-2 gap-2">
-          {uploads.map((m) => (
-            <video
-              key={m.id}
-              src={m.url}
-              controls
-              onClick={() => update("url", m.url)}
-              className="h-24 w-full rounded cursor-pointer border hover:ring-2"
-            />
+            </div>
           ))}
         </div>
-      )}
+      </div>
 
-      {/* Camera */}
-      {tab === "camera" && (
-        <div className="space-y-2">
-          {!capturing ? (
-            <button
-              onClick={startCamera}
-              className="bg-blue-600 text-white px-3 py-1 rounded"
-            >
-              Open camera
-            </button>
-          ) : (
-            <>
-              <video
-                ref={videoRef}
-                autoPlay
-                className="w-full h-48 bg-black rounded"
-              />
-              <button
-                onClick={capturePhoto}
-                className="bg-yellow-500 text-white px-3 py-1 rounded"
-              >
-                📸 Maak foto
-              </button>
-            </>
-          )}
-          {file && (
-            <>
-              <video
-                src={URL.createObjectURL(file)}
-                controls
-                className="h-24 w-auto rounded mb-2"
-              />
-              <button
-                onClick={doUpload}
-                className="bg-green-600 text-white px-3 py-1 rounded"
-              >
-                Voeg toe
-              </button>
-            </>
+      {/* Preview of selected */}
+      {p.url && (
+        <div>
+          <video
+            src={p.url}
+            controls={p.controls}
+            autoPlay={p.autoplay}
+            loop={p.loop}
+            className="w-full h-auto mb-2 rounded overflow-hidden"
+            style={{
+              width: `${p.width}px`,
+              height: `${p.height}px`,
+              objectFit: p.objectFit,
+              borderRadius: `${p.radius}px`,
+              ...(p.shadow ? { boxShadow: "0 4px 6px rgba(0,0,0,0.1)" } : {}),
+            }}
+          />
+          {p.showAlt && p.alt && (
+            <div className="text-sm text-gray-600 italic">{p.alt}</div>
           )}
         </div>
       )}
 
-      {/* Style & Controls */}
-      <div className="border-t pt-4 space-y-3">
+      {/* Additional settings */}
+      <div className="space-y-2">
         <div>
-          <label className="block mb-1">Breedte (px)</label>
+          <label className="block mb-1">Alt-tekst</label>
           <input
-            type="number"
-            min={50}
-            value={p.width}
-            onChange={(e) => update("width", +e.target.value)}
+            type="text"
+            value={p.alt}
+            onChange={e => upd("alt", e.target.value)}
             className="w-full border rounded px-2 py-1"
           />
         </div>
-        <div>
-          <label className="block mb-1">Hoogte (px)</label>
-          <input
-            type="number"
-            min={50}
-            value={p.height}
-            onChange={(e) => update("height", +e.target.value)}
-            className="w-full border rounded px-2 py-1"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Radius (px)</label>
-          <input
-            type="number"
-            min={0}
-            value={p.radius}
-            onChange={(e) => update("radius", +e.target.value)}
-            className="w-full border rounded px-2 py-1"
-          />
-        </div>
-        <label className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            checked={p.shadow}
-            onChange={(e) => update("shadow", e.target.checked)}
-          />
-          <span>Shadow</span>
-        </label>
         <div className="flex space-x-4">
           <label className="flex items-center space-x-2">
             <input
               type="checkbox"
               checked={p.controls}
-              onChange={(e) => update("controls", e.target.checked)}
+              onChange={e => upd("controls", e.target.checked)}
             />
             <span>Controls</span>
           </label>
@@ -243,7 +173,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
             <input
               type="checkbox"
               checked={p.autoplay}
-              onChange={(e) => update("autoplay", e.target.checked)}
+              onChange={e => upd("autoplay", e.target.checked)}
             />
             <span>Autoplay</span>
           </label>
@@ -251,26 +181,73 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
             <input
               type="checkbox"
               checked={p.loop}
-              onChange={(e) => update("loop", e.target.checked)}
+              onChange={e => upd("loop", e.target.checked)}
             />
             <span>Loop</span>
           </label>
         </div>
-        <div>
-          <label className="block mb-1">Object-fit</label>
-          <select
-            value={p.objectFit}
-            onChange={(e) => update("objectFit", e.target.value)}
-            className="w-full border rounded px-2 py-1"
-          >
-            <option value="cover">Cover</option>
-            <option value="contain">Contain</option>
-          </select>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block mb-1">Breedte (px)</label>
+            <input
+              type="number"
+              min={50}
+              value={p.width}
+              onChange={e => upd("width", +e.target.value)}
+              className="w-full border rounded px-2 py-1"
+            />
+          </div>
+          <div>
+            <label className="block mb-1">Hoogte (px)</label>
+            <input
+              type="number"
+              min={50}
+              value={p.height}
+              onChange={e => upd("height", +e.target.value)}
+              className="w-full border rounded px-2 py-1"
+            />
+          </div>
+          <div>
+            <label className="block mb-1">Radius (px)</label>
+            <input
+              type="number"
+              min={0}
+              value={p.radius}
+              onChange={e => upd("radius", +e.target.value)}
+              className="w-full border rounded px-2 py-1"
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={p.shadow}
+              onChange={e => upd("shadow", e.target.checked)}
+            />
+            <span>Schaduw</span>
+          </div>
+          <div>
+            <label className="block mb-1">Object-fit</label>
+            <select
+              value={p.objectFit}
+              onChange={e => upd("objectFit", e.target.value as VideoProps["objectFit"])}
+              className="w-full border rounded px-2 py-1"
+            >
+              <option value="cover">Cover</option>
+              <option value="contain">Contain</option>
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={p.showAlt}
+              onChange={e => upd("showAlt", e.target.checked)}
+            />
+            <span>Toon alt-tekst</span>
+          </div>
         </div>
       </div>
     </div>
-);
-
+  );
 };
 
 export default VideoSettings;

@@ -13,6 +13,7 @@ export default function ComponentPalette({ onAdd }: Props) {
     "quote",
     "image",
     "video",
+    "file",
     "button",
     "checklist",
     "divider",
