@@ -1,4 +1,4 @@
-// src/pages/TourBuilderPage.tsx
+// /src/pages/TourBuilderPage.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getTour, updateTour, type Tour } from "../api/tours";
@@ -34,7 +34,6 @@ export default function TourBuilderPage() {
   const [selectedComp, setSelectedComp] = useState<ComponentItem | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
 
-  // 1) Load tour
   useEffect(() => {
     if (!id) {
       navigate("/tours");
@@ -62,7 +61,6 @@ export default function TourBuilderPage() {
     loadTour(id);
   }, [id, navigate]);
 
-  // 2) Save tour
   const saveTour = useCallback(async () => {
     setSaving(true);
     try {
@@ -79,7 +77,6 @@ export default function TourBuilderPage() {
     }
   }, [id, naamLocatie, sectionsByFase, fasesList]);
 
-  // 3) Auto-save on hide/unload
   useEffect(() => {
     const onHide = () => {
       if (document.visibilityState === "hidden") saveTour();
@@ -94,7 +91,6 @@ export default function TourBuilderPage() {
 
   if (loading) return <div className="p-4 animate-pulse">Laden…</div>;
 
-  // Ensure at least one section
   const currentFaseSections = sectionsByFase[activeFase]!;
   if (currentFaseSections.length === 0) {
     currentFaseSections.push({
@@ -110,7 +106,6 @@ export default function TourBuilderPage() {
   const current =
     currentFaseSections[activeSectionIndex] ?? currentFaseSections[0];
 
-  // Section handlers
   const addSection = () => {
     const sec: Section = { id: uuidv4(), title: "Nieuwe sectie", components: [] };
     setSectionsByFase((p) => ({
@@ -136,7 +131,6 @@ export default function TourBuilderPage() {
     setSelectedComp(null);
   };
 
-  // Component handlers
   const addComponent = (type: ComponentType) => {
     const baseText = {
       text: "Tekst",
@@ -144,7 +138,7 @@ export default function TourBuilderPage() {
       fontSize: 16,
       color: "#000000",
       bg: "#ffffff",
-      align: "left",
+      align: "left" as const,
       bold: false,
       italic: false,
       underline: false,
@@ -167,7 +161,7 @@ export default function TourBuilderPage() {
             bold: false,
             italic: false,
             underline: false,
-            functionType: "dummy",
+            functionType: "dummy" as const,
             url: "",
           }
         : type === "image"
@@ -180,7 +174,7 @@ export default function TourBuilderPage() {
             borderColor: "#000000",
             radius: 0,
             shadow: false,
-            objectFit: "cover",
+            objectFit: "cover" as const,
           }
         : type === "video"
         ? {
@@ -193,7 +187,7 @@ export default function TourBuilderPage() {
             height: 200,
             radius: 0,
             shadow: false,
-            objectFit: "cover",
+            objectFit: "cover" as const,
           }
         : type === "grid"
         ? {
@@ -204,7 +198,7 @@ export default function TourBuilderPage() {
             borderColor: "#000000",
             radius: 0,
             shadow: false,
-            objectFit: "cover",
+            objectFit: "cover" as const,
           }
         : baseText;
     const comp: ComponentItem = { id: uuidv4(), type, props };
@@ -262,7 +256,6 @@ export default function TourBuilderPage() {
     }));
   };
 
-  // Preview mode: flatten alle secties uit alle fases
   if (previewMode) {
     const allComponents = fasesList.flatMap((f) =>
       sectionsByFase[f].flatMap((s) => s.components)
@@ -282,12 +275,11 @@ export default function TourBuilderPage() {
     );
   }
 
-  // Edit mode
   return (
     <div className="flex h-full">
       <ComponentPalette onAdd={addComponent} />
 
-      <div className="flex-1 relative">
+      <div className="flex-1 relative pb-16"> {/* Zorgt voor ruimte onder voor BottomNav */}
         <BuilderCanvas
           components={current.components}
           sectionTitle={current.title}
