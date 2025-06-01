@@ -56,6 +56,8 @@ builder.Services.AddAuthentication(opts =>
 builder.Services.AddSingleton<UserService>();
 builder.Services.AddSingleton<EmailService>();
 builder.Services.AddSingleton<InventoryService>();
+builder.Services.AddSingleton<LiveSessionService>();
+
 
 // 5) MONGO-CLIENT
 builder.Services.AddSingleton<IMongoClient>(sp =>
