@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 
 namespace server.Controllers
 {
@@ -49,6 +50,19 @@ namespace server.Controllers
                 if (tour == null)
                     return BadRequest(new { message = "Tour niet gevonden." });
 
+                // Zet BsonDocument-fases om naar JSON-vriendelijke Dictionary<string, object>
+                var fasesDict = new Dictionary<string, List<Dictionary<string, object>>>();
+                foreach (var kv in tour.Fases)
+                {
+                    var naamFase = kv.Key;
+                    var docs = kv.Value;
+                    var mappedDocs = docs.Select(d => d.ToDictionary(
+                        element => element.Name,
+                        element => BsonTypeMapper.MapToDotNetValue(element.Value)
+                    )).ToList();
+                    fasesDict.Add(naamFase, mappedDocs);
+                }
+
                 var response = new LiveSessionDto
                 {
                     Id = session.Id,
@@ -60,7 +74,7 @@ namespace server.Controllers
                     {
                         Id = tour.Id,
                         NaamLocatie = tour.NaamLocatie,
-                        Fases = tour.Fases
+                        Fases = fasesDict
                     },
                     PublicUrl = $"/api/LiveSession/public/{session.Id}"
                 };
@@ -96,25 +110,36 @@ namespace server.Controllers
             {
                 var sessions = await _liveService.GetActiveSessionsAsync(creatorId);
 
-                // Altijd lege lijst terug als er niets is
                 if (sessions == null || !sessions.Any())
                     return Ok(new List<LiveSessionDto>());
 
                 var result = new List<LiveSessionDto>();
                 foreach (var s in sessions)
                 {
-                    // Probeer Tour op te halen, vang eventuele exceptions op per sessie
                     TourDto? tourDto = null;
                     try
                     {
                         var tour = await _tourService.GetByIdAsync(s.TourId);
                         if (tour != null)
                         {
+                            // Zet BsonDocument-fases om naar JSON-vriendelijke Dictionary<string, object>
+                            var fasesDict = new Dictionary<string, List<Dictionary<string, object>>>();
+                            foreach (var kv in tour.Fases)
+                            {
+                                var naamFase = kv.Key;
+                                var docs = kv.Value;
+                                var mappedDocs = docs.Select(d => d.ToDictionary(
+                                    element => element.Name,
+                                    element => BsonTypeMapper.MapToDotNetValue(element.Value)
+                                )).ToList();
+                                fasesDict.Add(naamFase, mappedDocs);
+                            }
+
                             tourDto = new TourDto
                             {
                                 Id = tour.Id,
                                 NaamLocatie = tour.NaamLocatie,
-                                Fases = tour.Fases
+                                Fases = fasesDict
                             };
                         }
                     }
@@ -126,7 +151,7 @@ namespace server.Controllers
                     }
 
                     if (tourDto == null)
-                        continue; // overslaan als tour niet bestaat
+                        continue;
 
                     result.Add(new LiveSessionDto
                     {
@@ -169,6 +194,19 @@ namespace server.Controllers
             if (tour == null)
                 return BadRequest(new { message = "Tour niet gevonden." });
 
+            // Zet BsonDocument-fases om naar JSON-vriendelijke Dictionary<string, object>
+            var fasesDict = new Dictionary<string, List<Dictionary<string, object>>>();
+            foreach (var kv in tour.Fases)
+            {
+                var naamFase = kv.Key;
+                var docs = kv.Value;
+                var mappedDocs = docs.Select(d => d.ToDictionary(
+                    element => element.Name,
+                    element => BsonTypeMapper.MapToDotNetValue(element.Value)
+                )).ToList();
+                fasesDict.Add(naamFase, mappedDocs);
+            }
+
             var response = new LiveSessionDto
             {
                 Id = session.Id,
@@ -180,7 +218,7 @@ namespace server.Controllers
                 {
                     Id = tour.Id,
                     NaamLocatie = tour.NaamLocatie,
-                    Fases = tour.Fases
+                    Fases = fasesDict
                 },
                 PublicUrl = $"/api/LiveSession/public/{session.Id}"
             };
@@ -203,6 +241,19 @@ namespace server.Controllers
             if (tour == null)
                 return BadRequest(new { message = "Tour niet gevonden." });
 
+            // Zet BsonDocument-fases om naar JSON-vriendelijke Dictionary<string, object>
+            var fasesDict = new Dictionary<string, List<Dictionary<string, object>>>();
+            foreach (var kv in tour.Fases)
+            {
+                var naamFase = kv.Key;
+                var docs = kv.Value;
+                var mappedDocs = docs.Select(d => d.ToDictionary(
+                    element => element.Name,
+                    element => BsonTypeMapper.MapToDotNetValue(element.Value)
+                )).ToList();
+                fasesDict.Add(naamFase, mappedDocs);
+            }
+
             var publicDto = new LiveSessionPublicDto
             {
                 Id = session.Id,
@@ -212,7 +263,7 @@ namespace server.Controllers
                 {
                     Id = tour.Id,
                     NaamLocatie = tour.NaamLocatie,
-                    Fases = tour.Fases
+                    Fases = fasesDict
                 }
             };
             return Ok(publicDto);
@@ -260,7 +311,7 @@ namespace server.Controllers
     {
         public string Id { get; set; } = null!;
         public string NaamLocatie { get; set; } = null!;
-        public Dictionary<string, List<BsonDocument>> Fases { get; set; } = null!;
+        public Dictionary<string, List<Dictionary<string, object>>> Fases { get; set; } = null!;
     }
 
     // DTO voor eigenaren (inclusief CreatorId en PublicUrl)
