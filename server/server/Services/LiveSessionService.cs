@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿// File: server/Services/LiveSessionService.cs
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using server.Helpers;
 using server.Models;
@@ -11,52 +12,44 @@ namespace server.Services
     public class LiveSessionService
     {
         private readonly IMongoCollection<LiveSession> _liveCol;
-        private readonly TourService _tourService;
 
-        public LiveSessionService(IMongoClient client, IOptions<MongoSettings> opts, TourService tourService)
+        public LiveSessionService(IMongoClient client, IOptions<MongoSettings> opts)
         {
             var cfg = opts.Value;
             var db = client.GetDatabase(cfg.Database);
-            _liveCol = db.GetCollection<LiveSession>("LiveSessions");
-            _tourService = tourService;
+            _liveCol = db.GetCollection<LiveSession>("livesessions");
         }
 
-        public async Task<LiveSession> StartSessionAsync(string groep, string tourId)
+        public async Task<LiveSession> StartSessionAsync(string groep, string tourId, string creatorId)
         {
-            // ► 1) ALTIJD eerst checken of er al een actieve sessie voor deze groep is
             var existingFilter = Builders<LiveSession>.Filter.And(
                 Builders<LiveSession>.Filter.Eq(s => s.Groep, groep),
+                Builders<LiveSession>.Filter.Eq(s => s.CreatorId, creatorId),
                 Builders<LiveSession>.Filter.Eq(s => s.IsActive, true)
             );
             var already = await _liveCol.Find(existingFilter).FirstOrDefaultAsync();
             if (already != null)
-            {
                 throw new InvalidOperationException($"Er is al een actieve sessie voor groep '{groep}'.");
-            }
 
-            // ► 2) Haal de volledige Tour op (of gooi KeyNotFoundException)
-            var tour = await _tourService.GetByIdAsync(tourId);
-            if (tour is null)
-            {
-                throw new KeyNotFoundException($"Tour met id '{tourId}' niet gevonden.");
-            }
-
-            // ► 3) Maak en insert de nieuwe LiveSession
             var session = new LiveSession
             {
                 Groep = groep,
-                Tour = tour,
+                TourId = tourId,
                 StartDate = DateTime.UtcNow,
-                IsActive = true
+                IsActive = true,
+                CreatorId = creatorId
             };
 
             await _liveCol.InsertOneAsync(session);
             return session;
         }
 
-        public async Task<IEnumerable<LiveSession>> GetActiveSessionsAsync()
+        public async Task<IEnumerable<LiveSession>> GetActiveSessionsAsync(string creatorId)
         {
-            var filter = Builders<LiveSession>.Filter.Eq(s => s.IsActive, true);
+            var filter = Builders<LiveSession>.Filter.And(
+                Builders<LiveSession>.Filter.Eq(s => s.CreatorId, creatorId),
+                Builders<LiveSession>.Filter.Eq(s => s.IsActive, true)
+            );
             return await _liveCol.Find(filter).ToListAsync();
         }
 
@@ -65,10 +58,16 @@ namespace server.Services
             return await _liveCol.Find(s => s.Id == id).FirstOrDefaultAsync();
         }
 
-        public async Task EndSessionAsync(string id)
+        public async Task EndSessionAsync(string id, string creatorId)
         {
+            var filter = Builders<LiveSession>.Filter.And(
+                Builders<LiveSession>.Filter.Eq(s => s.Id, id),
+                Builders<LiveSession>.Filter.Eq(s => s.CreatorId, creatorId)
+            );
             var update = Builders<LiveSession>.Update.Set(s => s.IsActive, false);
-            await _liveCol.UpdateOneAsync(s => s.Id == id, update);
+            var result = await _liveCol.UpdateOneAsync(filter, update);
+            if (result.MatchedCount == 0)
+                throw new KeyNotFoundException("Live-sessie niet gevonden of geen rechten om te beëindigen.");
         }
     }
 }

@@ -1,3 +1,4 @@
+// File: client/src/pages/Register.tsx
 import { useState } from 'react';
 import { registerUser } from '../api/auth';
 import { Link } from 'react-router-dom';
@@ -35,20 +36,22 @@ export default function Register() {
           <input
             type="email"
             placeholder="E-mailadres"
-            className="w-full px-4 py-2 border border-gray-300 rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-green-500"
             value={email}
             onChange={e => setEmail(e.target.value)}
+            required
           />
           <input
             type="password"
             placeholder="Wachtwoord"
-            className="w-full px-4 py-2 border border-gray-300 rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-green-500"
             value={password}
             onChange={e => setPassword(e.target.value)}
+            required
           />
           <button
             type="submit"
-            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-500 disabled:opacity-50"
+            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-500 transition disabled:opacity-50"
             disabled={loading}
           >
             {loading ? 'Even geduld...' : 'Registreren'}
@@ -56,7 +59,7 @@ export default function Register() {
         </form>
         <p className="text-center mt-4 text-sm">
           Al een account?{' '}
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" className="text-indigo-600 hover:underline">
             Log hier in
           </Link>
         </p>

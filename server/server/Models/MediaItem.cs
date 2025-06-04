@@ -1,33 +1,35 @@
-﻿using MongoDB.Bson;
+﻿// File: server/Models/MediaItem.cs
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
 
 namespace server.Models
 {
+    [BsonIgnoreExtraElements]
     public class MediaItem
     {
         [BsonId]
         public ObjectId Id { get; set; }
 
-        [BsonElement("FileName")]
+        [BsonElement("fileName")]
         public string FileName { get; set; } = null!;
 
-        [BsonElement("ContentType")]
+        [BsonElement("contentType")]
         public string ContentType { get; set; } = null!;
 
-        [BsonElement("Alt")]
+        [BsonElement("alt")]
         public string Alt { get; set; } = null!;
 
-        [BsonElement("Styles")]
+        [BsonElement("styles")]
         public string Styles { get; set; } = null!;
 
-        [BsonElement("UserId")]
+        [BsonElement("userId")]
         public string UserId { get; set; } = null!;
 
-        [BsonElement("Timestamp")]
+        [BsonElement("timestamp")]
         public DateTime Timestamp { get; set; }
 
-        [BsonElement("BlobName")]
+        [BsonElement("blobName")]
         public string BlobName { get; set; } = null!;
     }
 }

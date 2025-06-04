@@ -1,10 +1,10 @@
-﻿using MongoDB.Bson;
+﻿// File: server/Models/LiveSession.cs
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
 
 namespace server.Models
 {
-    // BsonIgnoreExtraElements zorgt ervoor dat een oud veld 'tourId' genegeerd wordt
     [BsonIgnoreExtraElements]
     public class LiveSession
     {
@@ -15,14 +15,16 @@ namespace server.Models
         [BsonElement("groep")]
         public string Groep { get; set; } = null!;
 
-        // Tour is nullable, zodat bestaande oude records zonder embedded tour niet crashen
-        [BsonElement("tour")]
-        public Tour? Tour { get; set; }
+        [BsonElement("tourId")]
+        public string TourId { get; set; } = null!;
 
         [BsonElement("startDate")]
         public DateTime StartDate { get; set; }
 
         [BsonElement("isActive")]
         public bool IsActive { get; set; }
+
+        [BsonElement("creatorId")]
+        public string CreatorId { get; set; } = null!;
     }
 }

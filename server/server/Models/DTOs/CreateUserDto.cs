@@ -1,10 +1,10 @@
-﻿namespace server.Models.DTOs
+﻿// File: server/Models/DTOs/CreateUserDto.cs
+namespace server.Models.DTOs
 {
     public class CreateUserDto
     {
-        public string Email { get; set; } = string.Empty;
-        public string Role { get; set; } = "User";
-        public string? Password { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; } // Optional: if empty, backend will assign a temporary password
+        public string Role { get; set; }
     }
-
 }

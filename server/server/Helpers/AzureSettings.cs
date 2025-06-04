@@ -1,9 +1,10 @@
-﻿namespace server.Helpers
+﻿// File: server/Helpers/AzureSettings.cs
+namespace server.Helpers
 {
     public class AzureSettings
     {
         public string ConnectionString { get; set; } = null!;
         public string ContainerName { get; set; } = null!;
-        public int SasExpiryHours { get; set; } = 24;
+        public int SasExpiryHours { get; set; }
     }
 }

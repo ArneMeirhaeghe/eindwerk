@@ -1,4 +1,5 @@
-﻿namespace server.Helpers
+﻿// File: server/Helpers/MongoSettings.cs
+namespace server.Helpers
 {
     public class MongoSettings
     {

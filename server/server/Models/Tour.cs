@@ -1,4 +1,4 @@
-﻿// File: Models/Tour.cs
+﻿// File: server/Models/Tour.cs
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Collections.Generic;
@@ -20,7 +20,6 @@ namespace server.Models
         [JsonIgnore]
         public string VerhuurderId { get; set; } = null!;
 
-        // Dictionary met raw BsonDocument‐lijsten (voor elke fase)
         [BsonElement("fases")]
         public Dictionary<string, List<BsonDocument>> Fases { get; set; } = null!;
     }

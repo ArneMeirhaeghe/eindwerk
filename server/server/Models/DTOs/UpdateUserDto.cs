@@ -1,8 +1,9 @@
-﻿namespace server.Models.DTOs
+﻿// File: server/Models/DTOs/UpdateUserDto.cs
+namespace server.Models.DTOs
 {
     public class UpdateUserDto
     {
-        public string Email { get; set; } = string.Empty;
-        public string Role { get; set; } = "User";
+        public string Email { get; set; }
+        public string Role { get; set; }
     }
 }

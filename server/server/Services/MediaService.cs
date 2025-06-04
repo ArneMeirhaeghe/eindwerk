@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿// File: server/Services/MediaService.cs
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Microsoft.Extensions.Options;
 using server.Helpers;
@@ -14,7 +15,6 @@ namespace server.Services
         Task<List<MediaItem>> GetByUserAsync(string userId);
         Task<MediaItem?> GetByIdAsync(string id);
         Task<bool> DeleteAsync(string id);
-
     }
 
     public class MediaService : IMediaService
@@ -44,6 +44,7 @@ namespace server.Services
             if (!ObjectId.TryParse(id, out var objId)) return null;
             return await _mediaCollection.Find(i => i.Id == objId).FirstOrDefaultAsync();
         }
+
         public async Task<bool> DeleteAsync(string id)
         {
             if (!ObjectId.TryParse(id, out var objId)) return false;

@@ -1,7 +1,9 @@
-﻿namespace server.Models.DTOs;
-
-public class ChangePasswordDto
+﻿// File: server/Models/DTOs/ChangePasswordDto.cs
+namespace server.Models.DTOs
 {
-    public string CurrentPassword { get; set; }
-    public string NewPassword { get; set; }
+    public class ChangePasswordDto
+    {
+        public string CurrentPassword { get; set; }
+        public string NewPassword { get; set; }
+    }
 }

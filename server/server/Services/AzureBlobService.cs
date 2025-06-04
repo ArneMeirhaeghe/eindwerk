@@ -1,4 +1,5 @@
-﻿using Azure.Storage.Blobs;
+﻿// File: server/Services/AzureBlobService.cs
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 using Microsoft.Extensions.Options;
@@ -23,27 +24,28 @@ namespace server.Services
 
         public async Task UploadBlobAsync(Stream content, string contentType, string blobName)
         {
-            var blob = _containerClient.GetBlobClient(blobName);
-            await blob.UploadAsync(content, new BlobHttpHeaders { ContentType = contentType });
+            var blobClient = _containerClient.GetBlobClient(blobName);
+            await blobClient.UploadAsync(content, new BlobHttpHeaders { ContentType = contentType });
+        }
+
+        public async Task DeleteBlobAsync(string blobName)
+        {
+            var blobClient = _containerClient.GetBlobClient(blobName);
+            await blobClient.DeleteIfExistsAsync();
         }
 
         public Uri GetBlobSasUri(string blobName, int expiryHours)
         {
-            var blob = _containerClient.GetBlobClient(blobName);
-            var sas = new BlobSasBuilder
+            var blobClient = _containerClient.GetBlobClient(blobName);
+            var sasBuilder = new BlobSasBuilder
             {
                 BlobContainerName = _settings.ContainerName,
                 BlobName = blobName,
                 Resource = "b",
                 ExpiresOn = DateTimeOffset.UtcNow.AddHours(expiryHours)
             };
-            sas.SetPermissions(BlobSasPermissions.Read);
-            return blob.GenerateSasUri(sas);
-        }
-        public async Task DeleteBlobAsync(string blobName)
-        {
-            var blob = _containerClient.GetBlobClient(blobName);
-            await blob.DeleteIfExistsAsync();
+            sasBuilder.SetPermissions(BlobSasPermissions.Read);
+            return blobClient.GenerateSasUri(sasBuilder);
         }
     }
 }

@@ -1,3 +1,4 @@
+// File: client/src/pages/Login.tsx
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { loginUser } from '../api/auth';
@@ -8,8 +9,8 @@ export default function Login() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [show, setShow] = useState(false);
-  const [remember, setRemember] = useState(true);
+  const [show, setShow] = useState(false); // Toggle voor wachtwoord zichtbaar maken
+  const [remember, setRemember] = useState(true); // "Ingelogd blijven"
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -22,8 +23,8 @@ export default function Login() {
 
     try {
       const token = await loginUser(email, password);
-      login(token,);
-      window.location.href = '/';
+      login(token, remember); // Opslaan token in context + localStorage indien 'remember'
+      window.location.href = '/'; // Redirect naar home/dashboard
     } catch (err: any) {
       setError(err.response?.data || 'Login mislukt');
     } finally {
@@ -40,17 +41,19 @@ export default function Login() {
           <input
             type="email"
             placeholder="E-mailadres"
-            className="w-full px-4 py-2 border border-gray-300 rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500"
             value={email}
             onChange={e => setEmail(e.target.value)}
+            required
           />
           <div className="relative">
             <input
               type={show ? 'text' : 'password'}
               placeholder="Wachtwoord"
-              className="w-full px-4 py-2 border border-gray-300 rounded pr-10"
+              className="w-full px-4 py-2 border border-gray-300 rounded pr-10 focus:outline-none focus:border-indigo-500"
               value={password}
               onChange={e => setPassword(e.target.value)}
+              required
             />
             <button
               type="button"
@@ -61,7 +64,6 @@ export default function Login() {
               {show ? <FaEyeSlash /> : <FaEye />}
             </button>
           </div>
-
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -70,10 +72,9 @@ export default function Login() {
             />
             Ingelogd blijven
           </label>
-
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-500 disabled:opacity-50"
+            className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition disabled:opacity-50"
             disabled={loading}
           >
             {loading ? 'Bezig...' : 'Inloggen'}
@@ -81,7 +82,7 @@ export default function Login() {
         </form>
         <p className="text-center mt-4 text-sm">
           Nog geen account?{' '}
-          <Link to="/register" className="text-blue-600 hover:underline">
+          <Link to="/register" className="text-indigo-600 hover:underline">
             Registreer hier
           </Link>
         </p>

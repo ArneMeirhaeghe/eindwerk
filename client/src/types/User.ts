@@ -1,12 +1,12 @@
-// src/types/User.ts
+// File: client/src/types/User.ts
 export interface User {
-  id: string      // LET OP: niet _id, maar id zoals de API teruggeeft
-  email: string
-  role: "user" | "admin"
+  id: string;      // Let op: API retourneert 'id' ipv. '_id'
+  email: string;
+  role: 'user' | 'admin';
 }
 
 export interface UserCreateRequest {
-  email: string
-  password: string
-  // role stuur je niet mee bij aanmaken; admin wijzigt rol later via PATCH
+  email: string;
+  password: string;
+  // role wordt niet meegestuurd bij aanmaken; admin wijzigt rol later via PUT
 }

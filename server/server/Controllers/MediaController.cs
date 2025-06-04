@@ -1,9 +1,4 @@
-﻿// File: MediaController.cs
-using System;
-using System.IO;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
+﻿// File: server/Controllers/MediaController.cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,134 +6,143 @@ using Microsoft.Extensions.Options;
 using server.Helpers;
 using server.Models;
 using server.Services;
+using System;
+using System.IO;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
-[ApiController]
-[Route("api/[controller]")]
-public class MediaController : ControllerBase
+namespace server.Controllers
 {
-    private readonly IAzureBlobService _blobSvc;
-    private readonly IMediaService _mediaSvc;
-    private readonly AzureSettings _azureSettings;
-
-    public MediaController(
-        IAzureBlobService blobSvc,
-        IMediaService mediaSvc,
-        IOptions<AzureSettings> azureOptions)
+    [ApiController]
+    [Route("api/media")]
+    public class MediaController : ControllerBase
     {
-        _blobSvc = blobSvc;
-        _mediaSvc = mediaSvc;
-        _azureSettings = azureOptions.Value;
-    }
+        private readonly IAzureBlobService _blobSvc;
+        private readonly IMediaService _mediaSvc;
+        private readonly AzureSettings _azureSettings;
 
-    // POST api/media/upload
-    [HttpPost("upload")]
-    [DisableRequestSizeLimit]
-    [Authorize]
-    public async Task<IActionResult> Upload(
-        IFormFile file,
-        [FromForm] string? alt,
-        [FromForm] string? styles,
-        [FromForm] string? type)
-    {
-        if (file == null || file.Length == 0)
-            return BadRequest("Geen bestand geüpload");
-
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
-
-        // 1) Kies subfolder op basis van het type
-        var folder = type switch
+        public MediaController(
+            IAzureBlobService blobSvc,
+            IMediaService mediaSvc,
+            IOptions<AzureSettings> azureOptions)
         {
-            "img" => "img",
-            "video" => "video",
-            "files" => "file",
-            _ => "file"  // default
-        };
+            _blobSvc = blobSvc;
+            _mediaSvc = mediaSvc;
+            _azureSettings = azureOptions.Value;
+        }
 
-        // 2) Blobnaam met folder-prefix en originele extensie
-        var blobName = $"{folder}/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-
-        // 3) Upload naar Azure Blob
-        await using var stream = file.OpenReadStream();
-        await _blobSvc.UploadBlobAsync(stream, file.ContentType, blobName);
-
-        // 4) Wegschrijven metadata naar MongoDB
-        var media = new MediaItem
+        // POST api/media/upload
+        [HttpPost("upload")]
+        [DisableRequestSizeLimit]
+        [Authorize]
+        public async Task<IActionResult> Upload(
+            IFormFile file,
+            [FromForm] string? alt,
+            [FromForm] string? styles,
+            [FromForm] string? type)
         {
-            FileName = file.FileName,
-            ContentType = file.ContentType,
-            Alt = string.IsNullOrEmpty(alt) ? file.FileName : alt,
-            Styles = string.IsNullOrEmpty(styles) ? "" : styles,
-            UserId = userId,
-            Timestamp = DateTime.UtcNow,
-            BlobName = blobName
-        };
-        await _mediaSvc.CreateAsync(media);
+            if (file == null || file.Length == 0)
+                return BadRequest("Geen bestand geüpload");
 
-        // 5) Response DTO met SAS-url
-        var dto = new
-        {
-            id = media.Id.ToString(),
-            filename = media.FileName,
-            contentType = media.ContentType,
-            alt = media.Alt,
-            styles = media.Styles,
-            timestamp = media.Timestamp,
-            url = _blobSvc
-                            .GetBlobSasUri(media.BlobName, _azureSettings.SasExpiryHours)
-                            .ToString()
-        };
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
 
-        return Ok(dto);
-    }
-
-    // GET api/media
-    [HttpGet]
-    [Authorize]
-    public async Task<IActionResult> List()
-    {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
-
-        var items = await _mediaSvc.GetByUserAsync(userId);
-        var dto = items
-            .OrderByDescending(m => m.Timestamp)
-            .Select(m => new
+            // Kies subfolder op basis van het type
+            var folder = type switch
             {
-                id = m.Id.ToString(),
-                filename = m.FileName,
-                contentType = m.ContentType,
-                alt = m.Alt,
-                styles = m.Styles,
-                timestamp = m.Timestamp,
-                url = _blobSvc
-                                .GetBlobSasUri(m.BlobName, _azureSettings.SasExpiryHours)
-                                .ToString()
-            });
+                "img" => "img",
+                "video" => "video",
+                "files" => "files",
+                _ => "files"
+            };
 
-        return Ok(dto);
-    }
+            // Blobnaam met folder-prefix en originele extensie
+            var blobName = $"{folder}/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
 
-    // DELETE api/media/{id}
-    [HttpDelete("{id:length(24)}")]
-    [Authorize]
-    public async Task<IActionResult> Delete(string id)
-    {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
+            // Upload naar Azure Blob via UploadBlobAsync
+            await using (var stream = file.OpenReadStream())
+            {
+                await _blobSvc.UploadBlobAsync(stream, file.ContentType, blobName);
+            }
 
-        var media = await _mediaSvc.GetByIdAsync(id);
-        if (media == null || media.UserId != userId)
-            return NotFound();
+            // Wegschrijven metadata naar MongoDB
+            var media = new MediaItem
+            {
+                FileName = file.FileName,
+                ContentType = file.ContentType,
+                Alt = string.IsNullOrWhiteSpace(alt) ? file.FileName : alt!,
+                Styles = string.IsNullOrWhiteSpace(styles) ? "" : styles!,
+                UserId = userId,
+                Timestamp = DateTime.UtcNow,
+                BlobName = blobName
+            };
+            await _mediaSvc.CreateAsync(media);
 
-        await _blobSvc.DeleteBlobAsync(media.BlobName);
-        var removed = await _mediaSvc.DeleteAsync(id);
-        if (!removed)
-            return StatusCode(StatusCodes.Status500InternalServerError, "Verwijderen mislukt");
+            // Response DTO met SAS-uri
+            var dto = new
+            {
+                id = media.Id.ToString(),
+                filename = media.FileName,
+                contentType = media.ContentType,
+                alt = media.Alt,
+                styles = media.Styles,
+                timestamp = media.Timestamp,
+                url = _blobSvc.GetBlobSasUri(media.BlobName, _azureSettings.SasExpiryHours).ToString()
+            };
 
-        return NoContent();
+            return Ok(dto);
+        }
+
+        // GET api/media
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> List()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var items = await _mediaSvc.GetByUserAsync(userId);
+            var dto = items
+                .OrderByDescending(m => m.Timestamp)
+                .Select(m => new
+                {
+                    id = m.Id.ToString(),
+                    filename = m.FileName,
+                    contentType = m.ContentType,
+                    alt = m.Alt,
+                    styles = m.Styles,
+                    timestamp = m.Timestamp,
+                    url = _blobSvc.GetBlobSasUri(m.BlobName, _azureSettings.SasExpiryHours).ToString()
+                });
+
+            return Ok(dto);
+        }
+
+        // DELETE api/media/{id}
+        [HttpDelete("{id:length(24)}")]
+        [Authorize]
+        public async Task<IActionResult> Delete(string id)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var mediaItem = await _mediaSvc.GetByIdAsync(id);
+            if (mediaItem == null || mediaItem.UserId != userId)
+                return NotFound();
+
+            // Verwijder blob uit Azure
+            await _blobSvc.DeleteBlobAsync(mediaItem.BlobName);
+
+            // Verwijder metadata uit MongoDB
+            var removed = await _mediaSvc.DeleteAsync(id);
+            if (!removed)
+                return StatusCode(StatusCodes.Status500InternalServerError, "Verwijderen mislukt");
+
+            return NoContent();
+        }
     }
 }

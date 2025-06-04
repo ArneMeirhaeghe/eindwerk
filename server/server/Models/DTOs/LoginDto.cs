@@ -1,7 +1,9 @@
-﻿namespace server.Models.DTOs;
-
-public class LoginDto
+﻿// File: server/Models/DTOs/LoginDto.cs
+namespace server.Models.DTOs
 {
-    public string Email { get; set; }
-    public string Password { get; set; }
+    public class LoginDto
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
 }

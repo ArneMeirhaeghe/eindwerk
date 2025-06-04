@@ -1,5 +1,4 @@
-﻿// Controllers/ToursController.cs
-
+﻿// File: server/Controllers/ToursController.cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
@@ -16,7 +15,7 @@ namespace server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize] // Alleen ingelogde verhuurders mogen tours beheren
     public class ToursController : ControllerBase
     {
         private readonly IMongoCollection<BsonDocument> _tours;
@@ -27,7 +26,7 @@ namespace server.Controllers
             _tours = db.GetCollection<BsonDocument>("tours");
         }
 
-        // GET /api/tours
+        // GET api/Tours
         [HttpGet]
         public async Task<IActionResult> GetTours()
         {
@@ -41,7 +40,8 @@ namespace server.Controllers
                     .Include("naamLocatie"))
                 .ToListAsync();
 
-            var list = docs.Select(d => new {
+            var list = docs.Select(d => new
+            {
                 id = d["_id"].AsObjectId.ToString(),
                 naamLocatie = d["naamLocatie"].AsString
             });
@@ -49,7 +49,7 @@ namespace server.Controllers
             return Ok(list);
         }
 
-        // GET /api/tours/{id}
+        // GET api/Tours/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTourById(string id)
         {
@@ -61,10 +61,9 @@ namespace server.Controllers
                        & Builders<BsonDocument>.Filter.Eq("verhuurderId", verhuurderId);
 
             var doc = await _tours.Find(filter).FirstOrDefaultAsync();
-            if (doc == null)
-                return NotFound();
+            if (doc == null) return NotFound();
 
-            // cleanup
+            // Verwijder verhuurderId en _id, voeg id toe
             doc.Remove("verhuurderId");
             var oid = doc["_id"].AsObjectId.ToString();
             doc.Remove("_id");
@@ -74,7 +73,7 @@ namespace server.Controllers
             return Ok(result);
         }
 
-        // POST /api/tours
+        // POST api/Tours
         [HttpPost]
         public async Task<IActionResult> CreateTour([FromBody] CreateTourDto dto)
         {
@@ -97,7 +96,7 @@ namespace server.Controllers
 
             await _tours.InsertOneAsync(doc);
 
-            // cleanup
+            // Cleanup voor response
             doc.Remove("verhuurderId");
             var oid = doc["_id"].AsObjectId.ToString();
             doc.Remove("_id");
@@ -107,15 +106,13 @@ namespace server.Controllers
             return Ok(result);
         }
 
-        // PUT /api/tours/{id}
+        // PUT api/Tours/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTour(string id, [FromBody] JsonElement body)
         {
-            // 1) ID validatie
             if (!ObjectId.TryParse(id, out var objId))
                 return BadRequest("Ongeldig ID");
 
-            // 2) Parse de binnenkomende JSON naar een BsonDocument
             BsonDocument data;
             try
             {
@@ -126,24 +123,19 @@ namespace server.Controllers
                 return BadRequest("Ongeldige JSON: " + ex.Message);
             }
 
-            // 3) Verplicht veld check
             if (!data.Contains("naamLocatie") || data["naamLocatie"].AsString == "")
                 return BadRequest("NaamLocatie is verplicht");
 
-            // 4) VendorId toevoegen
             var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             data["_id"] = objId;
             data["verhuurderId"] = verhuurderId;
 
-            // 5) Replace
             var filter = Builders<BsonDocument>.Filter.Eq("_id", objId)
                        & Builders<BsonDocument>.Filter.Eq("verhuurderId", verhuurderId);
 
             var res = await _tours.ReplaceOneAsync(filter, data);
-            if (res.MatchedCount == 0)
-                return NotFound();
+            if (res.MatchedCount == 0) return NotFound();
 
-            // 6) Cleanup response
             data.Remove("verhuurderId");
             data.Remove("_id");
             data["id"] = objId.ToString();
@@ -152,7 +144,7 @@ namespace server.Controllers
             return Ok(result);
         }
 
-        // DELETE /api/tours/{id}
+        // DELETE api/Tours/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTour(string id)
         {
@@ -164,10 +156,14 @@ namespace server.Controllers
                        & Builders<BsonDocument>.Filter.Eq("verhuurderId", verhuurderId);
 
             var del = await _tours.DeleteOneAsync(filter);
-            if (del.DeletedCount == 0)
-                return NotFound();
+            if (del.DeletedCount == 0) return NotFound();
 
             return Ok();
         }
+    }
+
+    public class CreateTourDto
+    {
+        public string NaamLocatie { get; set; } = null!;
     }
 }
