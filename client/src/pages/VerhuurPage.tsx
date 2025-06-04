@@ -1,5 +1,5 @@
 // File: client/src/pages/VerhuurPage.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import {
   getActiveLiveSessions,
   getToursList,
@@ -7,52 +7,57 @@ import {
   startLiveSession,
   type VerhuurPeriode,
   type LiveSessionDto,
-} from "../api/verhuur";
-import type { TourListDto } from "../api/verhuur";
-
-import ErrorMessage from "../components/ErrorMessage";
-import LoadingIndicator from "../components/LoadingIndicator";
+  type TourListDto,
+} from '../api/verhuur';
+import ErrorMessage from '../components/ErrorMessage';
+import LoadingIndicator from '../components/LoadingIndicator';
 
 export default function VerhuurPage() {
   const [verhuur, setVerhuur] = useState<VerhuurPeriode[]>([]);
   const [tours, setTours] = useState<TourListDto[]>([]);
   const [liveSessions, setLiveSessions] = useState<LiveSessionDto[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
 
-  // Haal verhuurperiodes op
+  // Basis-URL zonder '/api' zodat publicUrl correct werkt
+  const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(
+    /\/api$/,
+    ''
+  );
+
+  // Ophalen verhuurperiodes
   const fetchVerhuurperiodes = async () => {
     setLoading(true);
-    setError("");
+    setError('');
     try {
       const periodes = await getVerhuurperiodes();
       setVerhuur(periodes);
     } catch (err: any) {
-      console.error("Kan verhuurperiodes niet laden:", err);
-      setError("Kan verhuurperiodes niet laden");
+      console.error('Kan verhuurperiodes niet laden:', err);
+      setError('Kan verhuurperiodes niet laden');
     } finally {
       setLoading(false);
     }
   };
 
-  // Haal tours op
+  // Ophalen tours
   const fetchTours = async () => {
     try {
       const lijst = await getToursList();
       setTours(lijst);
     } catch (err: any) {
-      console.error("Kan tours niet laden:", err);
+      console.error('Kan tours niet laden:', err);
     }
   };
 
-  // Haal actieve live-sessies op
+  // Ophalen actieve live-sessies
   const fetchLiveSessions = async () => {
     try {
       const sessies = await getActiveLiveSessions();
       setLiveSessions(sessies);
     } catch (err: any) {
-      console.error("Kan live-sessies niet laden:", err);
-      setError("Kan live-sessies niet laden");
+      console.error('Kan live-sessies niet laden:', err);
+      setError('Kan live-sessies niet laden');
     }
   };
 
@@ -62,11 +67,11 @@ export default function VerhuurPage() {
       await startLiveSession(groep, tourId);
       await fetchLiveSessions();
     } catch (err: any) {
-      console.error("Kan live-sessie niet starten:", err);
+      console.error('Kan live-sessie niet starten:', err);
       if (err.response?.data?.message) {
-        alert("Fout vanuit server: " + err.response.data.message);
+        alert('Fout vanuit server: ' + err.response.data.message);
       } else {
-        alert("Er ging iets mis bij het starten van de live-sessie.");
+        alert('Er ging iets mis bij het starten van de live-sessie.');
       }
     }
   };
@@ -85,6 +90,7 @@ export default function VerhuurPage() {
 
       {error && <ErrorMessage message={error} />}
 
+      {/* Verhuurperiodes */}
       {!loading && !error && verhuur.length > 0 && (
         <>
           <h2 className="text-xl font-semibold mb-2">Verhuurperiodes</h2>
@@ -100,7 +106,7 @@ export default function VerhuurPage() {
               </tr>
             </thead>
             <tbody>
-              {verhuur.map((v) => (
+              {verhuur.map(v => (
                 <tr key={v.id} className="hover:bg-gray-50">
                   <td className="border px-4 py-2">{v.groep}</td>
                   <td className="border px-4 py-2">
@@ -109,24 +115,20 @@ export default function VerhuurPage() {
                   <td className="border px-4 py-2">
                     {new Date(v.vertrek).toLocaleString()}
                   </td>
-                  <td className="border px-4 py-2">
-                    {v.verantwoordelijke.naam}
-                  </td>
+                  <td className="border px-4 py-2">{v.verantwoordelijke.naam}</td>
                   <td className="border px-4 py-2">
                     {v.verantwoordelijke.tel} / {v.verantwoordelijke.mail}
                   </td>
                   <td className="border px-4 py-2">
                     <select
-                      onChange={(e) =>
-                        handleTourSelect(v.groep, e.target.value)
-                      }
+                      onChange={e => handleTourSelect(v.groep, e.target.value)}
                       defaultValue=""
                       className="border rounded px-2 py-1 w-full"
                     >
                       <option value="" disabled>
                         Selecteer tour
                       </option>
-                      {tours.map((t) => (
+                      {tours.map(t => (
                         <option key={t.id} value={t.id}>
                           {t.naamLocatie}
                         </option>
@@ -144,6 +146,7 @@ export default function VerhuurPage() {
         <div className="text-gray-500 mb-8">Geen verhuurperiodes gevonden.</div>
       )}
 
+      {/* Actieve Live Sessies */}
       <h2 className="text-xl font-semibold mb-4">Actieve Live Sessies</h2>
       {!loading && !error && liveSessions.length === 0 && (
         <div className="text-gray-500">Geen actieve live sessies.</div>
@@ -153,26 +156,26 @@ export default function VerhuurPage() {
           <thead>
             <tr className="bg-gray-100">
               <th className="border px-4 py-2">Groep</th>
-              <th className="border px-4 py-2">Tour ID</th>
+              <th className="border px-4 py-2">Tour Naam</th>
               <th className="border px-4 py-2">Gestart op</th>
               <th className="border px-4 py-2">Status</th>
               <th className="border px-4 py-2">Link</th>
             </tr>
           </thead>
           <tbody>
-            {liveSessions.map((s) => (
+            {liveSessions.map(s => (
               <tr key={s.id} className="hover:bg-gray-50">
                 <td className="border px-4 py-2">{s.groep}</td>
-                <td className="border px-4 py-2">{s.tourId}</td>
+                <td className="border px-4 py-2">{s.tour.naamLocatie}</td>
                 <td className="border px-4 py-2">
                   {new Date(s.startDate).toLocaleString()}
                 </td>
                 <td className="border px-4 py-2">
-                  {s.isActive ? "Actief" : "Beëindigd"}
+                  {s.isActive ? 'Actief' : 'Beëindigd'}
                 </td>
                 <td className="border px-4 py-2">
                   <a
-                    href={`http://localhost:5000/api/LiveSession/public/${s.id}`}
+                    href={`${apiBase}${s.publicUrl}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline"

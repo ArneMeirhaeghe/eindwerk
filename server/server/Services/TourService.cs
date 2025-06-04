@@ -20,7 +20,7 @@ namespace server.Services
 
         public async Task<Tour?> GetByIdAsync(string id)
         {
-            return await _tours.Find(t => t.Id == id).FirstOrDefaultAsync();
+            return await _tours.Find(x => x.Id == id).FirstOrDefaultAsync();
         }
     }
 }

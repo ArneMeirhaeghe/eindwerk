@@ -1,7 +1,7 @@
-﻿// File: server/Services/AzureBlobService.cs
-using Azure.Storage.Blobs;
+﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using server.Helpers;
 using System;
@@ -15,9 +15,9 @@ namespace server.Services
         private readonly BlobContainerClient _containerClient;
         private readonly AzureSettings _settings;
 
-        public AzureBlobService(BlobServiceClient blobServiceClient, IOptions<AzureSettings> options)
+        public AzureBlobService(BlobServiceClient blobServiceClient, IOptions<AzureSettings> opts)
         {
-            _settings = options.Value;
+            _settings = opts.Value;
             _containerClient = blobServiceClient.GetBlobContainerClient(_settings.ContainerName);
             _containerClient.CreateIfNotExists(PublicAccessType.None);
         }

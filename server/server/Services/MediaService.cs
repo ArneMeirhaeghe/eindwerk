@@ -1,5 +1,4 @@
-﻿// File: server/Services/MediaService.cs
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using Microsoft.Extensions.Options;
 using server.Helpers;
@@ -21,11 +20,11 @@ namespace server.Services
     {
         private readonly IMongoCollection<MediaItem> _mediaCollection;
 
-        public MediaService(IMongoClient client, IOptions<MongoSettings> options)
+        public MediaService(IMongoClient client, IOptions<MongoSettings> opts)
         {
-            var cfg = options.Value;
-            var database = client.GetDatabase(cfg.Database);
-            _mediaCollection = database.GetCollection<MediaItem>(cfg.MediaCollectionName);
+            var cfg = opts.Value;
+            var db = client.GetDatabase(cfg.Database);
+            _mediaCollection = db.GetCollection<MediaItem>(cfg.MediaCollectionName);
         }
 
         public async Task<MediaItem> CreateAsync(MediaItem item)
@@ -36,19 +35,21 @@ namespace server.Services
 
         public async Task<List<MediaItem>> GetByUserAsync(string userId)
         {
-            return await _mediaCollection.Find(i => i.UserId == userId).ToListAsync();
+            return await _mediaCollection.Find(x => x.UserId == userId).ToListAsync();
         }
 
         public async Task<MediaItem?> GetByIdAsync(string id)
         {
-            if (!ObjectId.TryParse(id, out var objId)) return null;
-            return await _mediaCollection.Find(i => i.Id == objId).FirstOrDefaultAsync();
+            if (!ObjectId.TryParse(id, out var objId))
+                return null;
+            return await _mediaCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
         }
 
         public async Task<bool> DeleteAsync(string id)
         {
-            if (!ObjectId.TryParse(id, out var objId)) return false;
-            var filter = Builders<MediaItem>.Filter.Eq(i => i.Id, objId);
+            if (!ObjectId.TryParse(id, out var objId))
+                return false;
+            var filter = Builders<MediaItem>.Filter.Eq(x => x.Id, id);
             var result = await _mediaCollection.DeleteOneAsync(filter);
             return result.DeletedCount > 0;
         }

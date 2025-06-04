@@ -1,5 +1,4 @@
-﻿// File: server/Controllers/MediaController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -49,41 +48,40 @@ namespace server.Controllers
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            // Kies subfolder op basis van het type
+            // Bepaal folder op basis van type
             var folder = type switch
             {
                 "img" => "img",
                 "video" => "video",
-                "files" => "files",
                 _ => "files"
             };
 
-            // Blobnaam met folder-prefix en originele extensie
+            // Blobnaam met folderprefix + GUID + extensie
             var blobName = $"{folder}/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
 
-            // Upload naar Azure Blob via UploadBlobAsync
+            // Uploaden naar Azure Blob
             await using (var stream = file.OpenReadStream())
             {
                 await _blobSvc.UploadBlobAsync(stream, file.ContentType, blobName);
             }
 
-            // Wegschrijven metadata naar MongoDB
+            // Opslaan in MongoDB
             var media = new MediaItem
             {
                 FileName = file.FileName,
                 ContentType = file.ContentType,
-                Alt = string.IsNullOrWhiteSpace(alt) ? file.FileName : alt!,
-                Styles = string.IsNullOrWhiteSpace(styles) ? "" : styles!,
+                Alt = string.IsNullOrEmpty(alt) ? file.FileName : alt,
+                Styles = string.IsNullOrEmpty(styles) ? "" : styles,
                 UserId = userId,
                 Timestamp = DateTime.UtcNow,
                 BlobName = blobName
             };
             await _mediaSvc.CreateAsync(media);
 
-            // Response DTO met SAS-uri
+            // Response met SAS-URL
             var dto = new
             {
-                id = media.Id.ToString(),
+                id = media.Id,
                 filename = media.FileName,
                 contentType = media.ContentType,
                 alt = media.Alt,
@@ -91,7 +89,6 @@ namespace server.Controllers
                 timestamp = media.Timestamp,
                 url = _blobSvc.GetBlobSasUri(media.BlobName, _azureSettings.SasExpiryHours).ToString()
             };
-
             return Ok(dto);
         }
 
@@ -106,18 +103,17 @@ namespace server.Controllers
 
             var items = await _mediaSvc.GetByUserAsync(userId);
             var dto = items
-                .OrderByDescending(m => m.Timestamp)
-                .Select(m => new
+                .OrderByDescending(x => x.Timestamp)
+                .Select(x => new
                 {
-                    id = m.Id.ToString(),
-                    filename = m.FileName,
-                    contentType = m.ContentType,
-                    alt = m.Alt,
-                    styles = m.Styles,
-                    timestamp = m.Timestamp,
-                    url = _blobSvc.GetBlobSasUri(m.BlobName, _azureSettings.SasExpiryHours).ToString()
+                    id = x.Id,
+                    filename = x.FileName,
+                    contentType = x.ContentType,
+                    alt = x.Alt,
+                    styles = x.Styles,
+                    timestamp = x.Timestamp,
+                    url = _blobSvc.GetBlobSasUri(x.BlobName, _azureSettings.SasExpiryHours).ToString()
                 });
-
             return Ok(dto);
         }
 
@@ -134,10 +130,8 @@ namespace server.Controllers
             if (mediaItem == null || mediaItem.UserId != userId)
                 return NotFound();
 
-            // Verwijder blob uit Azure
+            // Verwijder blob én metadata
             await _blobSvc.DeleteBlobAsync(mediaItem.BlobName);
-
-            // Verwijder metadata uit MongoDB
             var removed = await _mediaSvc.DeleteAsync(id);
             if (!removed)
                 return StatusCode(StatusCodes.Status500InternalServerError, "Verwijderen mislukt");

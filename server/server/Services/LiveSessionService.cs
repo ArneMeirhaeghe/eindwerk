@@ -1,5 +1,4 @@
-﻿// File: server/Services/LiveSessionService.cs
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using server.Helpers;
 using server.Models;
@@ -17,15 +16,21 @@ namespace server.Services
         {
             var cfg = opts.Value;
             var db = client.GetDatabase(cfg.Database);
+            // Zorg dat de collectie‐naam EXACT "livesessions" is
             _liveCol = db.GetCollection<LiveSession>("livesessions");
         }
 
+        /// <summary>
+        /// Start een nieuwe live-sessie voor (groep, tourId, creatorId).
+        /// Werpt InvalidOperationException als er al een actieve sessie is 
+        /// voor dezelfde groep én dezelfde gebruiker.
+        /// </summary>
         public async Task<LiveSession> StartSessionAsync(string groep, string tourId, string creatorId)
         {
             var existingFilter = Builders<LiveSession>.Filter.And(
-                Builders<LiveSession>.Filter.Eq(s => s.Groep, groep),
-                Builders<LiveSession>.Filter.Eq(s => s.CreatorId, creatorId),
-                Builders<LiveSession>.Filter.Eq(s => s.IsActive, true)
+                Builders<LiveSession>.Filter.Eq(x => x.Groep, groep),
+                Builders<LiveSession>.Filter.Eq(x => x.CreatorId, creatorId),
+                Builders<LiveSession>.Filter.Eq(x => x.IsActive, true)
             );
             var already = await _liveCol.Find(existingFilter).FirstOrDefaultAsync();
             if (already != null)
@@ -44,27 +49,39 @@ namespace server.Services
             return session;
         }
 
-        public async Task<IEnumerable<LiveSession>> GetActiveSessionsAsync(string creatorId)
+        /// <summary>
+        /// Haal alle actieve sessies op voor deze creatorId.
+        /// Geeft een lege lijst terug als er geen matches zijn.
+        /// </summary>
+        public async Task<List<LiveSession>> GetActiveSessionsAsync(string creatorId)
         {
             var filter = Builders<LiveSession>.Filter.And(
-                Builders<LiveSession>.Filter.Eq(s => s.CreatorId, creatorId),
-                Builders<LiveSession>.Filter.Eq(s => s.IsActive, true)
+                Builders<LiveSession>.Filter.Eq(x => x.CreatorId, creatorId),
+                Builders<LiveSession>.Filter.Eq(x => x.IsActive, true)
             );
-            return await _liveCol.Find(filter).ToListAsync();
+            var list = await _liveCol.Find(filter).ToListAsync();
+            return list; // nooit null, altijd ten minste een lege List
         }
 
+        /// <summary>
+        /// Haal 1 sessie op via id (string‐ObjectId).
+        /// </summary>
         public async Task<LiveSession?> GetByIdAsync(string id)
         {
-            return await _liveCol.Find(s => s.Id == id).FirstOrDefaultAsync();
+            return await _liveCol.Find(x => x.Id == id).FirstOrDefaultAsync();
         }
 
+        /// <summary>
+        /// Zet IsActive=false voor deze sessie, mits dezelfde creatorId.
+        /// Werpt KeyNotFoundException als niets gematched wordt.
+        /// </summary>
         public async Task EndSessionAsync(string id, string creatorId)
         {
             var filter = Builders<LiveSession>.Filter.And(
-                Builders<LiveSession>.Filter.Eq(s => s.Id, id),
-                Builders<LiveSession>.Filter.Eq(s => s.CreatorId, creatorId)
+                Builders<LiveSession>.Filter.Eq(x => x.Id, id),
+                Builders<LiveSession>.Filter.Eq(x => x.CreatorId, creatorId)
             );
-            var update = Builders<LiveSession>.Update.Set(s => s.IsActive, false);
+            var update = Builders<LiveSession>.Update.Set(x => x.IsActive, false);
             var result = await _liveCol.UpdateOneAsync(filter, update);
             if (result.MatchedCount == 0)
                 throw new KeyNotFoundException("Live-sessie niet gevonden of geen rechten om te beëindigen.");

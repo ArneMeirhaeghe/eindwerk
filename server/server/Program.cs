@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using MongoDB.Driver;
 using Azure.Storage.Blobs;
+using MongoDB.Driver;
 using server.Helpers;
 using server.Services;
 using System;
@@ -12,20 +12,28 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1) Configuratie‐secties binden
+// -----------------------------------------------------
+// 1) CONFIGURATIE BINDEN
+// -----------------------------------------------------
+// Mongo‐settings (ConnectionString, Database)
 builder.Services.Configure<MongoSettings>(
     builder.Configuration.GetSection("MongoSettings"));
+
+// JWT‐settings (Key, Issuer, Audience, DurationInMinutes)
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("JwtSettings"));
+
+// Azure‐settings (ConnectionString, ContainerName, SasExpiryHours)
 builder.Services.Configure<AzureSettings>(
     builder.Configuration.GetSection("AzureSettings"));
 
-// 2) JWT‐handler registreren
+// -----------------------------------------------------
+// 2) JWT‐HANDLER EN AUTHENTICATIE CONFIGUREREN
+// -----------------------------------------------------
 builder.Services.AddSingleton<JwtHandler>();
 var jwtConfig = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()!;
 var keyBytes = Encoding.ASCII.GetBytes(jwtConfig.Key);
 
-// 3) JWT‐authenticatie configureren
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -47,7 +55,9 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// 4) MongoClient registreren
+// -----------------------------------------------------
+// 3) MONGOCLIENT REGISTREREN
+// -----------------------------------------------------
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
     var cfg = sp.GetRequiredService<IOptions<MongoSettings>>().Value;
@@ -56,7 +66,10 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
     return new MongoClient(cfg.ConnectionString);
 });
 
-// 5) Azure BlobServiceClient registreren
+// -----------------------------------------------------
+// 4) AZURE BLOBSERVICECLIENT REGISTREREN
+// -----------------------------------------------------
+// We lezen AzureSettings uit appsettings.json en creëren BlobServiceClient
 builder.Services.AddSingleton(sp =>
 {
     var azureCfg = sp.GetRequiredService<IOptions<AzureSettings>>().Value;
@@ -64,16 +77,25 @@ builder.Services.AddSingleton(sp =>
         throw new InvalidOperationException("AzureSettings:ConnectionString ontbreekt.");
     return new BlobServiceClient(azureCfg.ConnectionString);
 });
-builder.Services.AddSingleton<IAzureBlobService, AzureBlobService>();
 
-// 6) Register overige services
+// -----------------------------------------------------
+// 5) EIGEN SERVICES REGISTREREN
+// -----------------------------------------------------
+// User/Auth blijven ongewijzigd
 builder.Services.AddSingleton<UserService>();
 builder.Services.AddSingleton<EmailService>();
 builder.Services.AddSingleton<TourService>();
+
+// LiveSession
 builder.Services.AddSingleton<LiveSessionService>();
+
+// Media (upload)
+builder.Services.AddSingleton<IAzureBlobService, AzureBlobService>();
 builder.Services.AddSingleton<IMediaService, MediaService>();
 
-// 7) CORS configureren
+// -----------------------------------------------------
+// 6) CORS CONFIGUREREN
+// -----------------------------------------------------
 builder.Services.AddCors(opts =>
 {
     opts.AddPolicy("CorsPolicy", policy =>
@@ -83,7 +105,9 @@ builder.Services.AddCors(opts =>
               .AllowCredentials());
 });
 
-// 8) Controllers, Swagger en upload-limiet
+// -----------------------------------------------------
+// 7) CONTROLLERS, SWAGGER & UPLOAD-LIMIET
+// -----------------------------------------------------
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -94,21 +118,31 @@ builder.Services.Configure<FormOptions>(opts =>
 
 var app = builder.Build();
 
-// 9) Swagger UI
+// -----------------------------------------------------
+// 8) SWAGGER UI
+// -----------------------------------------------------
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// 10) CORS vóór authentication
+// -----------------------------------------------------
+// 9) CORS VÓÓR AUTHENTICATIE
+// -----------------------------------------------------
 app.UseCors("CorsPolicy");
 
-// 11) JWT‐authenticatie en -autorisatie
+// -----------------------------------------------------
+// 10) AUTHENTICATIE & AUTORISATIE
+// -----------------------------------------------------
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 12) Map controllers
+// -----------------------------------------------------
+// 11) MAP CONTROLLERS
+// -----------------------------------------------------
 app.MapControllers();
 
-// 13) Optionele URL’s
+// -----------------------------------------------------
+// 12) OPTIONELE URL'S
+// -----------------------------------------------------
 app.Urls.Add("http://localhost:5000");
 app.Urls.Add("https://localhost:5001");
 
