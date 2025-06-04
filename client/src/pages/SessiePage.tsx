@@ -1,5 +1,4 @@
 // src/pages/SessiePage.tsx
-
 import { useEffect, useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import API from "../api/axios"
@@ -18,17 +17,17 @@ type VerhuurPeriode = {
 }
 
 const SessiePage = () => {
-  const { slug } = useParams<{ slug: string }>()
+  // useParams haalt de id uit de URL /sessie/:id
+  const { id } = useParams<{ id: string }>()
   const [sessie, setSessie] = useState<VerhuurPeriode | null>(null)
   const [tour, setTour] = useState<TourListDto | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // haal sessie-data en gekoppelde tour op
+  // Haal sessie-data en gekoppelde tour op
   const fetchSessie = async () => {
     try {
-      const res = await API.get<VerhuurPeriode>(
-        `/fakeapi/verhuurperiodes/${slug}`
-      )
+      // Gebruik het juiste endpoint /api/Verhuurperiodes/:groepId
+      const res = await API.get<VerhuurPeriode>(`/api/Verhuurperiodes/${encodeURIComponent(id || "")}`)
       const data = res.data
       setSessie(data)
       if (data.tourId) {
@@ -44,8 +43,10 @@ const SessiePage = () => {
   }
 
   useEffect(() => {
-    fetchSessie()
-  }, [slug])
+    if (id) {
+      fetchSessie()
+    }
+  }, [id])
 
   if (loading) {
     return <div className="p-6">Loading…</div>

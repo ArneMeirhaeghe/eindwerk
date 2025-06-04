@@ -1,25 +1,24 @@
-// File: Program.cs
+﻿// File: Program.cs
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
-using server.Helpers;    // MongoSettings, JwtSettings, AzureSettings
-using server.Services;   // InventoryService, UserService, EmailService, MediaService, AzureBlobService
+using server.Helpers;
+using server.Services;
 using System;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1) LAAD USER-SECRETS ALLEEN IN DEVELOPMENT
+// 1) User‐secrets (alleen in Development)
 if (builder.Environment.IsDevelopment())
 {
     builder.Configuration.AddUserSecrets<Program>();
 }
 
-// 2) CONFIGURATIE (leest zowel appsettings.json als secrets.json)
+// 2) Lees settings uit
 builder.Services.Configure<MongoSettings>(
     builder.Configuration.GetSection("MongoSettings"));
 builder.Services.Configure<JwtSettings>(
@@ -27,10 +26,10 @@ builder.Services.Configure<JwtSettings>(
 builder.Services.Configure<AzureSettings>(
     builder.Configuration.GetSection("AzureSettings"));
 
-// 3) JWT HANDLER + AUTH
+// 3) JWT-handler + Authentication
 builder.Services.AddSingleton<JwtHandler>();
-var jwt = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()!;
-var key = Encoding.ASCII.GetBytes(jwt.Key);
+var jwtConfig = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()!;
+var key = Encoding.ASCII.GetBytes(jwtConfig.Key);
 builder.Services.AddAuthentication(opts =>
 {
     opts.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -45,21 +44,14 @@ builder.Services.AddAuthentication(opts =>
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
         ValidateIssuer = true,
-        ValidIssuer = jwt.Issuer,
+        ValidIssuer = jwtConfig.Issuer,
         ValidateAudience = true,
-        ValidAudience = jwt.Audience,
+        ValidAudience = jwtConfig.Audience,
         ClockSkew = TimeSpan.Zero
     };
 });
 
-// 4) DI VOOR JE SERVICES
-builder.Services.AddSingleton<UserService>();
-builder.Services.AddSingleton<EmailService>();
-builder.Services.AddSingleton<InventoryService>();
-builder.Services.AddSingleton<LiveSessionService>();
-
-
-// 5) MONGO-CLIENT
+// 4) Mongo‐client registreren
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
     var cfg = sp.GetRequiredService<IOptions<MongoSettings>>().Value;
@@ -68,7 +60,15 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
     return new MongoClient(cfg.ConnectionString);
 });
 
-// 6) AZURE BLOB STORAGE
+// 5) Registreer alle services in de juiste volgorde:
+builder.Services.AddSingleton<UserService>();       // indien je AuthController hebt
+builder.Services.AddSingleton<EmailService>();      // indien nodig
+builder.Services.AddSingleton<InventoryService>();  // indien nodig
+
+builder.Services.AddSingleton<TourService>();            // <— eerst TourService
+builder.Services.AddSingleton<LiveSessionService>();     // <— daarna LiveSessionService (injecteert TourService)
+
+// 6) Azure Blob Storage (optioneel)
 builder.Services.AddSingleton<IMediaService, MediaService>();
 builder.Services.AddSingleton(sp =>
 {
@@ -79,11 +79,11 @@ builder.Services.AddSingleton(sp =>
 });
 builder.Services.AddSingleton<IAzureBlobService, AzureBlobService>();
 
-// 7) UPLOAD LIMITS
+// 7) Upload limits
 builder.Services.Configure<FormOptions>(opts =>
     opts.MultipartBodyLengthLimit = long.MaxValue);
 
-// 8) CONTROLLERS, SWAGGER & CORS
+// 8) Controllers, Swagger & CORS
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -96,7 +96,7 @@ builder.Services.AddCors(o => o.AddPolicy("CorsPolicy", p =>
 
 var app = builder.Build();
 
-// MIDDLEWARE PIPELINE
+// Middleware‐pipeline
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors("CorsPolicy");
@@ -104,7 +104,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Optionele poorten
+// Optionele poorten voor lokale ontwikkeling
 app.Urls.Add("http://localhost:5000");
 app.Urls.Add("https://localhost:5001");
 
