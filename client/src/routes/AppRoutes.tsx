@@ -1,3 +1,4 @@
+// File: client/src/AppRoutes.tsx
 import { Routes, Route } from "react-router-dom"
 import Dashboard from "../pages/Dashboard"
 import Login from "../pages/Login"
@@ -14,6 +15,7 @@ import TourBuilderPage from "../pages/TourBuilderPage"
 import TestUploadPage from "../pages/TestUploadPage"
 import UploadZone from "../pages/UploadZone"
 import InventoryPage from "../pages/InventoryPage"
+import PublicSessionPage from "../pages/PublicSessionPage" // Route voor publieke live-sessie
 
 function AppRoutes() {
   return (
@@ -21,6 +23,9 @@ function AppRoutes() {
       {/* Auth */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+
+      {/* Publieke live-sessie (geen autorisatie) */}
+      <Route path="/public/:id" element={<PublicSessionPage />} />
 
       {/* Dashboard */}
       <Route
@@ -72,7 +77,7 @@ function AppRoutes() {
         }
       />
 
-      {/* Groep detail / sessie blijf hetzelfde */}
+      {/* Groep detail / sessie */}
       <Route
         path="/groep/:groepId"
         element={
@@ -81,7 +86,14 @@ function AppRoutes() {
           </PrivateRoute>
         }
       />
-      <Route path="/sessie/:groepId" element={<SessiePage />} />
+      <Route
+        path="/sessie/:id"
+        element={
+          <PrivateRoute>
+            <SessiePage />
+          </PrivateRoute>
+        }
+      />
 
       {/* Admin */}
       <Route
@@ -92,7 +104,8 @@ function AppRoutes() {
           </RoleRoute>
         }
       />
-       {/* Test upload pagina */}
+
+      {/* Test upload pagina */}
       <Route
         path="/upload-zone"
         element={
@@ -101,6 +114,7 @@ function AppRoutes() {
           </PrivateRoute>
         }
       />
+
       {/* Inventory */}
       <Route
         path="/inventory"
@@ -110,7 +124,8 @@ function AppRoutes() {
           </PrivateRoute>
         }
       />
- {/* Test upload pagina */}
+
+      {/* Test upload pagina */}
       <Route
         path="/test-upload"
         element={
@@ -119,6 +134,7 @@ function AppRoutes() {
           </PrivateRoute>
         }
       />
+
       {/* Fallback */}
       <Route path="*" element={<NotFound />} />
     </Routes>

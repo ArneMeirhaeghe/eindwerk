@@ -11,6 +11,7 @@ import {
 } from '../api/verhuur';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingIndicator from '../components/LoadingIndicator';
+import { useNavigate } from 'react-router-dom';
 
 export default function VerhuurPage() {
   const [verhuur, setVerhuur] = useState<VerhuurPeriode[]>([]);
@@ -18,12 +19,7 @@ export default function VerhuurPage() {
   const [liveSessions, setLiveSessions] = useState<LiveSessionDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
-
-  // Basis-URL zonder '/api' zodat publicUrl correct werkt
-  const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(
-    /\/api$/,
-    ''
-  );
+  const navigate = useNavigate();
 
   // Ophalen verhuurperiodes
   const fetchVerhuurperiodes = async () => {
@@ -174,14 +170,13 @@ export default function VerhuurPage() {
                   {s.isActive ? 'Actief' : 'Beëindigd'}
                 </td>
                 <td className="border px-4 py-2">
-                  <a
-                    href={`${apiBase}${s.publicUrl}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  {/* Navigeren naar mobiele weergave van fase-navigatie */}
+                  <button
+                    onClick={() => navigate(`/public/${s.id}`)}
                     className="text-blue-600 hover:underline"
                   >
                     Unieke Link
-                  </a>
+                  </button>
                 </td>
               </tr>
             ))}
