@@ -1,4 +1,4 @@
-// /src/components/BuilderCanvas.tsx
+// File: src/components/BuilderCanvas.tsx
 import React from "react";
 import type { ComponentItem } from "../types/types";
 import type { DropResult } from "@hello-pangea/dnd";
@@ -15,7 +15,7 @@ import DividerPreview from "./previews/DividerPreview";
 import ImagePreview from "./previews/ImagePreview";
 import VideoPreview from "./previews/VideoPreview";
 import GridPreview from "./previews/GridPreview";
-import FilePreview from "./previews/FilePreview"; // toegevoegd
+import FilePreview from "./previews/FilePreview";
 
 interface Props {
   components: ComponentItem[];
@@ -24,10 +24,10 @@ interface Props {
   onSelect: (c: ComponentItem) => void;
   onDelete: (id: string) => void;
   onDragEnd: (res: DropResult) => void;
-  onSectionTitleChange: (t: string) => void;
+  onSectionTitleClick: () => void;
 }
 
-// Map each component type to zijn Preview-component
+// Mapping van component-type naar corresponderende preview-component
 const previewMap: Record<string, React.FC<{ p: any }>> = {
   title: TitlePreview,
   subheading: SubheadingPreview,
@@ -39,7 +39,7 @@ const previewMap: Record<string, React.FC<{ p: any }>> = {
   divider: DividerPreview,
   image: ImagePreview,
   video: VideoPreview,
-  file: FilePreview,       // toegevoegd
+  file: FilePreview,
   grid: GridPreview,
 };
 
@@ -50,7 +50,7 @@ export default function BuilderCanvas({
   onSelect,
   onDelete,
   onDragEnd,
-  onSectionTitleChange,
+  onSectionTitleClick,
 }: Props) {
   return (
     <div
@@ -63,17 +63,23 @@ export default function BuilderCanvas({
         backgroundPosition: "center",
       }}
     >
+      {/* Binnenin telefoonsjabloon: marges om content te tonen */}
       <div
         className="absolute inset-0 overflow-auto p-4"
         style={{ top: 120, bottom: 120, left: 40, right: 40 }}
       >
-        <input
-          value={sectionTitle}
-          onChange={(e) => onSectionTitleChange(e.target.value)}
-          className="w-full mb-4 text-xl font-semibold border-b px-2 py-1 focus:outline-none"
-          placeholder="Sectietitel"
-        />
+        {/* Sectietitel (klik opent modal, niet direct editable) */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onSectionTitleClick();
+          }}
+          className="w-full mb-4 text-xl font-semibold text-left px-2 py-1 focus:outline-none cursor-pointer"
+        >
+          {sectionTitle || "Sectietitel"}
+        </button>
 
+        {/* Drag & Drop context voor componenten */}
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="canvas" direction="vertical">
             {(provided) => (
@@ -93,17 +99,29 @@ export default function BuilderCanvas({
                           className="bg-white w-full rounded shadow flex justify-between items-start"
                         >
                           <div
-                            className={`flex-1 p-3 ${preview ? "" : "cursor-pointer"}`}
-                            onClick={() => !preview && onSelect(comp)}
+                            className={`flex-1 p-3 ${
+                              preview ? "" : "cursor-pointer"
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!preview) onSelect(comp);
+                            }}
                           >
                             {Preview && <Preview p={comp.props} />}
                           </div>
                           {!preview && (
                             <div className="flex flex-col space-y-2 p-2">
-                              <div {...prov.dragHandleProps} className="cursor-move">
+                              <div
+                                {...prov.dragHandleProps}
+                                className="cursor-move"
+                                title="Versleep"
+                              >
                                 <GripVertical className="text-gray-500" />
                               </div>
-                              <div onClick={() => onDelete(comp.id)}>
+                              <div
+                                onClick={() => onDelete(comp.id)}
+                                title="Verwijder component"
+                              >
                                 <Trash2 className="cursor-pointer text-red-600" />
                               </div>
                             </div>

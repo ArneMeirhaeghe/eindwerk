@@ -1,4 +1,4 @@
-// /src/components/SettingsPanel.tsx
+// File: src/components/SettingsPanel.tsx
 import type { ComponentItem } from "../types/types";
 import TitleSettings from "./settings/TitleSettings";
 import SubheadingSettings from "./settings/SubheadingSettings";

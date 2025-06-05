@@ -1,4 +1,4 @@
-// src/components/ComponentPalette.tsx
+// File: src/components/ComponentPalette.tsx
 import type { ComponentType } from "../types/types";
 
 interface Props {
@@ -18,7 +18,7 @@ export default function ComponentPalette({ onAdd }: Props) {
     "checklist",
     "divider",
     "checkbox-list",
-    "grid", // nieuwe grid component
+    "grid",
   ];
 
   return (
@@ -29,7 +29,7 @@ export default function ComponentPalette({ onAdd }: Props) {
           <button
             key={type}
             onClick={() => onAdd(type)}
-            className="text-left px-3 py-2 bg-gray-100 rounded hover:bg-gray-200"
+            className="text-left px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 transition"
           >
             +{" "}
             {type === "checkbox-list"

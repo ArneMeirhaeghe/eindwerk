@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿// File: server/Services/LiveSessionService.cs
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using server.Helpers;
 using server.Models;
@@ -16,14 +17,14 @@ namespace server.Services
         {
             var cfg = opts.Value;
             var db = client.GetDatabase(cfg.Database);
-            // Zorg dat de collectie‐naam EXACT "livesessions" is
+            // Zorg dat de collectie-naam EXACT "livesessions" is
             _liveCol = db.GetCollection<LiveSession>("livesessions");
         }
 
         /// <summary>
-        /// Start een nieuwe live-sessie voor (groep, tourId, creatorId).
+        /// Start een nieuwe live-sessie (groep, tourId, creatorId).
         /// Werpt InvalidOperationException als er al een actieve sessie is 
-        /// voor dezelfde groep én dezelfde gebruiker.
+        /// voor dezelfde groep & creator.
         /// </summary>
         public async Task<LiveSession> StartSessionAsync(string groep, string tourId, string creatorId)
         {
@@ -51,7 +52,6 @@ namespace server.Services
 
         /// <summary>
         /// Haal alle actieve sessies op voor deze creatorId.
-        /// Geeft een lege lijst terug als er geen matches zijn.
         /// </summary>
         public async Task<List<LiveSession>> GetActiveSessionsAsync(string creatorId)
         {
@@ -60,11 +60,11 @@ namespace server.Services
                 Builders<LiveSession>.Filter.Eq(x => x.IsActive, true)
             );
             var list = await _liveCol.Find(filter).ToListAsync();
-            return list; // nooit null, altijd ten minste een lege List
+            return list;
         }
 
         /// <summary>
-        /// Haal 1 sessie op via id (string‐ObjectId).
+        /// Haal één sessie op via id.
         /// </summary>
         public async Task<LiveSession?> GetByIdAsync(string id)
         {
@@ -72,8 +72,7 @@ namespace server.Services
         }
 
         /// <summary>
-        /// Zet IsActive=false voor deze sessie, mits dezelfde creatorId.
-        /// Werpt KeyNotFoundException als niets gematched wordt.
+        /// Zet IsActive = false voor deze sessie (eigenaar).
         /// </summary>
         public async Task EndSessionAsync(string id, string creatorId)
         {

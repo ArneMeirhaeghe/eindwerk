@@ -1,169 +1,300 @@
 ﻿// File: server/Controllers/ToursController.cs
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
-using MongoDB.Driver;
-using server.Models;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
+using server.Models;
+using server.Services;
+using static server.Controllers.LiveSessionController;
 
 namespace server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // Alleen ingelogde verhuurders mogen tours beheren
     public class ToursController : ControllerBase
     {
-        private readonly IMongoCollection<BsonDocument> _tours;
+        private readonly TourService _tourService;
 
-        public ToursController(IMongoClient client, IConfiguration config)
+        public ToursController(TourService tourService)
         {
-            var db = client.GetDatabase(config["MongoSettings:Database"]);
-            _tours = db.GetCollection<BsonDocument>("tours");
+            _tourService = tourService;
         }
 
-        // GET api/Tours
+        // ----- GET api/tours -----  
         [HttpGet]
-        public async Task<IActionResult> GetTours()
+        public async Task<ActionResult<IEnumerable<object>>> GetAllTours()
         {
-            var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var filter = Builders<BsonDocument>.Filter.Eq("verhuurderId", verhuurderId);
-
-            var docs = await _tours
-                .Find(filter)
-                .Project(Builders<BsonDocument>.Projection
-                    .Include("_id")
-                    .Include("naamLocatie"))
-                .ToListAsync();
-
-            var list = docs.Select(d => new
+            var tours = await _tourService.GetAllAsync();
+            var lijst = tours.Select(t => new
             {
-                id = d["_id"].AsObjectId.ToString(),
-                naamLocatie = d["naamLocatie"].AsString
-            });
-
-            return Ok(list);
+                id = t.Id,
+                naamLocatie = t.NaamLocatie
+            }).ToList();
+            return Ok(lijst);
         }
 
-        // GET api/Tours/{id}
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetTourById(string id)
+        // ----- GET api/tours/{id} -----  
+        [HttpGet("{id:length(24)}")]
+        public async Task<ActionResult<object>> GetTour(string id)
         {
-            if (!ObjectId.TryParse(id, out var objId))
-                return BadRequest("Ongeldig ID");
+            var tour = await _tourService.GetByIdAsync(id);
+            if (tour == null) return NotFound();
 
-            var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var filter = Builders<BsonDocument>.Filter.Eq("_id", objId)
-                       & Builders<BsonDocument>.Filter.Eq("verhuurderId", verhuurderId);
-
-            var doc = await _tours.Find(filter).FirstOrDefaultAsync();
-            if (doc == null) return NotFound();
-
-            // Verwijder verhuurderId en _id, voeg id toe
-            doc.Remove("verhuurderId");
-            var oid = doc["_id"].AsObjectId.ToString();
-            doc.Remove("_id");
-            doc["id"] = oid;
-
-            var result = (Dictionary<string, object>)BsonTypeMapper.MapToDotNetValue(doc);
-            return Ok(result);
+            var fasesDict = MapFasesToDto(tour.Fases);
+            var response = new
+            {
+                id = tour.Id,
+                naamLocatie = tour.NaamLocatie,
+                fases = fasesDict
+            };
+            return Ok(response);
         }
 
-        // POST api/Tours
+        // ----- POST api/tours -----  
         [HttpPost]
-        public async Task<IActionResult> CreateTour([FromBody] CreateTourDto dto)
+        [Authorize]
+        public async Task<ActionResult<object>> CreateTour([FromBody] CreateTourDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.NaamLocatie))
                 return BadRequest("NaamLocatie is verplicht");
 
             var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var doc = new BsonDocument
+            if (string.IsNullOrEmpty(verhuurderId))
+                return Unauthorized();
+
+            var tour = new Tour
             {
-                { "naamLocatie", dto.NaamLocatie },
-                { "verhuurderId", verhuurderId },
-                { "fases", new BsonDocument {
-                    { "voor", new BsonArray() },
-                    { "aankomst", new BsonArray() },
-                    { "terwijl", new BsonArray() },
-                    { "vertrek", new BsonArray() },
-                    { "na", new BsonArray() }
-                }}
+                NaamLocatie = dto.NaamLocatie,
+                VerhuurderId = verhuurderId,
+                Fases = new Fases()
             };
 
-            await _tours.InsertOneAsync(doc);
+            await _tourService.CreateTourAsync(tour);
 
-            // Cleanup voor response
-            doc.Remove("verhuurderId");
-            var oid = doc["_id"].AsObjectId.ToString();
-            doc.Remove("_id");
-            doc["id"] = oid;
+            var fasesDict = MapFasesToDto(tour.Fases);
+            var response = new
+            {
+                id = tour.Id,
+                naamLocatie = tour.NaamLocatie,
+                fases = fasesDict
+            };
 
-            var result = (Dictionary<string, object>)BsonTypeMapper.MapToDotNetValue(doc);
-            return Ok(result);
+            return CreatedAtAction(nameof(GetTour), new { id = tour.Id }, response);
         }
 
-        // PUT api/Tours/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTour(string id, [FromBody] JsonElement body)
+        // ----- PUT api/tours/{id} -----  
+        [HttpPut("{id:length(24)}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateTour(string id, [FromBody] UpdateTourDto dto)
         {
-            if (!ObjectId.TryParse(id, out var objId))
-                return BadRequest("Ongeldig ID");
+            var existing = await _tourService.GetByIdAsync(id);
+            if (existing == null) return NotFound();
 
-            BsonDocument data;
-            try
-            {
-                data = BsonDocument.Parse(body.GetRawText());
-            }
-            catch (JsonException ex)
-            {
-                return BadRequest("Ongeldige JSON: " + ex.Message);
-            }
+            var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(verhuurderId) || existing.VerhuurderId != verhuurderId)
+                return Forbid();
 
-            if (!data.Contains("naamLocatie") || data["naamLocatie"].AsString == "")
+            if (string.IsNullOrWhiteSpace(dto.NaamLocatie))
                 return BadRequest("NaamLocatie is verplicht");
 
-            var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            data["_id"] = objId;
-            data["verhuurderId"] = verhuurderId;
-
-            var filter = Builders<BsonDocument>.Filter.Eq("_id", objId)
-                       & Builders<BsonDocument>.Filter.Eq("verhuurderId", verhuurderId);
-
-            var res = await _tours.ReplaceOneAsync(filter, data);
-            if (res.MatchedCount == 0) return NotFound();
-
-            data.Remove("verhuurderId");
-            data.Remove("_id");
-            data["id"] = objId.ToString();
-            var result = (Dictionary<string, object>)BsonTypeMapper.MapToDotNetValue(data);
-
-            return Ok(result);
+            existing.NaamLocatie = dto.NaamLocatie;
+            await _tourService.UpdateTourAsync(id, existing);
+            return NoContent();
         }
 
-        // DELETE api/Tours/{id}
-        [HttpDelete("{id}")]
+        // ----- DELETE api/tours/{id} -----  
+        [HttpDelete("{id:length(24)}")]
+        [Authorize]
         public async Task<IActionResult> DeleteTour(string id)
         {
-            if (!ObjectId.TryParse(id, out var objId))
-                return BadRequest("Ongeldig ID");
+            var existing = await _tourService.GetByIdAsync(id);
+            if (existing == null) return NotFound();
 
             var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var filter = Builders<BsonDocument>.Filter.Eq("_id", objId)
-                       & Builders<BsonDocument>.Filter.Eq("verhuurderId", verhuurderId);
+            if (string.IsNullOrEmpty(verhuurderId) || existing.VerhuurderId != verhuurderId)
+                return Forbid();
 
-            var del = await _tours.DeleteOneAsync(filter);
-            if (del.DeletedCount == 0) return NotFound();
-
-            return Ok();
+            await _tourService.DeleteTourAsync(id);
+            return NoContent();
         }
-    }
 
-    public class CreateTourDto
-    {
-        public string NaamLocatie { get; set; } = null!;
+        // ----- SECTION CRUD binnen een fase -----  
+        [HttpPost("{tourId:length(24)}/fases/{fase}/sections")]
+        [Authorize]
+        public async Task<ActionResult<object>> AddSection(string tourId, string fase, [FromBody] CreateSectionDto dto)
+        {
+            var tour = await _tourService.GetByIdAsync(tourId);
+            if (tour == null) return NotFound();
+            var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
+                return Forbid();
+
+            var section = new Section { Naam = dto.Naam };
+            var added = await _tourService.AddSectionAsync(tourId, fase, section);
+
+            var response = new
+            {
+                id = added.Id,
+                naam = added.Naam,
+                components = new List<object>()
+            };
+            return Created($"/api/tours/{tourId}/fases/{fase}/sections/{added.Id}", response);
+        }
+
+        [HttpPut("{tourId:length(24)}/fases/{fase}/sections/{sectionId}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateSectionName(string tourId, string fase, string sectionId, [FromBody] UpdateSectionDto dto)
+        {
+            var tour = await _tourService.GetByIdAsync(tourId);
+            if (tour == null) return NotFound();
+            var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
+                return Forbid();
+
+            var success = await _tourService.UpdateSectionNameAsync(tourId, fase, sectionId, dto.Naam);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+
+        [HttpDelete("{tourId:length(24)}/fases/{fase}/sections/{sectionId}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteSection(string tourId, string fase, string sectionId)
+        {
+            var tour = await _tourService.GetByIdAsync(tourId);
+            if (tour == null) return NotFound();
+            var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
+                return Forbid();
+
+            var success = await _tourService.DeleteSectionAsync(tourId, fase, sectionId);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+
+        // ----- COMPONENT CRUD binnen een SECTION -----  
+        [HttpPost("{tourId:length(24)}/fases/{fase}/sections/{sectionId}/components")]
+        [Authorize]
+        public async Task<ActionResult<object>> AddComponent(string tourId, string fase, string sectionId, [FromBody] CreateComponentDto dto)
+        {
+            var tour = await _tourService.GetByIdAsync(tourId);
+            if (tour == null) return NotFound();
+            var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
+                return Forbid();
+
+            var component = new Component
+            {
+                Type = dto.Type,
+                Props = BsonDocument.Parse(dto.PropsJson)
+            };
+            var added = await _tourService.AddComponentAsync(tourId, fase, sectionId, component);
+
+            var response = new
+            {
+                id = added.Id,
+                type = added.Type,
+                props = (Dictionary<string, object>)BsonTypeMapper.MapToDotNetValue(added.Props)
+            };
+            return Created($"/api/tours/{tourId}/fases/{fase}/sections/{sectionId}/components/{added.Id}", response);
+        }
+
+        [HttpPut("{tourId:length(24)}/fases/{fase}/sections/{sectionId}/components/{componentId}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateComponent(string tourId, string fase, string sectionId, string componentId, [FromBody] UpdateComponentDto dto)
+        {
+            var tour = await _tourService.GetByIdAsync(tourId);
+            if (tour == null) return NotFound();
+            var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
+                return Forbid();
+
+            var nieuweProps = BsonDocument.Parse(dto.PropsJson);
+            var success = await _tourService.UpdateComponentAsync(tourId, fase, sectionId, componentId, nieuweProps, dto.Type);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+
+        [HttpDelete("{tourId:length(24)}/fases/{fase}/sections/{sectionId}/components/{componentId}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteComponent(string tourId, string fase, string sectionId, string componentId)
+        {
+            var tour = await _tourService.GetByIdAsync(tourId);
+            if (tour == null) return NotFound();
+            var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
+                return Forbid();
+
+            var success = await _tourService.DeleteComponentAsync(tourId, fase, sectionId, componentId);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+
+        // **HULPFUNCTIES & DTO’s**
+
+        private static Dictionary<string, List<SectionDto>> MapFasesToDto(Fases fases)
+        {
+            var dict = new Dictionary<string, List<SectionDto>>();
+
+            void Map(string naam, List<Section> secties)
+            {
+                var sectionDtos = secties.Select(sec => new SectionDto
+                {
+                    Id = sec.Id,
+                    Naam = sec.Naam,
+                    Components = sec.Components.Select(comp => new ComponentDto
+                    {
+                        Id = comp.Id,
+                        Type = comp.Type,
+                        Props = (Dictionary<string, object>)BsonTypeMapper.MapToDotNetValue(comp.Props)
+                    }).ToList()
+                }).ToList();
+
+                dict.Add(naam, sectionDtos);
+            }
+
+            Map("voor", fases.Voor);
+            Map("aankomst", fases.Aankomst);
+            Map("terwijl", fases.Terwijl);
+            Map("vertrek", fases.Vertrek);
+            Map("na", fases.Na);
+
+            return dict;
+        }
+
+        public class CreateTourDto
+        {
+            public string NaamLocatie { get; set; } = null!;
+        }
+
+        public class UpdateTourDto
+        {
+            public string NaamLocatie { get; set; } = null!;
+        }
+
+        public class CreateSectionDto
+        {
+            public string Naam { get; set; } = null!;
+        }
+
+        public class UpdateSectionDto
+        {
+            public string Naam { get; set; } = null!;
+        }
+
+        public class CreateComponentDto
+        {
+            public string Type { get; set; } = null!;
+            public string PropsJson { get; set; } = null!;
+        }
+
+        public class UpdateComponentDto
+        {
+            public string Type { get; set; } = null!;
+            public string PropsJson { get; set; } = null!;
+        }
     }
 }

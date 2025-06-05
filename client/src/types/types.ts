@@ -1,5 +1,4 @@
-// /src/types/types.ts
-
+// File: src/types/types.ts
 export type ComponentType =
   | "title"
   | "subheading"
@@ -14,12 +13,13 @@ export type ComponentType =
   | "checkbox-list"
   | "grid";
 
+// Item voor checkbox-list
 export interface CheckboxListItem {
   label: string;
   good: boolean;
 }
 
-// Title, Subheading, Paragraph & Quote share text & style props
+// Basis-text props gedeeld door meerdere componenten
 interface TextStyleProps {
   fontFamily: string;
   fontSize: number;
@@ -32,24 +32,28 @@ interface TextStyleProps {
   lineHeight?: number;
 }
 
+// Title component props
 export interface TitleProps extends TextStyleProps {
   text: string;
 }
 
+// Subheading component props
 export interface SubheadingProps extends TextStyleProps {
   text: string;
 }
 
+// Paragraph component props
 export interface ParagraphProps extends TextStyleProps {
   text: string;
 }
 
+// Quote component props
 export interface QuoteProps extends TextStyleProps {
   text: string;
   author?: string;
 }
 
-// Button
+// Button component props
 export interface ButtonProps {
   label: string;
   functionType?: "link" | "action";
@@ -63,7 +67,7 @@ export interface ButtonProps {
   underline?: boolean;
 }
 
-// Checklist
+// Checklist component props
 export interface ChecklistProps {
   items: string[];
   fontSize?: number;
@@ -72,7 +76,7 @@ export interface ChecklistProps {
   spacing?: number;
 }
 
-// Checkbox-list
+// Checkbox-list component props
 export interface CheckboxListProps {
   items: CheckboxListItem[];
   fontSize?: number;
@@ -81,14 +85,14 @@ export interface CheckboxListProps {
   spacing?: number;
 }
 
-// Divider
+// Divider component props
 export interface DividerProps {
   color?: string;
   thickness?: number;
   bg?: string;
 }
 
-// Single-image props
+// Image component props
 export interface ImageProps {
   url: string;
   alt?: string;
@@ -102,7 +106,7 @@ export interface ImageProps {
   showAlt?: boolean;
 }
 
-// Single-video props
+// Video component props
 export interface VideoProps {
   url: string;
   alt?: string;
@@ -117,7 +121,7 @@ export interface VideoProps {
   showAlt?: boolean;
 }
 
-// Grid (multi-image) props
+// Grid (multi-image) component props
 export interface GridProps {
   images: string[];
   columns: number;
@@ -129,14 +133,14 @@ export interface GridProps {
   objectFit?: "cover" | "contain";
 }
 
-// File props
+// File component props
 export interface FileProps {
   url: string;
   filename: string;
   showName: boolean;
 }
 
-// Union of all props
+// Union van alle possible component props
 export type ComponentProps =
   | TitleProps
   | SubheadingProps
@@ -151,18 +155,22 @@ export type ComponentProps =
   | GridProps
   | FileProps;
 
+// Eén component-item in app
 export interface ComponentItem {
   id: string;
   type: ComponentType;
   props: ComponentProps;
 }
 
+// Section met title in plaats van naam
 export interface Section {
   id: string;
   title: string;
   components: ComponentItem[];
 }
 
+// Vijf fases van een tour
 export type Fase = "voor" | "aankomst" | "terwijl" | "vertrek" | "na";
 
+// Mapping van fase naar lijst van sections
 export type FaseSections = Record<Fase, Section[]>;

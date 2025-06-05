@@ -1,21 +1,34 @@
-// /src/pages/TourBuilderPage.tsx
-import React, { useState, useEffect, useCallback } from "react";
+// File: src/pages/TourBuilderPage.tsx
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getTour, updateTour, type Tour } from "../api/tours";
+import {
+  getTour,
+  addSection,
+  updateSection,
+  deleteSection,
+  addComponent,
+  updateComponent,
+  deleteComponent,
+  updateTourNaam,
+  type Tour,
+  type SectionDto,
+  type ComponentDto,
+} from "../api/tours";
 import { v4 as uuidv4 } from "uuid";
 import ComponentPalette from "../components/ComponentPalette";
 import BuilderCanvas from "../components/BuilderCanvas";
 import SettingsPanel from "../components/SettingsPanel";
 import BottomNav from "../components/BottomNav";
 import LivePreview from "../components/LivePreview";
+import EditSectionModal from "../components/EditSectionModal";
 import { ToastContainer, toast } from "react-toastify";
-import type { DropResult } from "@hello-pangea/dnd";
-import type {
-  ComponentItem,
-  ComponentType,
-  Section,
-  Fase,
-  FaseSections,
+import { type DropResult } from "@hello-pangea/dnd";
+import {
+  type ComponentItem,
+  type ComponentType,
+  type Section,
+  type Fase,
+  type FaseSections,
 } from "../types/types";
 
 export default function TourBuilderPage() {
@@ -23,7 +36,6 @@ export default function TourBuilderPage() {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [naamLocatie, setNaamLocatie] = useState("");
   const fasesList: Fase[] = ["voor", "aankomst", "terwijl", "vertrek", "na"];
   const [sectionsByFase, setSectionsByFase] = useState<FaseSections>(() =>
@@ -31,66 +43,74 @@ export default function TourBuilderPage() {
   );
   const [activeFase, setActiveFase] = useState<Fase>("voor");
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+
   const [selectedComp, setSelectedComp] = useState<ComponentItem | null>(null);
+  const [dirty, setDirty] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
 
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalValue, setModalValue] = useState("");
+  const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
+
+  // Laad tour én zorg dat elke fase minstens één section in DB heeft
   useEffect(() => {
     if (!id) {
       navigate("/tours");
       return;
     }
     setLoading(true);
+
     async function loadTour(tourId: string) {
       try {
         const tour: Tour = await getTour(tourId);
-        setNaamLocatie(tour.naamLocatie ?? "");
-        const init = fasesList.reduce((acc, f) => {
-          const comps = tour.fases?.[f] ?? [];
-          acc[f] = comps.length
-            ? [{ id: uuidv4(), title: "Sectie 1", components: comps }]
-            : [{ id: uuidv4(), title: "Nieuwe sectie", components: [] }];
-          return acc;
-        }, {} as FaseSections);
-        setSectionsByFase(init);
+        setNaamLocatie(tour.naamLocatie);
+
+        const newState: FaseSections = {} as FaseSections;
+
+        for (const f of fasesList) {
+          const apiSections: SectionDto[] = tour.fases?.[f] ?? [];
+
+          // Als deze fase geen sections heeft, maak er één aan in DB
+          if (apiSections.length === 0) {
+            const created = await addSection(tourId, f, "Nieuwe sectie");
+            newState[f] = [
+              {
+                id: created.id,
+                title: created.naam,
+                components: [],
+              },
+            ];
+          } else {
+            // Map bestaande sections naar lokale format
+            newState[f] = apiSections.map((secDto) => ({
+              id: secDto.id,
+              title: secDto.naam,
+              components: secDto.components.map((c: ComponentDto) => ({
+                id: c.id,
+                type: c.type as ComponentType,
+                props: c.props,
+              })),
+            }));
+          }
+        }
+
+        setSectionsByFase(newState);
+        setActiveSectionIndex(0);
       } catch {
         toast.error("Kon tour niet laden");
+        navigate("/tours");
       } finally {
         setLoading(false);
       }
     }
+
     loadTour(id);
   }, [id, navigate]);
 
-  const saveTour = useCallback(async () => {
-    setSaving(true);
-    try {
-      const payload = fasesList.reduce((acc, f) => {
-        acc[f] = sectionsByFase[f].flatMap((s) => s.components);
-        return acc;
-      }, {} as Record<Fase, ComponentItem[]>);
-      await updateTour(id!, { naamLocatie, fases: payload });
-      toast.success("Opgeslagen");
-    } catch {
-      toast.error("Opslaan mislukt");
-    } finally {
-      setSaving(false);
-    }
-  }, [id, naamLocatie, sectionsByFase, fasesList]);
-
-  useEffect(() => {
-    const onHide = () => {
-      if (document.visibilityState === "hidden") saveTour();
-    };
-    window.addEventListener("beforeunload", saveTour);
-    document.addEventListener("visibilitychange", onHide);
-    return () => {
-      window.removeEventListener("beforeunload", saveTour);
-      document.removeEventListener("visibilitychange", onHide);
-    };
-  }, [saveTour]);
-
   if (loading) return <div className="p-4 animate-pulse">Laden…</div>;
 
+  // Zorg dat er altijd minstens één section is in actieve fase
   const currentFaseSections = sectionsByFase[activeFase]!;
   if (currentFaseSections.length === 0) {
     currentFaseSections.push({
@@ -103,35 +123,103 @@ export default function TourBuilderPage() {
       [activeFase]: currentFaseSections,
     }));
   }
+
   const current =
     currentFaseSections[activeSectionIndex] ?? currentFaseSections[0];
 
-  const addSection = () => {
-    const sec: Section = { id: uuidv4(), title: "Nieuwe sectie", components: [] };
-    setSectionsByFase((p) => ({
-      ...p,
-      [activeFase]: [...p[activeFase], sec],
-    }));
-    setActiveSectionIndex((i) => i + 1);
-    setSelectedComp(null);
-  };
-  const renameSection = (idx: number, title: string) =>
-    setSectionsByFase((p) => ({
-      ...p,
-      [activeFase]: p[activeFase].map((s, i) =>
-        i === idx ? { ...s, title } : s
-      ),
-    }));
-  const deleteSection = (idx: number) => {
-    setSectionsByFase((p) => ({
-      ...p,
-      [activeFase]: p[activeFase].filter((_, i) => i !== idx),
-    }));
-    setActiveSectionIndex(0);
-    setSelectedComp(null);
+  // SLA wijzigingen op voor het wisselen van component/fase
+  const savePreviousComponent = async () => {
+    if (!selectedComp || !dirty || !id) return;
+    for (const f of fasesList) {
+      const secs = sectionsByFase[f];
+      for (const sectie of secs) {
+        const compMatch = sectie.components.find((c) => c.id === selectedComp.id);
+        if (compMatch) {
+          try {
+            await updateComponent(
+              id,
+              f,
+              sectie.id,
+              selectedComp.id,
+              selectedComp.type,
+              selectedComp.props
+            );
+            toast.success("Component opgeslagen");
+          } catch {
+            toast.error("Fout bij opslaan component");
+          }
+          break;
+        }
+      }
+    }
+    setDirty(false);
   };
 
-  const addComponent = (type: ComponentType) => {
+  // Wijzig actieve fase
+  const onFaseChange = async (f: Fase) => {
+    await savePreviousComponent();
+    setSelectedComp(null);
+    setActiveFase(f);
+    setActiveSectionIndex(0);
+  };
+
+  // SECTION-CRUD
+
+  const onAddSection = async () => {
+    try {
+      const nieuwSec = await addSection(id!, activeFase, "Nieuwe sectie");
+      const sec: Section = {
+        id: nieuwSec.id,
+        title: nieuwSec.naam,
+        components: [],
+      };
+      setSectionsByFase((prev) => ({
+        ...prev,
+        [activeFase]: [...prev[activeFase], sec],
+      }));
+      setActiveSectionIndex(currentFaseSections.length);
+      setSelectedComp(null);
+      setDirty(false);
+    } catch {
+      toast.error("Sectie aanmaken mislukt");
+    }
+  };
+
+  const onRenameSection = async (idx: number, newTitle: string) => {
+    const sectie = sectionsByFase[activeFase][idx];
+    try {
+      await updateSection(id!, activeFase, sectie.id, newTitle);
+      setSectionsByFase((prev) => ({
+        ...prev,
+        [activeFase]: prev[activeFase].map((s, i) =>
+          i === idx ? { ...s, title: newTitle } : s
+        ),
+      }));
+    } catch {
+      toast.error("Sectie hernoemen mislukt");
+    }
+  };
+
+  const onDeleteSection = async (idx: number) => {
+    const sectie = sectionsByFase[activeFase][idx];
+    if (!window.confirm(`Verwijder sectie "${sectie.title}"?`)) return;
+    try {
+      await deleteSection(id!, activeFase, sectie.id);
+      setSectionsByFase((prev) => ({
+        ...prev,
+        [activeFase]: prev[activeFase].filter((_, i) => i !== idx),
+      }));
+      setActiveSectionIndex(0);
+      setSelectedComp(null);
+      setDirty(false);
+    } catch {
+      toast.error("Sectie verwijderen mislukt");
+    }
+  };
+
+  // COMPONENT-CRUD
+
+  const onAddComponent = async (type: ComponentType) => {
     const baseText = {
       text: "Tekst",
       fontFamily: "sans-serif",
@@ -148,7 +236,7 @@ export default function TourBuilderPage() {
       type === "checklist"
         ? { items: [""], fontSize: 16, color: "#000000", bg: "#ffffff", spacing: 8 }
         : type === "checkbox-list"
-        ? { items: [{ label: "", good: false }], color: "#000000", bg: "#ffffff" }
+        ? { items: [{ label: "", good: false }], fontSize: 16, color: "#000000", bg: "#ffffff" }
         : type === "divider"
         ? { color: "#000000", thickness: 1 }
         : type === "button"
@@ -161,7 +249,7 @@ export default function TourBuilderPage() {
             bold: false,
             italic: false,
             underline: false,
-            functionType: "dummy" as const,
+            functionType: "link" as const,
             url: "",
           }
         : type === "image"
@@ -191,7 +279,7 @@ export default function TourBuilderPage() {
           }
         : type === "grid"
         ? {
-            images: [],
+            images: [] as string[],
             columns: 3,
             gap: 8,
             borderWidth: 0,
@@ -201,47 +289,71 @@ export default function TourBuilderPage() {
             objectFit: "cover" as const,
           }
         : baseText;
-    const comp: ComponentItem = { id: uuidv4(), type, props };
-    setSectionsByFase((p) => ({
-      ...p,
-      [activeFase]: p[activeFase].map((s, i) =>
-        i === activeSectionIndex
-          ? { ...s, components: [...s.components, comp] }
-          : s
-      ),
-    }));
-    setSelectedComp(comp);
+
+    const sec = currentFaseSections[activeSectionIndex];
+    try {
+      const nieuwComp = await addComponent(id!, activeFase, sec.id, type, props);
+      const compNew: ComponentItem = {
+        id: nieuwComp.id,
+        type: nieuwComp.type as ComponentType,
+        props: nieuwComp.props,
+      };
+      setSectionsByFase((prev) => ({
+        ...prev,
+        [activeFase]: prev[activeFase].map((s, i) => {
+          if (i !== activeSectionIndex) return s;
+          return {
+            ...s,
+            components: [...s.components, compNew],
+          };
+        }),
+      }));
+      await savePreviousComponent();
+      setSelectedComp(compNew);
+      setDirty(false);
+    } catch {
+      toast.error("Component aanmaken mislukt");
+    }
   };
 
-  const deleteComponent = (cid: string) => {
-    setSectionsByFase((p) => ({
-      ...p,
-      [activeFase]: p[activeFase].map((s, i) =>
-        i === activeSectionIndex
-          ? { ...s, components: s.components.filter((c) => c.id !== cid) }
-          : s
-      ),
-    }));
-    setSelectedComp(null);
+  const onDeleteComponent = async (cid: string) => {
+    const sec = currentFaseSections[activeSectionIndex];
+    try {
+      await deleteComponent(id!, activeFase, sec.id, cid);
+      setSectionsByFase((prev) => ({
+        ...prev,
+        [activeFase]: prev[activeFase].map((s, i) => {
+          if (i !== activeSectionIndex) return s;
+          return {
+            ...s,
+            components: s.components.filter((c) => c.id !== cid),
+          };
+        }),
+      }));
+      setSelectedComp(null);
+      setDirty(false);
+    } catch {
+      toast.error("Component verwijderen mislukt");
+    }
   };
 
-  const updateComponent = (c: ComponentItem) => {
-    setSectionsByFase((p) => ({
-      ...p,
-      [activeFase]: p[activeFase].map((s, i) =>
-        i === activeSectionIndex
-          ? {
-              ...s,
-              components: s.components.map((x) =>
-                x.id === c.id ? c : x
-              ),
-            }
-          : s
-      ),
+  // Wijziging in settings, alleen lokale update
+  const handleSettingsChange = (c: ComponentItem) => {
+    setSectionsByFase((prev) => ({
+      ...prev,
+      [activeFase]: prev[activeFase].map((s, i) => {
+        if (i !== activeSectionIndex) return s;
+        return {
+          ...s,
+          components: s.components.map((x) => (x.id === c.id ? c : x)),
+        };
+      }),
     }));
     setSelectedComp(c);
+    setDirty(true);
   };
 
+  // Drag & drop voor componenten
   const onDragEnd = (res: DropResult) => {
     if (!res.destination) return;
     setSectionsByFase((p) => ({
@@ -256,20 +368,73 @@ export default function TourBuilderPage() {
     }));
   };
 
+  // Opslaan tour-naam
+  const onSaveName = async () => {
+    try {
+      await updateTourNaam(id!, naamLocatie);
+      toast.success("Naam bijgewerkt");
+    } catch {
+      toast.error("Naam bijwerken mislukt");
+    }
+  };
+
+  // Wanneer gebruiker een component selecteert, sla vorige op
+  const onSelectComponent = async (comp: ComponentItem) => {
+    await savePreviousComponent();
+    setSelectedComp(comp);
+    setDirty(false);
+  };
+
+  // Als user wegklikt uit component (bv. naar preview), sla op
+  const onDeselect = async () => {
+    await savePreviousComponent();
+    setSelectedComp(null);
+    setDirty(false);
+  };
+
+  // Handlers voor edit-sectie modal
+  const openSectionModal = (idx: number) => {
+    const sectie = currentFaseSections[idx];
+    setModalValue(sectie.title);
+    setEditingSectionIndex(idx);
+    setModalOpen(true);
+  };
+
+  const closeSectionModal = () => {
+    setModalOpen(false);
+    setEditingSectionIndex(null);
+    setModalValue("");
+  };
+
+  const submitSectionModal = async (newTitle: string) => {
+    if (editingSectionIndex !== null) {
+      await onRenameSection(editingSectionIndex, newTitle);
+    }
+    closeSectionModal();
+  };
+
+  // Handle click on section title in canvas
+  const handleSectionTitleClick = () => {
+    openSectionModal(activeSectionIndex);
+  };
+
+  // Schakel previewmode in
   if (previewMode) {
-    const allComponents = fasesList.flatMap((f) =>
-      sectionsByFase[f].flatMap((s) => s.components)
-    );
-    return (
-      <div className="relative h-full bg-gray-100">
+    const sectionsForActiveFase = sectionsByFase[activeFase];
+       return (
+     <div className="relative h-full bg-gray-100">
         <div className="p-4">
           <button
-            onClick={() => setPreviewMode(false)}
+            onClick={async () => {
+              await savePreviousComponent();
+              setPreviewMode(false);
+            }}
             className="mb-4 px-4 py-2 bg-blue-600 text-white rounded"
           >
             Terug naar bewerken
           </button>
-          <LivePreview components={allComponents} />
+          <LivePreview fases={fasesList} sectionsByFase={sectionsByFase} />
+
         </div>
       </div>
     );
@@ -277,54 +442,66 @@ export default function TourBuilderPage() {
 
   return (
     <div className="flex h-full">
-      <ComponentPalette onAdd={addComponent} />
+      <ComponentPalette onAdd={onAddComponent} />
 
-      <div className="flex-1 relative pb-16"> {/* Zorgt voor ruimte onder voor BottomNav */}
+      <div className="flex-1 relative pb-16" onClick={onDeselect}>
         <BuilderCanvas
           components={current.components}
           sectionTitle={current.title}
-          preview={previewMode}
-          onSelect={setSelectedComp}
-          onDelete={deleteComponent}
+          preview={false}
+          onSelect={onSelectComponent}
+          onDelete={onDeleteComponent}
           onDragEnd={onDragEnd}
-          onSectionTitleChange={(t) => renameSection(activeSectionIndex, t)}
+          onSectionTitleClick={handleSectionTitleClick}
         />
+
+        {/* Knop Voorbeeld */}
         <div className="absolute top-4 right-4 space-x-2">
+         
           <button
-            onClick={saveTour}
-            disabled={saving}
-            className="px-4 py-2 bg-blue-600 text-white rounded"
-          >
-            {saving ? "..." : "Opslaan"}
-          </button>
-          <button
-            onClick={() => setPreviewMode(true)}
+            onClick={async () => {
+              await savePreviousComponent();
+              setPreviewMode(true);
+            }}
             className="px-4 py-2 bg-gray-200 rounded"
           >
             Voorbeeld
           </button>
         </div>
+
         <BottomNav
           fases={fasesList}
           sectionsByFase={sectionsByFase}
           activeFase={activeFase}
           activeSectionIndex={activeSectionIndex}
-          onFaseChange={(f) => {
+          onFaseChange={async (f) => {
+            await savePreviousComponent();
+            setSelectedComp(null);
             setActiveFase(f);
             setActiveSectionIndex(0);
-            setSelectedComp(null);
           }}
-          onSectionChange={(i) => {
+          onSectionChange={async (i) => {
+            await savePreviousComponent();
             setActiveSectionIndex(i);
             setSelectedComp(null);
+            setDirty(false);
           }}
-          onAddSection={addSection}
-          onRenameSection={renameSection}
-          onDeleteSection={deleteSection}
+          onAddSection={onAddSection}
+          onEditSection={openSectionModal}
+          onRenameSection={onRenameSection}
+          onDeleteSection={onDeleteSection}
         />
       </div>
 
-      <SettingsPanel comp={selectedComp} onUpdate={updateComponent} />
+      <SettingsPanel comp={selectedComp} onUpdate={handleSettingsChange} />
+
+      {/* Edit Section Modal */}
+      <EditSectionModal
+        isOpen={modalOpen}
+        initialValue={modalValue}
+        onSave={submitSectionModal}
+        onClose={closeSectionModal}
+      />
 
       <ToastContainer position="bottom-right" autoClose={3000} />
     </div>

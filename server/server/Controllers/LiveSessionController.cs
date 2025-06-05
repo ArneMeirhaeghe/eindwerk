@@ -1,14 +1,15 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using server.Models;
-using server.Services;
+﻿// File: server/Controllers/LiveSessionController.cs
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using server.Models;
+using server.Services;
 
 namespace server.Controllers
 {
@@ -19,24 +20,21 @@ namespace server.Controllers
         private readonly LiveSessionService _liveService;
         private readonly TourService _tourService;
 
-        public LiveSessionController(
-            LiveSessionService liveService,
-            TourService tourService)
+        public LiveSessionController(LiveSessionService liveService, TourService tourService)
         {
             _liveService = liveService;
             _tourService = tourService;
         }
 
         /// <summary>
-        /// Start een nieuwe live-sessie: 
-        /// BODY = { "groep": "...", "tourId": "..." } 
+        /// Start een nieuwe live-sessie:
+        /// BODY = { "groep": ".", "tourId": "." }
         /// Vereist [Authorize] (Bearer JWT).
         /// </summary>
         [HttpPost("start")]
         [Authorize]
         public async Task<IActionResult> Start([FromBody] StartSessionDto dto)
         {
-            // Haal creatorId (User.Id) uit de JWT-claims
             var creatorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(creatorId))
                 return Unauthorized("Geen gebruiker gevonden");
@@ -44,24 +42,11 @@ namespace server.Controllers
             try
             {
                 var session = await _liveService.StartSessionAsync(dto.Groep, dto.TourId, creatorId);
-
-                // Haal Tour op om in response‐dto te stoppen (naam + fases)
                 var tour = await _tourService.GetByIdAsync(session.TourId);
                 if (tour == null)
                     return BadRequest(new { message = "Tour niet gevonden." });
 
-                // Zet BsonDocument-fases om naar JSON-vriendelijke Dictionary<string, object>
-                var fasesDict = new Dictionary<string, List<Dictionary<string, object>>>();
-                foreach (var kv in tour.Fases)
-                {
-                    var naamFase = kv.Key;
-                    var docs = kv.Value;
-                    var mappedDocs = docs.Select(d => d.ToDictionary(
-                        element => element.Name,
-                        element => BsonTypeMapper.MapToDotNetValue(element.Value)
-                    )).ToList();
-                    fasesDict.Add(naamFase, mappedDocs);
-                }
+                var fasesDict = TourMapper.MapFasesToDto(tour.Fases);
 
                 var response = new LiveSessionDto
                 {
@@ -87,7 +72,6 @@ namespace server.Controllers
             }
             catch (Exception ex)
             {
-                // Log in console voor debugging
                 Console.WriteLine($"[ERROR] LiveSessionController.Start: {ex}");
                 return StatusCode(500, new { message = ex.ToString() });
             }
@@ -109,7 +93,6 @@ namespace server.Controllers
             try
             {
                 var sessions = await _liveService.GetActiveSessionsAsync(creatorId);
-
                 if (sessions == null || !sessions.Any())
                     return Ok(new List<LiveSessionDto>());
 
@@ -122,19 +105,7 @@ namespace server.Controllers
                         var tour = await _tourService.GetByIdAsync(s.TourId);
                         if (tour != null)
                         {
-                            // Zet BsonDocument-fases om naar JSON-vriendelijke Dictionary<string, object>
-                            var fasesDict = new Dictionary<string, List<Dictionary<string, object>>>();
-                            foreach (var kv in tour.Fases)
-                            {
-                                var naamFase = kv.Key;
-                                var docs = kv.Value;
-                                var mappedDocs = docs.Select(d => d.ToDictionary(
-                                    element => element.Name,
-                                    element => BsonTypeMapper.MapToDotNetValue(element.Value)
-                                )).ToList();
-                                fasesDict.Add(naamFase, mappedDocs);
-                            }
-
+                            var fasesDict = TourMapper.MapFasesToDto(tour.Fases);
                             tourDto = new TourDto
                             {
                                 Id = tour.Id,
@@ -145,7 +116,6 @@ namespace server.Controllers
                     }
                     catch (Exception exTour)
                     {
-                        // Log de fout en sla deze sessie over
                         Console.WriteLine($"[ERROR] Fout bij ophalen Tour voor TourId={s.TourId}: {exTour}");
                         continue;
                     }
@@ -194,18 +164,7 @@ namespace server.Controllers
             if (tour == null)
                 return BadRequest(new { message = "Tour niet gevonden." });
 
-            // Zet BsonDocument-fases om naar JSON-vriendelijke Dictionary<string, object>
-            var fasesDict = new Dictionary<string, List<Dictionary<string, object>>>();
-            foreach (var kv in tour.Fases)
-            {
-                var naamFase = kv.Key;
-                var docs = kv.Value;
-                var mappedDocs = docs.Select(d => d.ToDictionary(
-                    element => element.Name,
-                    element => BsonTypeMapper.MapToDotNetValue(element.Value)
-                )).ToList();
-                fasesDict.Add(naamFase, mappedDocs);
-            }
+            var fasesDict = TourMapper.MapFasesToDto(tour.Fases);
 
             var response = new LiveSessionDto
             {
@@ -241,18 +200,7 @@ namespace server.Controllers
             if (tour == null)
                 return BadRequest(new { message = "Tour niet gevonden." });
 
-            // Zet BsonDocument-fases om naar JSON-vriendelijke Dictionary<string, object>
-            var fasesDict = new Dictionary<string, List<Dictionary<string, object>>>();
-            foreach (var kv in tour.Fases)
-            {
-                var naamFase = kv.Key;
-                var docs = kv.Value;
-                var mappedDocs = docs.Select(d => d.ToDictionary(
-                    element => element.Name,
-                    element => BsonTypeMapper.MapToDotNetValue(element.Value)
-                )).ToList();
-                fasesDict.Add(naamFase, mappedDocs);
-            }
+            var fasesDict = TourMapper.MapFasesToDto(tour.Fases);
 
             var publicDto = new LiveSessionPublicDto
             {
@@ -271,7 +219,7 @@ namespace server.Controllers
 
         /// <summary>
         /// Zet IsActive = false (eindig sessie).
-        /// PATCH /api/LiveSession/{id}/end 
+        /// PATCH /api/LiveSession/{id}/end
         /// Vereist [Authorize].
         /// </summary>
         [HttpPatch("{id:length(24)}/end")]
@@ -297,41 +245,91 @@ namespace server.Controllers
                 return StatusCode(500, new { message = ex.ToString() });
             }
         }
-    }
 
-    // DTO voor POST /start
-    public class StartSessionDto
-    {
-        public string Groep { get; set; } = null!;
-        public string TourId { get; set; } = null!;
-    }
+        // Hulpfunctie om Fases (List<Section>) te mappen naar DTO
+        private static class TourMapper
+        {
+            public static Dictionary<string, List<SectionDto>> MapFasesToDto(Fases fases)
+            {
+                var dict = new Dictionary<string, List<SectionDto>>();
 
-    // DTO voor Tour meegeven in responses
-    public class TourDto
-    {
-        public string Id { get; set; } = null!;
-        public string NaamLocatie { get; set; } = null!;
-        public Dictionary<string, List<Dictionary<string, object>>> Fases { get; set; } = null!;
-    }
+                void Map(string naam, List<Section> secties)
+                {
+                    var sectionDtos = secties.Select(sec => new SectionDto
+                    {
+                        Id = sec.Id,
+                        Naam = sec.Naam,
+                        Components = sec.Components.Select(comp => new ComponentDto
+                        {
+                            Id = comp.Id,
+                            Type = comp.Type,
+                            Props = comp.Props.ToDictionary(
+                                elem => elem.Name,
+                                elem => BsonTypeMapper.MapToDotNetValue(elem.Value)
+                            )
+                        }).ToList()
+                    }).ToList();
 
-    // DTO voor eigenaren (inclusief CreatorId en PublicUrl)
-    public class LiveSessionDto
-    {
-        public string Id { get; set; } = null!;
-        public string Groep { get; set; } = null!;
-        public DateTime StartDate { get; set; }
-        public bool IsActive { get; set; }
-        public string CreatorId { get; set; } = null!;
-        public TourDto Tour { get; set; } = null!;
-        public string PublicUrl { get; set; } = null!;
-    }
+                    if (sectionDtos.Any())
+                        dict.Add(naam, sectionDtos);
+                }
 
-    // DTO voor publieke weergave (geen CreatorId, alleen Tour + basisinfo)
-    public class LiveSessionPublicDto
-    {
-        public string Id { get; set; } = null!;
-        public string Groep { get; set; } = null!;
-        public DateTime StartDate { get; set; }
-        public TourDto Tour { get; set; } = null!;
+                Map("voor", fases.Voor);
+                Map("aankomst", fases.Aankomst);
+                Map("terwijl", fases.Terwijl);
+                Map("vertrek", fases.Vertrek);
+                Map("na", fases.Na);
+
+                return dict;
+            }
+        }
+
+        // DTO voor POST /start
+        public class StartSessionDto
+        {
+            public string Groep { get; set; } = null!;
+            public string TourId { get; set; } = null!;
+        }
+
+        // Response-DTO’s
+        public class LiveSessionDto
+        {
+            public string Id { get; set; } = null!;
+            public string Groep { get; set; } = null!;
+            public DateTime StartDate { get; set; }
+            public bool IsActive { get; set; }
+            public string CreatorId { get; set; } = null!;
+            public TourDto Tour { get; set; } = null!;
+            public string PublicUrl { get; set; } = null!;
+        }
+
+        public class LiveSessionPublicDto
+        {
+            public string Id { get; set; } = null!;
+            public string Groep { get; set; } = null!;
+            public DateTime StartDate { get; set; }
+            public TourDto Tour { get; set; } = null!;
+        }
+
+        public class TourDto
+        {
+            public string Id { get; set; } = null!;
+            public string NaamLocatie { get; set; } = null!;
+            public Dictionary<string, List<SectionDto>> Fases { get; set; } = new();
+        }
+
+        public class SectionDto
+        {
+            public string Id { get; set; } = null!;
+            public string Naam { get; set; } = null!;
+            public List<ComponentDto> Components { get; set; } = new();
+        }
+
+        public class ComponentDto
+        {
+            public string Id { get; set; } = null!;
+            public string Type { get; set; } = null!;
+            public Dictionary<string, object> Props { get; set; } = new();
+        }
     }
 }

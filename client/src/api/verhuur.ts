@@ -20,14 +20,14 @@ export interface TourListDto {
   naamLocatie: string;
 }
 
-// DTO die backend nu retourneert voor Tour
+// DTO voor Tour in live sessie
 export interface TourDto {
   id: string;
   naamLocatie: string;
-  fases: Record<string, any[]>; // BsonDocument[] komt als any[]
+  fases: Record<string, any[]>;
 }
 
-// DTO die backend nu retourneert voor LiveSession
+// DTO voor LiveSession
 export interface LiveSessionDto {
   id: string;
   groep: string;
@@ -69,19 +69,25 @@ export const getActiveLiveSessions = async (): Promise<LiveSessionDto[]> => {
   return res.data.map(s => ({
     ...s,
     startDate: new Date(s.startDate).toISOString(),
-    // tour en publicUrl blijven ongewijzigd
   }));
 };
 
 /**
- * Start een nieuwe live-sessie:
+ * Start een nieuwe live-sessie met geselecteerde secties:
  * POST /api/LiveSession/start
  */
+export interface StartSessionDto {
+  groep: string;
+  tourId: string;
+  sectionIds: string[];
+}
 export const startLiveSession = async (
   groep: string,
-  tourId: string
+  tourId: string,
+  sectionIds: string[]
 ): Promise<LiveSessionDto> => {
-  const res = await API.post<LiveSessionDto>('/LiveSession/start', { groep, tourId });
+  const payload: StartSessionDto = { groep, tourId, sectionIds };
+  const res = await API.post<LiveSessionDto>('/LiveSession/start', payload);
   const data = res.data;
   return {
     ...data,

@@ -1,6 +1,6 @@
-// src/components/BottomNav.tsx
+// File: src/components/BottomNav.tsx
 import React, { useRef } from "react";
-import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Trash2, Edit2 } from "lucide-react";
 import type { Fase, Section } from "../types/types";
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
   onFaseChange: (f: Fase) => void;
   onSectionChange: (i: number) => void;
   onAddSection: () => void;
+  onEditSection: (index: number) => void;
   onRenameSection: (index: number, newTitle: string) => void;
   onDeleteSection: (index: number) => void;
 }
@@ -23,6 +24,7 @@ export default function BottomNav({
   onFaseChange,
   onSectionChange,
   onAddSection,
+  onEditSection,
   onRenameSection,
   onDeleteSection,
 }: Props) {
@@ -39,10 +41,11 @@ export default function BottomNav({
   };
 
   const sections = sectionsByFase[activeFase] || [];
+  const displaySections = sections.length > 0 ? sections : [{ id: "", title: "Nieuwe sectie", components: [] }];
 
   return (
     <footer className="fixed bottom-0 left-0 w-full bg-white shadow-t z-20">
-      {/* Fase-bar */}
+      {/* Fase-keuzebalk */}
       <div className="flex items-center justify-between px-4 py-2 border-b bg-gray-50">
         <div
           className="flex items-center space-x-2 overflow-x-auto scrollbar-hide"
@@ -72,7 +75,7 @@ export default function BottomNav({
         </button>
       </div>
 
-      {/* Sectie-bar */}
+      {/* Sectie-keuzebalk */}
       <div className="flex items-center px-4 py-2 bg-white">
         <button
           onClick={() => scrollContainer(sectieRef, "left")}
@@ -86,11 +89,12 @@ export default function BottomNav({
           className="flex items-center space-x-2 overflow-x-auto scrollbar-hide mx-2"
           ref={sectieRef}
         >
-          {sections.map((section, idx) => {
+          {displaySections.map((section, idx) => {
             const isActive = idx === activeSectionIndex;
             const label = section.title.trim()
               ? section.title
               : `Sectie ${idx + 1}`;
+            const isOnlySection = sections.length === 1;
             return (
               <div
                 key={idx}
@@ -104,28 +108,30 @@ export default function BottomNav({
                 <button
                   onClick={() => onSectionChange(idx)}
                   className="flex-1 text-left truncate"
+                  disabled={sections.length === 0}
                 >
                   {idx + 1}. {label}
                 </button>
                 <button
-                  onClick={() => {
-                    const title =
-                      prompt("Nieuwe sectienaam:", section.title) ?? "";
-                    if (title.trim()) onRenameSection(idx, title.trim());
-                  }}
+                  onClick={() => onEditSection(idx)}
                   className="p-1 text-gray-400 hover:text-gray-600"
                   title="Naam bewerken"
                 >
-                  ✎
+                  <Edit2 size={14} />
                 </button>
                 <button
                   onClick={() => {
-                    if (confirm(`Verwijder sectie "${label}"?`)) {
+                    if (!isOnlySection && confirm(`Verwijder sectie "${label}"?`)) {
                       onDeleteSection(idx);
                     }
                   }}
-                  className="p-1 text-red-500 hover:text-red-700"
-                  title="Sectie verwijderen"
+                  disabled={isOnlySection}
+                  className={`p-1 ${
+                    isOnlySection
+                      ? "cursor-not-allowed opacity-50"
+                      : "text-red-500 hover:text-red-700"
+                  }`}
+                  title={isOnlySection ? "Kan niet verwijderen" : "Sectie verwijderen"}
                 >
                   <Trash2 size={14} />
                 </button>
