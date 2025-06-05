@@ -1,10 +1,12 @@
 ﻿// File: server/Services/LiveSessionService.cs
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using server.Helpers;
 using server.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace server.Services
@@ -12,22 +14,34 @@ namespace server.Services
     public class LiveSessionService
     {
         private readonly IMongoCollection<LiveSession> _liveCol;
+        private readonly IMongoCollection<Tour> _tourCol;
 
         public LiveSessionService(IMongoClient client, IOptions<MongoSettings> opts)
         {
             var cfg = opts.Value;
             var db = client.GetDatabase(cfg.Database);
-            // Zorg dat de collectie-naam EXACT "livesessions" is
             _liveCol = db.GetCollection<LiveSession>("livesessions");
+            _tourCol = db.GetCollection<Tour>("tours");
         }
 
         /// <summary>
-        /// Start een nieuwe live-sessie (groep, tourId, creatorId).
-        /// Werpt InvalidOperationException als er al een actieve sessie is 
-        /// voor dezelfde groep & creator.
+        /// Start een nieuwe live-sessie en sla alle nodige 
+        /// fake-API-data + gekozen secties (met componenten) op.
         /// </summary>
-        public async Task<LiveSession> StartSessionAsync(string groep, string tourId, string creatorId)
+        public async Task<LiveSession> StartSessionAsync(
+            string verhuurderId,
+            string groep,
+            string verantwoordelijkeNaam,
+            string verantwoordelijkeTel,
+            string verantwoordelijkeMail,
+            DateTime aankomst,
+            DateTime vertrek,
+            string tourId,
+            string tourName,
+            string creatorId,
+            List<string> chosenSectionIds)
         {
+            // Controleer op bestaande actieve sessie voor dezelfde groep & creator
             var existingFilter = Builders<LiveSession>.Filter.And(
                 Builders<LiveSession>.Filter.Eq(x => x.Groep, groep),
                 Builders<LiveSession>.Filter.Eq(x => x.CreatorId, creatorId),
@@ -37,43 +51,80 @@ namespace server.Services
             if (already != null)
                 throw new InvalidOperationException($"Er is al een actieve sessie voor groep '{groep}'.");
 
+            // Haal tour op
+            var tour = await _tourCol.Find(x => x.Id == tourId).FirstOrDefaultAsync();
+            if (tour == null)
+                throw new KeyNotFoundException("Tour niet gevonden.");
+
+            // Bouw snapshot dictionary: per fase, lijst van SectionSnapshot
+            var snapshotFases = new Dictionary<string, List<SectionSnapshot>>();
+            void MapPhase(string faseNaam, List<Section> secties)
+            {
+                var selected = secties
+                    .Where(sec => chosenSectionIds.Contains(sec.Id))
+                    .Select(sec => new SectionSnapshot
+                    {
+                        Id = sec.Id,
+                        Naam = sec.Naam,
+                        Components = sec.Components
+                            .Select(c => new ComponentSnapshot
+                            {
+                                Id = c.Id,
+                                Type = c.Type,
+                                Props = c.Props.ToDictionary(
+                                    elem => elem.Name,
+                                    elem => BsonTypeMapper.MapToDotNetValue(elem.Value)
+                                )
+                            })
+                            .ToList()
+                    })
+                    .ToList();
+
+                if (selected.Any())
+                    snapshotFases[faseNaam] = selected;
+            }
+
+            MapPhase("voor", tour.Fases.Voor);
+            MapPhase("aankomst", tour.Fases.Aankomst);
+            MapPhase("terwijl", tour.Fases.Terwijl);
+            MapPhase("vertrek", tour.Fases.Vertrek);
+            MapPhase("na", tour.Fases.Na);
+
             var session = new LiveSession
             {
+                VerhuurderId = verhuurderId,
                 Groep = groep,
+                VerantwoordelijkeNaam = verantwoordelijkeNaam,
+                VerantwoordelijkeTel = verantwoordelijkeTel,
+                VerantwoordelijkeMail = verantwoordelijkeMail,
+                Aankomst = aankomst,
+                Vertrek = vertrek,
                 TourId = tourId,
+                TourName = tourName,
                 StartDate = DateTime.UtcNow,
                 IsActive = true,
-                CreatorId = creatorId
+                CreatorId = creatorId,
+                Fases = snapshotFases
             };
 
             await _liveCol.InsertOneAsync(session);
             return session;
         }
 
-        /// <summary>
-        /// Haal alle actieve sessies op voor deze creatorId.
-        /// </summary>
         public async Task<List<LiveSession>> GetActiveSessionsAsync(string creatorId)
         {
             var filter = Builders<LiveSession>.Filter.And(
                 Builders<LiveSession>.Filter.Eq(x => x.CreatorId, creatorId),
                 Builders<LiveSession>.Filter.Eq(x => x.IsActive, true)
             );
-            var list = await _liveCol.Find(filter).ToListAsync();
-            return list;
+            return await _liveCol.Find(filter).ToListAsync();
         }
 
-        /// <summary>
-        /// Haal één sessie op via id.
-        /// </summary>
         public async Task<LiveSession?> GetByIdAsync(string id)
         {
             return await _liveCol.Find(x => x.Id == id).FirstOrDefaultAsync();
         }
 
-        /// <summary>
-        /// Zet IsActive = false voor deze sessie (eigenaar).
-        /// </summary>
         public async Task EndSessionAsync(string id, string creatorId)
         {
             var filter = Builders<LiveSession>.Filter.And(

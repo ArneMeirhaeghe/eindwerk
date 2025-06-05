@@ -1,195 +1,180 @@
 // File: client/src/pages/PublicSessionPage.tsx
-import { useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
-import { getPublicSession, type LiveSessionPublicDto } from "../api/liveSession"
-import { getVerhuurperiodes, type VerhuurPeriode } from "../api/verhuur"
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { useEffect, useState, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { getPublicSession, type LiveSessionDto } from "../api/verhuur";
+import LoadingIndicator from "../components/LoadingIndicator";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import TitlePreview from "../components/previews/TitlePreview";
+import SubheadingPreview from "../components/previews/SubheadingPreview";
+import ParagraphPreview from "../components/previews/ParagraphPreview";
+import QuotePreview from "../components/previews/QuotePreview";
+import ButtonPreview from "../components/previews/ButtonPreview";
+import ChecklistPreview from "../components/previews/ChecklistPreview";
+import CheckboxListPreview from "../components/previews/CheckboxListPreview";
+import DividerPreview from "../components/previews/DividerPreview";
+import ImagePreview from "../components/previews/ImagePreview";
+import VideoPreview from "../components/previews/VideoPreview";
+import FilePreview from "../components/previews/FilePreview";
+import GridPreview from "../components/previews/GridPreview";
+
+const previewMap: Record<string, React.FC<{ p: any }>> = {
+  title: TitlePreview,
+  subheading: SubheadingPreview,
+  paragraph: ParagraphPreview,
+  quote: QuotePreview,
+  button: ButtonPreview,
+  checklist: ChecklistPreview,
+  "checkbox-list": CheckboxListPreview,
+  divider: DividerPreview,
+  image: ImagePreview,
+  video: VideoPreview,
+  file: FilePreview,
+  grid: GridPreview,
+};
+
+interface FlatSection {
+  phase: string;
+  section: {
+    id: string;
+    naam: string;
+    components: { id: string; type: string; props: Record<string, any> }[];
+  };
+}
 
 export default function PublicSessionPage() {
-  const { id } = useParams<{ id: string }>()
-  const [session, setSession] = useState<LiveSessionPublicDto | null>(null)
-  const [verhuurPeriode, setVerhuurPeriode] = useState<VerhuurPeriode | null>(null)
-  const [phaseKeys, setPhaseKeys] = useState<string[]>([])
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [session, setSession] = useState<LiveSessionDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [flatSections, setFlatSections] = useState<FlatSection[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Haal publieke sessie en verhuurperiode op voor header
+  // Fetch session or redirect if invalid
   useEffect(() => {
-    if (!id) return
-    // Eerste: sessie ophalen
-    getPublicSession(id)
-      .then(data => {
-        setSession(data)
-        const keys = Object.keys(data.tour.fases)
-        setPhaseKeys(keys)
-        // Na sessie: huurperiode ophalen op basis van groepnaam
-        getVerhuurperiodes()
-          .then(periodes => {
-            const gevonden = periodes.find(v => v.groep === data.groep)
-            setVerhuurPeriode(gevonden || null)
-            setLoading(false)
-          })
-          .catch(() => {
-            setVerhuurPeriode(null)
-            setLoading(false)
-          })
-      })
-      .catch(() => {
-        setError("Fout bij laden van sessie.")
-        setLoading(false)
-      })
-  }, [id])
+    const fetchSession = async () => {
+      setLoading(true);
+      try {
+        if (!id) {
+          navigate("/public");
+          return;
+        }
+        const data = await getPublicSession(id);
+        setSession(data);
+      } catch {
+        navigate("/public");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSession();
+  }, [id, navigate]);
 
-  const prevPhase = () => {
-    setCurrentIndex(i => (i > 0 ? i - 1 : i))
-  }
+  // Once session is loaded, flatten phases → sections
+  useEffect(() => {
+    if (!session) return;
+    const list: FlatSection[] = [];
+    Object.entries(session.fases).forEach(([phaseName, sections]) => {
+      sections.forEach((sec) => {
+        list.push({
+          phase: phaseName,
+          section: {
+            id: sec.id,
+            naam: sec.naam,
+            components: sec.components.map((c) => ({
+              id: c.id,
+              type: c.type,
+              props: c.props,
+            })),
+          },
+        });
+      });
+    });
+    setFlatSections(list);
+    setCurrentIndex(0);
+  }, [session]);
 
-  const nextPhase = () => {
-    setCurrentIndex(i =>
-      session && phaseKeys.length
-        ? i < phaseKeys.length - 1
-          ? i + 1
-          : i
-        : i
-    )
-  }
+  // Navigation handlers
+  const prev = () => {
+    setCurrentIndex((i) => Math.max(i - 1, 0));
+  };
+  const next = () => {
+    setCurrentIndex((i) => Math.min(i + 1, flatSections.length - 1));
+  };
 
-  const renderBlock = (block: any) => {
-    const { type, props } = block
-    switch (type) {
-      case "image":
-        return (
-          <img
-            key={block.id}
-            src={props.url}
-            alt={props.alt || ""}
-            className="w-full h-auto my-4 rounded-lg shadow-md"
-            style={{ objectFit: props.objectFit || "cover" }}
-          />
-        )
-      case "file":
-        return (
-          <a
-            key={block.id}
-            href={props.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block my-4 p-4 bg-gray-100 rounded-md hover:bg-gray-200"
-          >
-            {props.filename || "Download bestand"}
-          </a>
-        )
-      case "title":
-        return (
-          <h2
-            key={block.id}
-            className="text-xl font-semibold my-2"
-            style={{
-              fontFamily: props.fontFamily,
-              fontSize: props.fontSize,
-              color: props.color,
-            }}
-          >
-            {props.text}
-          </h2>
-        )
-      case "paragraph":
-        return (
-          <p
-            key={block.id}
-            className="text-base my-2"
-            style={{
-              fontFamily: props.fontFamily,
-              fontSize: props.fontSize,
-              color: props.color,
-              lineHeight: props.lineHeight,
-            }}
-          >
-            {props.text}
-          </p>
-        )
-      default:
-        return null
-    }
-  }
+  // Current flat section
+  const current = useMemo(() => {
+    if (flatSections.length === 0) return null;
+    return flatSections[currentIndex];
+  }, [flatSections, currentIndex]);
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-white">
-        <p className="text-gray-500">Laden...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <LoadingIndicator />
       </div>
-    )
+    );
   }
 
-  if (error || !session) {
-    return (
-      <div className="flex flex-col justify-center items-center h-screen bg-white">
-        <p className="text-red-500">{error || "Sessie niet gevonden."}</p>
-      </div>
-    )
+  if (!session || !current) {
+    return null;
   }
-
-  const currentPhaseKey = phaseKeys[currentIndex]
-  const blocks = session.tour.fases[currentPhaseKey] || []
 
   return (
-    <div className="flex flex-col h-screen bg-white">
-      {/* Header met huurgroep en periode */}
-      <header className="p-4 bg-blue-600 text-white">
-        <h1 className="text-lg font-bold">{session.groep}</h1>
-        {verhuurPeriode && (
-          <p className="text-sm">
-            {new Date(verhuurPeriode.aankomst).toLocaleDateString("nl-BE", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            })}{" "}
-            –{" "}
-            {new Date(verhuurPeriode.vertrek).toLocaleDateString("nl-BE", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            })}
-          </p>
-        )}
-      </header>
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4">
+      {/* Mobile container (max width ~420px) */}
+      <div
+        className="relative bg-white rounded-2xl shadow-lg w-full max-w-xs flex flex-col"
+        style={{ height: "90vh" }}
+      >
+        {/* Header: Phase & Section Name */}
+        <div className="bg-gradient-to-r from-blue-600 to-teal-400 rounded-t-2xl p-4 flex flex-col items-center">
+          <h2 className="text-xs text-white uppercase tracking-wide">{current.phase}</h2>
+          <h1 className="text-lg font-semibold text-white mt-1 text-center">
+            {current.section.naam}
+          </h1>
+        </div>
 
-      {/* Hoofdcontent: alleen fasen */}
-      <main className="flex-1 overflow-y-auto p-4">
-        {blocks.length === 0 ? (
-          <p className="text-gray-500">Geen inhoud in deze fase.</p>
-        ) : (
-          blocks.map(block => renderBlock(block))
-        )}
-      </main>
+        {/* Components Container */}
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          {current.section.components.map((comp) => {
+            const PreviewComponent = previewMap[comp.type];
+            return (
+              <div key={comp.id} className="mb-6 last:mb-0">
+                {PreviewComponent && <PreviewComponent p={comp.props} />}
+              </div>
+            );
+          })}
+        </div>
 
-      {/* Pijltjes fixed onderaan */}
-      <div className="fixed bottom-0 left-0 w-full bg-white border-t p-2 flex items-center justify-between">
-        <button
-          onClick={prevPhase}
-          disabled={currentIndex === 0}
-          className={`p-2 rounded-full ${
-            currentIndex === 0 ? "text-gray-300" : "text-blue-600"
-          }`}
-        >
-          <ChevronLeftIcon className="h-6 w-6" />
-        </button>
-        <span className="text-base font-medium capitalize">
-          {currentPhaseKey}
-        </span>
-        <button
-          onClick={nextPhase}
-          disabled={currentIndex === phaseKeys.length - 1}
-          className={`p-2 rounded-full ${
-            currentIndex === phaseKeys.length - 1
-              ? "text-gray-300"
-              : "text-blue-600"
-          }`}
-        >
-          <ChevronRightIcon className="h-6 w-6" />
-        </button>
+        {/* Footer: Navigation */}
+        <div className="flex justify-between items-center p-3 bg-gray-100 rounded-b-2xl">
+          <button
+            onClick={prev}
+            disabled={currentIndex === 0}
+            className={`p-2 rounded-full transition ${
+              currentIndex === 0
+                ? "cursor-not-allowed opacity-50"
+                : "bg-white hover:bg-gray-200"
+            }`}
+          >
+            <ChevronLeft size={20} className="text-gray-600" />
+          </button>
+          <span className="text-sm font-medium text-gray-700">
+            {currentIndex + 1} / {flatSections.length}
+          </span>
+          <button
+            onClick={next}
+            disabled={currentIndex === flatSections.length - 1}
+            className={`p-2 rounded-full transition ${
+              currentIndex === flatSections.length - 1
+                ? "cursor-not-allowed opacity-50"
+                : "bg-white hover:bg-gray-200"
+            }`}
+          >
+            <ChevronRight size={20} className="text-gray-600" />
+          </button>
+        </div>
       </div>
     </div>
-  )
+  );
 }

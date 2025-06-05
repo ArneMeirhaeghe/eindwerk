@@ -1,15 +1,15 @@
 ﻿// File: server/Controllers/ToursController.cs
-
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
+using server.Helpers;
 using server.Models;
 using server.Services;
-using static server.Controllers.LiveSessionController;
+using MongoDB.Bson;                          // Voeg dit toe
+
 
 namespace server.Controllers
 {
@@ -24,7 +24,7 @@ namespace server.Controllers
             _tourService = tourService;
         }
 
-        // ----- GET api/tours -----  
+        // ----- GET api/tours -----
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetAllTours()
         {
@@ -37,14 +37,14 @@ namespace server.Controllers
             return Ok(lijst);
         }
 
-        // ----- GET api/tours/{id} -----  
+        // ----- GET api/tours/{id} -----
         [HttpGet("{id:length(24)}")]
         public async Task<ActionResult<object>> GetTour(string id)
         {
             var tour = await _tourService.GetByIdAsync(id);
             if (tour == null) return NotFound();
 
-            var fasesDict = MapFasesToDto(tour.Fases);
+            var fasesDict = TourMapper.MapFasesToDto(tour.Fases);
             var response = new
             {
                 id = tour.Id,
@@ -54,7 +54,7 @@ namespace server.Controllers
             return Ok(response);
         }
 
-        // ----- POST api/tours -----  
+        // ----- POST api/tours -----
         [HttpPost]
         [Authorize]
         public async Task<ActionResult<object>> CreateTour([FromBody] CreateTourDto dto)
@@ -75,7 +75,7 @@ namespace server.Controllers
 
             await _tourService.CreateTourAsync(tour);
 
-            var fasesDict = MapFasesToDto(tour.Fases);
+            var fasesDict = TourMapper.MapFasesToDto(tour.Fases);
             var response = new
             {
                 id = tour.Id,
@@ -86,7 +86,7 @@ namespace server.Controllers
             return CreatedAtAction(nameof(GetTour), new { id = tour.Id }, response);
         }
 
-        // ----- PUT api/tours/{id} -----  
+        // ----- PUT api/tours/{id} -----
         [HttpPut("{id:length(24)}")]
         [Authorize]
         public async Task<IActionResult> UpdateTour(string id, [FromBody] UpdateTourDto dto)
@@ -106,7 +106,7 @@ namespace server.Controllers
             return NoContent();
         }
 
-        // ----- DELETE api/tours/{id} -----  
+        // ----- DELETE api/tours/{id} -----
         [HttpDelete("{id:length(24)}")]
         [Authorize]
         public async Task<IActionResult> DeleteTour(string id)
@@ -122,13 +122,14 @@ namespace server.Controllers
             return NoContent();
         }
 
-        // ----- SECTION CRUD binnen een fase -----  
+        // ----- SECTION CRUD binnen een fase -----
         [HttpPost("{tourId:length(24)}/fases/{fase}/sections")]
         [Authorize]
         public async Task<ActionResult<object>> AddSection(string tourId, string fase, [FromBody] CreateSectionDto dto)
         {
             var tour = await _tourService.GetByIdAsync(tourId);
             if (tour == null) return NotFound();
+
             var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
                 return Forbid();
@@ -151,6 +152,7 @@ namespace server.Controllers
         {
             var tour = await _tourService.GetByIdAsync(tourId);
             if (tour == null) return NotFound();
+
             var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
                 return Forbid();
@@ -166,6 +168,7 @@ namespace server.Controllers
         {
             var tour = await _tourService.GetByIdAsync(tourId);
             if (tour == null) return NotFound();
+
             var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
                 return Forbid();
@@ -175,13 +178,18 @@ namespace server.Controllers
             return NoContent();
         }
 
-        // ----- COMPONENT CRUD binnen een SECTION -----  
+        // ----- COMPONENT CRUD binnen een SECTION -----
         [HttpPost("{tourId:length(24)}/fases/{fase}/sections/{sectionId}/components")]
         [Authorize]
-        public async Task<ActionResult<object>> AddComponent(string tourId, string fase, string sectionId, [FromBody] CreateComponentDto dto)
+        public async Task<ActionResult<object>> AddComponent(
+            string tourId,
+            string fase,
+            string sectionId,
+            [FromBody] CreateComponentDto dto)
         {
             var tour = await _tourService.GetByIdAsync(tourId);
             if (tour == null) return NotFound();
+
             var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
                 return Forbid();
@@ -193,13 +201,23 @@ namespace server.Controllers
             };
             var added = await _tourService.AddComponentAsync(tourId, fase, sectionId, component);
 
+            // Converteer BsonDocument (added.Props) naar Dictionary<string, object>
+            var propsDict = added.Props
+                .ToDictionary(
+                    elem => elem.Name,
+                    elem => BsonTypeMapper.MapToDotNetValue(elem.Value)
+                );
+
             var response = new
             {
                 id = added.Id,
                 type = added.Type,
-                props = (Dictionary<string, object>)BsonTypeMapper.MapToDotNetValue(added.Props)
+                props = propsDict
             };
-            return Created($"/api/tours/{tourId}/fases/{fase}/sections/{sectionId}/components/{added.Id}", response);
+            return Created(
+                $"/api/tours/{tourId}/fases/{fase}/sections/{sectionId}/components/{added.Id}",
+                response
+            );
         }
 
         [HttpPut("{tourId:length(24)}/fases/{fase}/sections/{sectionId}/components/{componentId}")]
@@ -208,11 +226,12 @@ namespace server.Controllers
         {
             var tour = await _tourService.GetByIdAsync(tourId);
             if (tour == null) return NotFound();
+
             var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
                 return Forbid();
 
-            var nieuweProps = BsonDocument.Parse(dto.PropsJson);
+            var nieuweProps = MongoDB.Bson.BsonDocument.Parse(dto.PropsJson);
             var success = await _tourService.UpdateComponentAsync(tourId, fase, sectionId, componentId, nieuweProps, dto.Type);
             if (!success) return NotFound();
             return NoContent();
@@ -224,6 +243,7 @@ namespace server.Controllers
         {
             var tour = await _tourService.GetByIdAsync(tourId);
             if (tour == null) return NotFound();
+
             var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
                 return Forbid();
@@ -231,38 +251,6 @@ namespace server.Controllers
             var success = await _tourService.DeleteComponentAsync(tourId, fase, sectionId, componentId);
             if (!success) return NotFound();
             return NoContent();
-        }
-
-        // **HULPFUNCTIES & DTO’s**
-
-        private static Dictionary<string, List<SectionDto>> MapFasesToDto(Fases fases)
-        {
-            var dict = new Dictionary<string, List<SectionDto>>();
-
-            void Map(string naam, List<Section> secties)
-            {
-                var sectionDtos = secties.Select(sec => new SectionDto
-                {
-                    Id = sec.Id,
-                    Naam = sec.Naam,
-                    Components = sec.Components.Select(comp => new ComponentDto
-                    {
-                        Id = comp.Id,
-                        Type = comp.Type,
-                        Props = (Dictionary<string, object>)BsonTypeMapper.MapToDotNetValue(comp.Props)
-                    }).ToList()
-                }).ToList();
-
-                dict.Add(naam, sectionDtos);
-            }
-
-            Map("voor", fases.Voor);
-            Map("aankomst", fases.Aankomst);
-            Map("terwijl", fases.Terwijl);
-            Map("vertrek", fases.Vertrek);
-            Map("na", fases.Na);
-
-            return dict;
         }
 
         public class CreateTourDto

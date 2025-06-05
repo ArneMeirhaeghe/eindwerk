@@ -1,46 +1,63 @@
-// File: src/api/tours.ts
+// File: client/src/api/tours.ts
 import API from "./axios";
 
-// DTO voor tourlijst (id + naamLocatie)
+// -------------------------------------------------------------
+// Typedefs / DTO’s
+// -------------------------------------------------------------
+
+// Wat de lijst-endpoint terugstuurt: alleen id + naamLocatie
 export interface TourListDto {
   id: string;
   naamLocatie: string;
 }
 
-// DTO voor component in een section
+// Een component in een section
 export interface ComponentDto {
   id: string;
   type: string;
-  props: any;
+  props: Record<string, any>;
 }
 
-// DTO voor section in een fase
+// Een section binnen een fase
 export interface SectionDto {
   id: string;
-  naam: string;
-  components: ComponentDto[];
+  naam: string;               // “naam” komt uit de API
+  components: ComponentDto[];  // lijst van componenten per section
 }
 
-// Volledige Tour met alle fases en sections
+// Een Tour met alle 5 fases, waarbij elke fase een array van SectionDto heeft
 export interface Tour {
   id: string;
   naamLocatie: string;
-  fases: Record<string, SectionDto[]>;
+  fases: Record<string, SectionDto[]>; // bv. { voor: SectionDto[], aankomst: SectionDto[], … }
 }
 
-// Haal lijst van tours op
+// -------------------------------------------------------------
+// 1) Bestaande Tour‐endpoints (name, lijst, get-by-id, delete)
+// -------------------------------------------------------------
+
+/**
+ * GET /api/tours  
+ * Haal lijst op (id + naamLocatie)
+ */
 export const getTours = async (): Promise<TourListDto[]> => {
   const res = await API.get<TourListDto[]>("/tours");
   return res.data;
 };
 
-// Haal één tour op incl. nested fases → sections → components
+/**
+ * GET /api/tours/{id}  
+ * Haal één tour incl. nested fases → sections → components
+ */
 export const getTour = async (id: string): Promise<Tour> => {
   const res = await API.get<Tour>(`/tours/${id}`);
   return res.data;
 };
 
-// Maak nieuwe tour aan; fases starten leeg
+/**
+ * POST /api/tours  
+ * Maak nieuwe tour aan (alle fases beginnen automatisch leeg)
+ */
 export const createTour = async (
   naamLocatie: string
 ): Promise<TourListDto> => {
@@ -48,12 +65,20 @@ export const createTour = async (
   return res.data;
 };
 
-// Verwijder tour
+/**
+ * DELETE /api/tours/{id}  
+ * Verwijder tour
+ */
 export const deleteTour = async (id: string): Promise<void> => {
   await API.delete(`/tours/${id}`);
 };
 
-// Update alleen de naam van een tour
+/**
+ * PUT /api/tours/{id}  
+ * Update alleen de naam (naamLocatie).  
+ * Let op: de backend‐controller (UpdateTour) kijkt alleen naar naamLocatie, 
+ * je kunt fases hier dus niet meer doorsturen.
+ */
 export const updateTourNaam = async (
   id: string,
   naamLocatie: string
@@ -61,7 +86,16 @@ export const updateTourNaam = async (
   await API.put(`/tours/${id}`, { naamLocatie });
 };
 
-// Voeg nieuwe section toe in fase
+// -------------------------------------------------------------
+// 2) Section-CRUD binnen fase “voor”, “aankomst”, etc.
+// -------------------------------------------------------------
+
+/**
+ * POST /api/tours/{tourId}/fases/{fase}/sections  
+ * Voeg een nieuwe Section toe onder fase ‘fase’ (bv. “voor”, “aankomst”, …).  
+ * BODY: { naam: string }  
+ * RETURN: SectionDto (met lege components[])
+ */
 export const addSection = async (
   tourId: string,
   fase: string,
@@ -74,7 +108,10 @@ export const addSection = async (
   return res.data;
 };
 
-// Hernoem een section
+/**
+ * PUT /api/tours/{tourId}/fases/{fase}/sections/{sectionId}  
+ * Pas de naam van een section aan. BODY: { naam: string }
+ */
 export const updateSection = async (
   tourId: string,
   fase: string,
@@ -87,7 +124,10 @@ export const updateSection = async (
   );
 };
 
-// Verwijder een section inclusief componenten
+/**
+ * DELETE /api/tours/{tourId}/fases/{fase}/sections/{sectionId}  
+ * Verwijder een section (incl. alle componenten daarin).
+ */
 export const deleteSection = async (
   tourId: string,
   fase: string,
@@ -98,13 +138,22 @@ export const deleteSection = async (
   );
 };
 
-// Voeg component toe in section
+// -------------------------------------------------------------
+// 3) Component-CRUD binnen een section
+// -------------------------------------------------------------
+
+/**
+ * POST /api/tours/{tourId}/fases/{fase}/sections/{sectionId}/components  
+ * Voeg een component toe in een section.  
+ * BODY: { type, propsJson }  
+ * RETURN: ComponentDto (met gegeneerde id, type, props)
+ */
 export const addComponent = async (
   tourId: string,
   fase: string,
   sectionId: string,
   type: string,
-  props: any
+  props: Record<string, any>
 ): Promise<ComponentDto> => {
   const propsJson = JSON.stringify(props);
   const res = await API.post<ComponentDto>(
@@ -114,14 +163,18 @@ export const addComponent = async (
   return res.data;
 };
 
-// Update component binnen section
+/**
+ * PUT /api/tours/{tourId}/fases/{fase}/sections/{sectionId}/components/{componentId}  
+ * Update van een component binnen een section.  
+ * BODY: { type, propsJson }
+ */
 export const updateComponent = async (
   tourId: string,
   fase: string,
   sectionId: string,
   componentId: string,
   type: string,
-  props: any
+  props: Record<string, any>
 ): Promise<void> => {
   const propsJson = JSON.stringify(props);
   await API.put(
@@ -130,7 +183,10 @@ export const updateComponent = async (
   );
 };
 
-// Verwijder component uit section
+/**
+ * DELETE /api/tours/{tourId}/fases/{fase}/sections/{sectionId}/components/{componentId}  
+ * Verwijder één component uit een section
+ */
 export const deleteComponent = async (
   tourId: string,
   fase: string,

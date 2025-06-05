@@ -16,6 +16,7 @@ import TestUploadPage from "../pages/TestUploadPage"
 import UploadZone from "../pages/UploadZone"
 import InventoryPage from "../pages/InventoryPage"
 import PublicSessionPage from "../pages/PublicSessionPage" // Route voor publieke live-sessie
+import PublicEntryPage from "../pages/PublicEntryPage"
 
 function AppRoutes() {
   return (
@@ -24,8 +25,7 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* Publieke live-sessie (geen autorisatie) */}
-      <Route path="/public/:id" element={<PublicSessionPage />} />
+
 
       {/* Dashboard */}
       <Route
@@ -77,23 +77,10 @@ function AppRoutes() {
         }
       />
 
-      {/* Groep detail / sessie */}
-      <Route
-        path="/groep/:groepId"
-        element={
-          <PrivateRoute>
-            <GroepDetailPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/sessie/:id"
-        element={
-          <PrivateRoute>
-            <SessiePage />
-          </PrivateRoute>
-        }
-      />
+      {/* Publieke entry-pagina voor codes */}
+        <Route path="/public" element={<PublicEntryPage />} />
+        {/* Publieke sessiepagina heeft parameter */}
+        <Route path="/public/:id" element={<PublicSessionPage />} />
 
       {/* Admin */}
       <Route
