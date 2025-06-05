@@ -196,6 +196,27 @@ export default function VerhuurPage() {
     }
   };
 
+  // Copy full session ID
+  const copyCode = async (sessionId: string) => {
+    try {
+      await navigator.clipboard.writeText(sessionId);
+      alert("Sessiecode gekopieerd!");
+    } catch {
+      alert("Kon code niet kopiëren.");
+    }
+  };
+
+  // Copy full URL
+  const copyLink = async (sessionId: string) => {
+    const fullUrl = `${window.location.origin}/public/${sessionId}`;
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      alert("Link gekopieerd!");
+    } catch {
+      alert("Kon link niet kopiëren.");
+    }
+  };
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-8">
       <h1 className="text-3xl font-bold text-center mb-4">Verhuur Overzicht</h1>
@@ -335,8 +356,13 @@ export default function VerhuurPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                       {s.tourName}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
-                      {s.id.slice(-6).toUpperCase()}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => copyCode(s.id)}
+                        className="px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition"
+                      >
+                        Copy Code
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                       {new Date(s.startDate).toLocaleString()}
@@ -352,10 +378,10 @@ export default function VerhuurPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                       <button
-                        onClick={() => navigate(`/public/${s.id}`)}
+                        onClick={() => copyLink(s.id)}
                         className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
                       >
-                        Bekijk
+                        Kopieer Link
                       </button>
                       {s.isActive && (
                         <button
