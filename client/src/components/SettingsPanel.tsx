@@ -1,4 +1,4 @@
-// File: src/components/SettingsPanel.tsx
+// File: client/src/components/SettingsPanel.tsx
 import type { ComponentItem } from "../types/types";
 import TitleSettings from "./settings/TitleSettings";
 import SubheadingSettings from "./settings/SubheadingSettings";
@@ -13,6 +13,7 @@ import VideoSettings from "./settings/VideoSettings";
 import FileSettings from "./settings/FileSettings";
 import GridSettings from "./settings/GridSettings";
 import type { FC } from "react";
+import UploadZoneSettings from "./settings/UploadZoneSettings";
 
 interface Props {
   comp: ComponentItem | null;
@@ -56,6 +57,8 @@ const SettingsPanel: FC<Props> = ({ comp, onUpdate }) => {
             return <FileSettings comp={comp} onUpdate={onUpdate} />;
           case "grid":
             return <GridSettings comp={comp} onUpdate={onUpdate} />;
+          case "uploadzone":
+            return <UploadZoneSettings comp={comp} onUpdate={onUpdate} />;
           default:
             return (
               <div className="text-red-500">

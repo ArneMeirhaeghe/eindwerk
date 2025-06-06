@@ -1,4 +1,4 @@
-// File: src/types/types.ts
+// File: client/src/types/types.ts
 export type ComponentType =
   | "title"
   | "subheading"
@@ -11,7 +11,8 @@ export type ComponentType =
   | "checklist"
   | "divider"
   | "checkbox-list"
-  | "grid";
+  | "grid"
+  | "uploadzone"; // toegevoegd
 
 // Item voor checkbox-list
 export interface CheckboxListItem {
@@ -140,7 +141,12 @@ export interface FileProps {
   showName: boolean;
 }
 
-// Union van alle possible component props
+// UploadZone component props
+export interface UploadZoneProps {
+  label: string;
+}
+
+// Union van alle mogelijke component props
 export type ComponentProps =
   | TitleProps
   | SubheadingProps
@@ -153,7 +159,8 @@ export type ComponentProps =
   | DividerProps
   | CheckboxListProps
   | GridProps
-  | FileProps;
+  | FileProps
+  | UploadZoneProps; // toegevoegd
 
 // Eén component-item in app
 export interface ComponentItem {

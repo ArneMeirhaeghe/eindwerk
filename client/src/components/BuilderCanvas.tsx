@@ -1,4 +1,4 @@
-// File: src/components/BuilderCanvas.tsx
+// File: client/src/components/BuilderCanvas.tsx
 import React from "react";
 import type { ComponentItem } from "../types/types";
 import type { DropResult } from "@hello-pangea/dnd";
@@ -14,8 +14,9 @@ import CheckboxListPreview from "./previews/CheckboxListPreview";
 import DividerPreview from "./previews/DividerPreview";
 import ImagePreview from "./previews/ImagePreview";
 import VideoPreview from "./previews/VideoPreview";
-import GridPreview from "./previews/GridPreview";
 import FilePreview from "./previews/FilePreview";
+import GridPreview from "./previews/GridPreview";
+import UploadZonePreview from "./previews/UploadZonePreview";
 
 interface Props {
   components: ComponentItem[];
@@ -27,7 +28,6 @@ interface Props {
   onSectionTitleClick: () => void;
 }
 
-// Mapping van component-type naar corresponderende preview-component
 const previewMap: Record<string, React.FC<{ p: any }>> = {
   title: TitlePreview,
   subheading: SubheadingPreview,
@@ -41,6 +41,7 @@ const previewMap: Record<string, React.FC<{ p: any }>> = {
   video: VideoPreview,
   file: FilePreview,
   grid: GridPreview,
+  uploadzone: UploadZonePreview,
 };
 
 export default function BuilderCanvas({
@@ -63,12 +64,11 @@ export default function BuilderCanvas({
         backgroundPosition: "center",
       }}
     >
-      {/* Binnenin telefoonsjabloon: marges om content te tonen */}
       <div
         className="absolute inset-0 overflow-auto p-4"
         style={{ top: 120, bottom: 120, left: 40, right: 40 }}
       >
-        {/* Sectietitel (klik opent modal, niet direct editable) */}
+        {/* Sectietitel (klik opent modal) */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -89,7 +89,7 @@ export default function BuilderCanvas({
                 className="flex flex-col items-center space-y-4 w-full"
               >
                 {components.map((comp, i) => {
-                  const Preview = previewMap[comp.type];
+                  const PreviewComponent = previewMap[comp.type];
                   return (
                     <Draggable key={comp.id} draggableId={comp.id} index={i}>
                       {(prov) => (
@@ -107,7 +107,7 @@ export default function BuilderCanvas({
                               if (!preview) onSelect(comp);
                             }}
                           >
-                            {Preview && <Preview p={comp.props} />}
+                            {PreviewComponent && <PreviewComponent p={comp.props} />}
                           </div>
                           {!preview && (
                             <div className="flex flex-col space-y-2 p-2">

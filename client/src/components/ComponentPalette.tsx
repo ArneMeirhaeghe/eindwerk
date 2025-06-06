@@ -1,5 +1,6 @@
-// File: src/components/ComponentPalette.tsx
+// File: client/src/components/ComponentPalette.tsx
 import type { ComponentType } from "../types/types";
+import { CloudUpload } from "lucide-react";
 
 interface Props {
   onAdd: (type: ComponentType) => void;
@@ -19,7 +20,24 @@ export default function ComponentPalette({ onAdd }: Props) {
     "divider",
     "checkbox-list",
     "grid",
+    "uploadzone",
   ];
+
+  const labelMap: Record<ComponentType, string> = {
+    title: "Titel",
+    subheading: "Subkop",
+    paragraph: "Paragraaf",
+    quote: "Quote",
+    image: "Afbeelding",
+    video: "Video",
+    file: "Bestand",
+    button: "Knop",
+    checklist: "Checklist",
+    divider: "Scheiding",
+    "checkbox-list": "Checkbox-lijst",
+    grid: "Grid",
+    uploadzone: "Upload Foto",
+  };
 
   return (
     <aside className="w-60 border-r p-4 overflow-auto">
@@ -29,14 +47,10 @@ export default function ComponentPalette({ onAdd }: Props) {
           <button
             key={type}
             onClick={() => onAdd(type)}
-            className="text-left px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 transition"
+            className="text-left px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 transition flex items-center justify-between"
           >
-            +{" "}
-            {type === "checkbox-list"
-              ? "Checkbox lijst"
-              : type === "grid"
-              ? "Grid"
-              : type}
+            + {labelMap[type]}
+            {type === "uploadzone" && <CloudUpload size={16} />}
           </button>
         ))}
       </div>

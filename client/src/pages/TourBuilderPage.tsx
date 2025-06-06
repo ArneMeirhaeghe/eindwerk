@@ -1,4 +1,4 @@
-// File: src/pages/TourBuilderPage.tsx
+// File: client/src/pages/TourBuilderPage.tsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -67,11 +67,8 @@ export default function TourBuilderPage() {
         setNaamLocatie(tour.naamLocatie);
 
         const newState: FaseSections = {} as FaseSections;
-
         for (const f of fasesList) {
           const apiSections: SectionDto[] = tour.fases?.[f] ?? [];
-
-          // Als deze fase geen sections heeft, maak er één aan in DB
           if (apiSections.length === 0) {
             const created = await addSection(tourId, f, "Nieuwe sectie");
             newState[f] = [
@@ -82,7 +79,6 @@ export default function TourBuilderPage() {
               },
             ];
           } else {
-            // Map bestaande sections naar lokale format
             newState[f] = apiSections.map((secDto) => ({
               id: secDto.id,
               title: secDto.naam,
@@ -94,7 +90,6 @@ export default function TourBuilderPage() {
             }));
           }
         }
-
         setSectionsByFase(newState);
         setActiveSectionIndex(0);
       } catch {
@@ -108,22 +103,33 @@ export default function TourBuilderPage() {
     loadTour(id);
   }, [id, navigate]);
 
+  // Zorg dat er altijd minstens één section is in actieve fase
+  useEffect(() => {
+    const currentSections = sectionsByFase[activeFase] || [];
+    if (currentSections.length === 0 && id) {
+      (async () => {
+        try {
+          const created = await addSection(id, activeFase, "Nieuwe sectie");
+          const newSection: Section = {
+            id: created.id,
+            title: created.naam,
+            components: [],
+          };
+          setSectionsByFase((prev) => ({
+            ...prev,
+            [activeFase]: [newSection],
+          }));
+          setActiveSectionIndex(0);
+        } catch {
+          toast.error("Sectie initialisatie mislukt");
+        }
+      })();
+    }
+  }, [sectionsByFase, activeFase, id]);
+
   if (loading) return <div className="p-4 animate-pulse">Laden…</div>;
 
-  // Zorg dat er altijd minstens één section is in actieve fase
   const currentFaseSections = sectionsByFase[activeFase]!;
-  if (currentFaseSections.length === 0) {
-    currentFaseSections.push({
-      id: uuidv4(),
-      title: "Nieuwe sectie",
-      components: [],
-    });
-    setSectionsByFase((prev) => ({
-      ...prev,
-      [activeFase]: currentFaseSections,
-    }));
-  }
-
   const current =
     currentFaseSections[activeSectionIndex] ?? currentFaseSections[0];
 
@@ -288,6 +294,8 @@ export default function TourBuilderPage() {
             shadow: false,
             objectFit: "cover" as const,
           }
+        : type === "uploadzone"
+        ? { label: "Upload Foto" }
         : baseText;
 
     const sec = currentFaseSections[activeSectionIndex];
@@ -420,9 +428,8 @@ export default function TourBuilderPage() {
 
   // Schakel previewmode in
   if (previewMode) {
-    const sectionsForActiveFase = sectionsByFase[activeFase];
-       return (
-     <div className="relative h-full bg-gray-100">
+    return (
+      <div className="relative h-full bg-gray-100">
         <div className="p-4">
           <button
             onClick={async () => {
@@ -434,7 +441,6 @@ export default function TourBuilderPage() {
             Terug naar bewerken
           </button>
           <LivePreview fases={fasesList} sectionsByFase={sectionsByFase} />
-
         </div>
       </div>
     );
@@ -457,7 +463,6 @@ export default function TourBuilderPage() {
 
         {/* Knop Voorbeeld */}
         <div className="absolute top-4 right-4 space-x-2">
-         
           <button
             onClick={async () => {
               await savePreviousComponent();
@@ -474,12 +479,7 @@ export default function TourBuilderPage() {
           sectionsByFase={sectionsByFase}
           activeFase={activeFase}
           activeSectionIndex={activeSectionIndex}
-          onFaseChange={async (f) => {
-            await savePreviousComponent();
-            setSelectedComp(null);
-            setActiveFase(f);
-            setActiveSectionIndex(0);
-          }}
+          onFaseChange={onFaseChange}
           onSectionChange={async (i) => {
             await savePreviousComponent();
             setActiveSectionIndex(i);
