@@ -1,8 +1,11 @@
-// /src/components/settings/VideoSettings.tsx
+// File: src/components/settings/VideoSettings.tsx
+
 import React, { useState, useEffect, type FC, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 import type { ComponentItem, VideoProps } from "../../types/types";
-import { getUploads, uploadFile, deleteUpload, type MediaResponse } from "../../api/uploads";
+import type { MediaResponse } from "../../api/media/types";
+import { deleteUpload, getUploads, uploadFile } from "../../api/media";
+
 
 interface Props {
   comp: ComponentItem;
@@ -32,11 +35,11 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
   const upd = (key: keyof VideoProps, value: unknown) =>
     onUpdate({ ...comp, props: { ...p, [key]: value } });
 
-  // fetch only mp4 videos
+  // Fetch only mp4 videos
   const fetchVideos = async () => {
     try {
       const all = await getUploads();
-      setUploads(all.filter(m => m.contentType.startsWith("video/")));
+      setUploads(all.filter((m) => m.contentType.startsWith("video/")));
     } catch {
       toast.error("Media laden mislukt");
     }
@@ -89,7 +92,12 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
     <div className="space-y-4">
       {/* Upload Zone */}
       <div className="p-4 border-2 border-dashed border-gray-400 rounded">
-        <input type="file" accept="video/mp4" onChange={handleFileChange} className="w-full" />
+        <input
+          type="file"
+          accept="video/mp4"
+          onChange={handleFileChange}
+          className="w-full"
+        />
         {file && (
           <button
             onClick={handleUpload}
@@ -105,7 +113,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
       <div>
         <div className="block mb-1 font-semibold">Beschikbare video’s</div>
         <div className="grid grid-cols-2 gap-2 max-h-40 overflow-auto">
-          {uploads.map(item => (
+          {uploads.map((item) => (
             <div key={item.id} className="relative">
               <video
                 src={item.url}
@@ -156,7 +164,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
           <input
             type="text"
             value={p.alt}
-            onChange={e => upd("alt", e.target.value)}
+            onChange={(e) => upd("alt", e.target.value)}
             className="w-full border rounded px-2 py-1"
           />
         </div>
@@ -165,7 +173,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
             <input
               type="checkbox"
               checked={p.controls}
-              onChange={e => upd("controls", e.target.checked)}
+              onChange={(e) => upd("controls", e.target.checked)}
             />
             <span>Controls</span>
           </label>
@@ -173,7 +181,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
             <input
               type="checkbox"
               checked={p.autoplay}
-              onChange={e => upd("autoplay", e.target.checked)}
+              onChange={(e) => upd("autoplay", e.target.checked)}
             />
             <span>Autoplay</span>
           </label>
@@ -181,7 +189,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
             <input
               type="checkbox"
               checked={p.loop}
-              onChange={e => upd("loop", e.target.checked)}
+              onChange={(e) => upd("loop", e.target.checked)}
             />
             <span>Loop</span>
           </label>
@@ -193,7 +201,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
               type="number"
               min={50}
               value={p.width}
-              onChange={e => upd("width", +e.target.value)}
+              onChange={(e) => upd("width", +e.target.value)}
               className="w-full border rounded px-2 py-1"
             />
           </div>
@@ -203,7 +211,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
               type="number"
               min={50}
               value={p.height}
-              onChange={e => upd("height", +e.target.value)}
+              onChange={(e) => upd("height", +e.target.value)}
               className="w-full border rounded px-2 py-1"
             />
           </div>
@@ -213,7 +221,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
               type="number"
               min={0}
               value={p.radius}
-              onChange={e => upd("radius", +e.target.value)}
+              onChange={(e) => upd("radius", +e.target.value)}
               className="w-full border rounded px-2 py-1"
             />
           </div>
@@ -221,7 +229,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
             <input
               type="checkbox"
               checked={p.shadow}
-              onChange={e => upd("shadow", e.target.checked)}
+              onChange={(e) => upd("shadow", e.target.checked)}
             />
             <span>Schaduw</span>
           </div>
@@ -229,7 +237,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
             <label className="block mb-1">Object-fit</label>
             <select
               value={p.objectFit}
-              onChange={e => upd("objectFit", e.target.value as VideoProps["objectFit"])}
+              onChange={(e) => upd("objectFit", e.target.value as VideoProps["objectFit"])}
               className="w-full border rounded px-2 py-1"
             >
               <option value="cover">Cover</option>
@@ -240,7 +248,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
             <input
               type="checkbox"
               checked={p.showAlt}
-              onChange={e => upd("showAlt", e.target.checked)}
+              onChange={(e) => upd("showAlt", e.target.checked)}
             />
             <span>Toon alt-tekst</span>
           </div>

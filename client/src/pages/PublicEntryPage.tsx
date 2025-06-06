@@ -1,15 +1,16 @@
-// File: client/src/pages/PublicEntryPage.tsx
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// File: src/pages/PublicEntryPage.tsx
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function PublicEntryPage() {
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!code.trim()) {
-      alert("Vul een geldige sessiecode in.");
+      alert('Vul een geldige sessiecode in.');
       return;
     }
     // Verwijder spaties en maak lowercase
@@ -23,8 +24,13 @@ export default function PublicEntryPage() {
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-lg shadow-md w-full max-w-md"
       >
-        <h1 className="text-2xl font-bold text-center mb-6">Live‐sessie Toegang</h1>
-        <label htmlFor="sessionCode" className="block text-sm font-medium text-gray-700 mb-2">
+        <h1 className="text-2xl font-bold text-center mb-6">
+          Live‐sessie Toegang
+        </h1>
+        <label
+          htmlFor="sessionCode"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Voer sessiecode in:
         </label>
         <input

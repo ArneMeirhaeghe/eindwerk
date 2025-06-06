@@ -1,70 +1,85 @@
-﻿// File: server/Controllers/ToursController.cs
+﻿// File: server/Controllers/TourController.cs
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using server.Helpers;
+using MongoDB.Bson;             // ← Voor BsonDocument, BsonTypeMapper
+using server.Mappings;          // ← TourMapper
 using server.Models;
-using server.Services;
-using MongoDB.Bson;                          // Voeg dit toe
-
+using server.Models.Entities;   // ← Tour, Section, Component, Fases, …
+using server.Services.Interfaces;  // ← Import interface ipv concrete
+// using server.Services.Implementations; (kun je verwijderen als je TourService niet meer direct noemt)
 
 namespace server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ToursController : ControllerBase
+    public class TourController : ControllerBase
     {
-        private readonly TourService _tourService;
+        private readonly ITourService _tourService;
 
-        public ToursController(TourService tourService)
+        public TourController(ITourService tourService)   // <-- interface in constructor
         {
             _tourService = tourService;
         }
 
-        // ----- GET api/tours -----
+        // 1) GET api/tour → alle tours voor de ingelogde verhuurder
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetAllTours()
+        [Authorize]
+        public async Task<IActionResult> GetAll()
         {
+            var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(verhuurderId))
+                return Unauthorized("Geen verhuurder gevonden");
+
             var tours = await _tourService.GetAllAsync();
-            var lijst = tours.Select(t => new
-            {
-                id = t.Id,
-                naamLocatie = t.NaamLocatie
-            }).ToList();
-            return Ok(lijst);
+            var response = tours
+                .Where(t => t.VerhuurderId == verhuurderId)
+                .Select(t => new
+                {
+                    id = t.Id,
+                    naamLocatie = t.NaamLocatie,
+                    verhuurderId = t.VerhuurderId,
+                    fases = TourMapper.MapFasesToDto(t.Fases)
+                })
+                .ToList();
+
+            return Ok(response);
         }
 
-        // ----- GET api/tours/{id} -----
+        // 2) GET api/tour/{id} → één tour (controle op eigenaar)
         [HttpGet("{id:length(24)}")]
-        public async Task<ActionResult<object>> GetTour(string id)
+        [Authorize]
+        public async Task<IActionResult> GetById(string id)
         {
             var tour = await _tourService.GetByIdAsync(id);
             if (tour == null) return NotFound();
 
-            var fasesDict = TourMapper.MapFasesToDto(tour.Fases);
-            var response = new
+            var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
+                return Forbid();
+
+            var dto = new
             {
                 id = tour.Id,
                 naamLocatie = tour.NaamLocatie,
-                fases = fasesDict
+                verhuurderId = tour.VerhuurderId,
+                fases = TourMapper.MapFasesToDto(tour.Fases)
             };
-            return Ok(response);
+            return Ok(dto);
         }
 
-        // ----- POST api/tours -----
+        // 3) POST api/tour → maak een nieuwe tour
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<object>> CreateTour([FromBody] CreateTourDto dto)
+        public async Task<IActionResult> Create([FromBody] CreateTourDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.NaamLocatie))
-                return BadRequest("NaamLocatie is verplicht");
-
             var verhuurderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(verhuurderId))
-                return Unauthorized();
+                return Unauthorized("Geen gebruiker gevonden");
 
             var tour = new Tour
             {
@@ -72,24 +87,22 @@ namespace server.Controllers
                 VerhuurderId = verhuurderId,
                 Fases = new Fases()
             };
-
             await _tourService.CreateTourAsync(tour);
 
-            var fasesDict = TourMapper.MapFasesToDto(tour.Fases);
             var response = new
             {
                 id = tour.Id,
                 naamLocatie = tour.NaamLocatie,
-                fases = fasesDict
+                verhuurderId = tour.VerhuurderId,
+                fases = new Dictionary<string, object>()
             };
-
-            return CreatedAtAction(nameof(GetTour), new { id = tour.Id }, response);
+            return Created($"/api/tour/{tour.Id}", response);
         }
 
-        // ----- PUT api/tours/{id} -----
+        // 4) PUT api/tour/{id} → update enkel NaamLocatie
         [HttpPut("{id:length(24)}")]
         [Authorize]
-        public async Task<IActionResult> UpdateTour(string id, [FromBody] UpdateTourDto dto)
+        public async Task<IActionResult> Update(string id, [FromBody] UpdateTourDto dto)
         {
             var existing = await _tourService.GetByIdAsync(id);
             if (existing == null) return NotFound();
@@ -98,15 +111,12 @@ namespace server.Controllers
             if (string.IsNullOrEmpty(verhuurderId) || existing.VerhuurderId != verhuurderId)
                 return Forbid();
 
-            if (string.IsNullOrWhiteSpace(dto.NaamLocatie))
-                return BadRequest("NaamLocatie is verplicht");
-
             existing.NaamLocatie = dto.NaamLocatie;
             await _tourService.UpdateTourAsync(id, existing);
             return NoContent();
         }
 
-        // ----- DELETE api/tours/{id} -----
+        // 5) DELETE api/tour/{id} → verwijder tour
         [HttpDelete("{id:length(24)}")]
         [Authorize]
         public async Task<IActionResult> DeleteTour(string id)
@@ -122,7 +132,7 @@ namespace server.Controllers
             return NoContent();
         }
 
-        // ----- SECTION CRUD binnen een fase -----
+        // 6) SECTION CRUD binnen een fase
         [HttpPost("{tourId:length(24)}/fases/{fase}/sections")]
         [Authorize]
         public async Task<ActionResult<object>> AddSection(string tourId, string fase, [FromBody] CreateSectionDto dto)
@@ -143,7 +153,7 @@ namespace server.Controllers
                 naam = added.Naam,
                 components = new List<object>()
             };
-            return Created($"/api/tours/{tourId}/fases/{fase}/sections/{added.Id}", response);
+            return Created($"/api/tour/{tourId}/fases/{fase}/sections/{added.Id}", response);
         }
 
         [HttpPut("{tourId:length(24)}/fases/{fase}/sections/{sectionId}")]
@@ -178,7 +188,7 @@ namespace server.Controllers
             return NoContent();
         }
 
-        // ----- COMPONENT CRUD binnen een SECTION -----
+        // 7) COMPONENT CRUD binnen een SECTION
         [HttpPost("{tourId:length(24)}/fases/{fase}/sections/{sectionId}/components")]
         [Authorize]
         public async Task<ActionResult<object>> AddComponent(
@@ -201,7 +211,6 @@ namespace server.Controllers
             };
             var added = await _tourService.AddComponentAsync(tourId, fase, sectionId, component);
 
-            // Converteer BsonDocument (added.Props) naar Dictionary<string, object>
             var propsDict = added.Props
                 .ToDictionary(
                     elem => elem.Name,
@@ -215,14 +224,19 @@ namespace server.Controllers
                 props = propsDict
             };
             return Created(
-                $"/api/tours/{tourId}/fases/{fase}/sections/{sectionId}/components/{added.Id}",
+                $"/api/tour/{tourId}/fases/{fase}/sections/{sectionId}/components/{added.Id}",
                 response
             );
         }
 
         [HttpPut("{tourId:length(24)}/fases/{fase}/sections/{sectionId}/components/{componentId}")]
         [Authorize]
-        public async Task<IActionResult> UpdateComponent(string tourId, string fase, string sectionId, string componentId, [FromBody] UpdateComponentDto dto)
+        public async Task<IActionResult> UpdateComponent(
+            string tourId,
+            string fase,
+            string sectionId,
+            string componentId,
+            [FromBody] UpdateComponentDto dto)
         {
             var tour = await _tourService.GetByIdAsync(tourId);
             if (tour == null) return NotFound();
@@ -231,7 +245,7 @@ namespace server.Controllers
             if (string.IsNullOrEmpty(verhuurderId) || tour.VerhuurderId != verhuurderId)
                 return Forbid();
 
-            var nieuweProps = MongoDB.Bson.BsonDocument.Parse(dto.PropsJson);
+            var nieuweProps = BsonDocument.Parse(dto.PropsJson);
             var success = await _tourService.UpdateComponentAsync(tourId, fase, sectionId, componentId, nieuweProps, dto.Type);
             if (!success) return NotFound();
             return NoContent();
@@ -239,7 +253,11 @@ namespace server.Controllers
 
         [HttpDelete("{tourId:length(24)}/fases/{fase}/sections/{sectionId}/components/{componentId}")]
         [Authorize]
-        public async Task<IActionResult> DeleteComponent(string tourId, string fase, string sectionId, string componentId)
+        public async Task<IActionResult> DeleteComponent(
+            string tourId,
+            string fase,
+            string sectionId,
+            string componentId)
         {
             var tour = await _tourService.GetByIdAsync(tourId);
             if (tour == null) return NotFound();
@@ -253,6 +271,7 @@ namespace server.Controllers
             return NoContent();
         }
 
+        // DTO’s
         public class CreateTourDto
         {
             public string NaamLocatie { get; set; } = null!;
@@ -276,6 +295,8 @@ namespace server.Controllers
         public class CreateComponentDto
         {
             public string Type { get; set; } = null!;
+
+            // PropsJson moet “platte JSON” zijn: bv. { "text":"Hallo", "fontSize":22, "bold":true }
             public string PropsJson { get; set; } = null!;
         }
 

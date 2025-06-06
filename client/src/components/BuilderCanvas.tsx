@@ -1,6 +1,6 @@
-// File: client/src/components/BuilderCanvas.tsx
+// File: src/components/BuilderCanvas.tsx
+
 import React from "react";
-import type { ComponentItem } from "../types/types";
 import type { DropResult } from "@hello-pangea/dnd";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { GripVertical, Trash2 } from "lucide-react";
@@ -17,6 +17,7 @@ import VideoPreview from "./previews/VideoPreview";
 import FilePreview from "./previews/FilePreview";
 import GridPreview from "./previews/GridPreview";
 import UploadZonePreview from "./previews/UploadZonePreview";
+import type { ComponentItem } from "../types/types";
 
 interface Props {
   components: ComponentItem[];

@@ -1,21 +1,25 @@
-// File: client/src/pages/PublicSessionPage.tsx
-import { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { getPublicSession, type LiveSessionDto } from "../api/verhuur";
-import LoadingIndicator from "../components/LoadingIndicator";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import TitlePreview from "../components/previews/TitlePreview";
-import SubheadingPreview from "../components/previews/SubheadingPreview";
-import ParagraphPreview from "../components/previews/ParagraphPreview";
-import QuotePreview from "../components/previews/QuotePreview";
-import ButtonPreview from "../components/previews/ButtonPreview";
-import ChecklistPreview from "../components/previews/ChecklistPreview";
-import CheckboxListPreview from "../components/previews/CheckboxListPreview";
-import DividerPreview from "../components/previews/DividerPreview";
-import ImagePreview from "../components/previews/ImagePreview";
-import VideoPreview from "../components/previews/VideoPreview";
-import FilePreview from "../components/previews/FilePreview";
-import GridPreview from "../components/previews/GridPreview";
+// File: src/pages/PublicSessionPage.tsx
+
+import { useEffect, useState, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+
+import TitlePreview from '../components/previews/TitlePreview';
+import SubheadingPreview from '../components/previews/SubheadingPreview';
+import ParagraphPreview from '../components/previews/ParagraphPreview';
+import QuotePreview from '../components/previews/QuotePreview';
+import ButtonPreview from '../components/previews/ButtonPreview';
+import ChecklistPreview from '../components/previews/ChecklistPreview';
+import CheckboxListPreview from '../components/previews/CheckboxListPreview';
+import DividerPreview from '../components/previews/DividerPreview';
+import ImagePreview from '../components/previews/ImagePreview';
+import VideoPreview from '../components/previews/VideoPreview';
+import FilePreview from '../components/previews/FilePreview';
+import GridPreview from '../components/previews/GridPreview';
+import type { LiveSessionDto } from '../api/verhuur/types';
+import { getPublicSession } from '../api/verhuur';
+import LoadingIndicator from '../components/LoadingIndicator';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 
 const previewMap: Record<string, React.FC<{ p: any }>> = {
   title: TitlePreview,
@@ -24,7 +28,7 @@ const previewMap: Record<string, React.FC<{ p: any }>> = {
   quote: QuotePreview,
   button: ButtonPreview,
   checklist: ChecklistPreview,
-  "checkbox-list": CheckboxListPreview,
+  'checkbox-list': CheckboxListPreview,
   divider: DividerPreview,
   image: ImagePreview,
   video: VideoPreview,
@@ -37,16 +41,24 @@ interface FlatSection {
   section: {
     id: string;
     naam: string;
-    components: { id: string; type: string; props: Record<string, any> }[];
+    components: {
+      id: string;
+      type: string;
+      props: Record<string, any>;
+    }[];
   };
 }
 
 export default function PublicSessionPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [session, setSession] = useState<LiveSessionDto | null>(null);
+  const [session, setSession] = useState<LiveSessionDto | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
-  const [flatSections, setFlatSections] = useState<FlatSection[]>([]);
+  const [flatSections, setFlatSections] = useState<FlatSection[]>(
+    []
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Fetch session or redirect if invalid
@@ -55,13 +67,13 @@ export default function PublicSessionPage() {
       setLoading(true);
       try {
         if (!id) {
-          navigate("/public");
+          navigate('/public');
           return;
         }
         const data = await getPublicSession(id);
         setSession(data);
       } catch {
-        navigate("/public");
+        navigate('/public');
       } finally {
         setLoading(false);
       }
@@ -73,22 +85,24 @@ export default function PublicSessionPage() {
   useEffect(() => {
     if (!session) return;
     const list: FlatSection[] = [];
-    Object.entries(session.fases).forEach(([phaseName, sections]) => {
-      sections.forEach((sec) => {
-        list.push({
-          phase: phaseName,
-          section: {
-            id: sec.id,
-            naam: sec.naam,
-            components: sec.components.map((c) => ({
-              id: c.id,
-              type: c.type,
-              props: c.props,
-            })),
-          },
+    Object.entries(session.fases).forEach(
+      ([phaseName, sections]) => {
+        sections.forEach((sec) => {
+          list.push({
+            phase: phaseName,
+            section: {
+              id: sec.id,
+              naam: sec.naam,
+              components: sec.components.map((c) => ({
+                id: c.id,
+                type: c.type,
+                props: c.props,
+              })),
+            },
+          });
         });
-      });
-    });
+      }
+    );
     setFlatSections(list);
     setCurrentIndex(0);
   }, [session]);
@@ -98,7 +112,9 @@ export default function PublicSessionPage() {
     setCurrentIndex((i) => Math.max(i - 1, 0));
   };
   const next = () => {
-    setCurrentIndex((i) => Math.min(i + 1, flatSections.length - 1));
+    setCurrentIndex((i) =>
+      Math.min(i + 1, flatSections.length - 1)
+    );
   };
 
   // Current flat section
@@ -124,11 +140,13 @@ export default function PublicSessionPage() {
       {/* Mobile container (max width ~420px) */}
       <div
         className="relative bg-white rounded-2xl shadow-lg w-full max-w-xs flex flex-col"
-        style={{ height: "90vh" }}
+        style={{ height: '90vh' }}
       >
         {/* Header: Phase & Section Name */}
         <div className="bg-gradient-to-r from-blue-600 to-teal-400 rounded-t-2xl p-4 flex flex-col items-center">
-          <h2 className="text-xs text-white uppercase tracking-wide">{current.phase}</h2>
+          <h2 className="text-xs text-white uppercase tracking-wide">
+            {current.phase}
+          </h2>
           <h1 className="text-lg font-semibold text-white mt-1 text-center">
             {current.section.naam}
           </h1>
@@ -137,10 +155,13 @@ export default function PublicSessionPage() {
         {/* Components Container */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {current.section.components.map((comp) => {
-            const PreviewComponent = previewMap[comp.type];
+            const PreviewComponent =
+              previewMap[comp.type];
             return (
               <div key={comp.id} className="mb-6 last:mb-0">
-                {PreviewComponent && <PreviewComponent p={comp.props} />}
+                {PreviewComponent && (
+                  <PreviewComponent p={comp.props} />
+                )}
               </div>
             );
           })}
@@ -153,8 +174,8 @@ export default function PublicSessionPage() {
             disabled={currentIndex === 0}
             className={`p-2 rounded-full transition ${
               currentIndex === 0
-                ? "cursor-not-allowed opacity-50"
-                : "bg-white hover:bg-gray-200"
+                ? 'cursor-not-allowed opacity-50'
+                : 'bg-white hover:bg-gray-200'
             }`}
           >
             <ChevronLeft size={20} className="text-gray-600" />
@@ -167,8 +188,8 @@ export default function PublicSessionPage() {
             disabled={currentIndex === flatSections.length - 1}
             className={`p-2 rounded-full transition ${
               currentIndex === flatSections.length - 1
-                ? "cursor-not-allowed opacity-50"
-                : "bg-white hover:bg-gray-200"
+                ? 'cursor-not-allowed opacity-50'
+                : 'bg-white hover:bg-gray-200'
             }`}
           >
             <ChevronRight size={20} className="text-gray-600" />

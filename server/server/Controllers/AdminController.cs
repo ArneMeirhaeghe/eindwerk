@@ -1,10 +1,8 @@
-﻿// File: server/Controllers/AdminController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using server.Services;
-using server.Models.DTOs;
-using server.Models;
 using System.Threading.Tasks;
+using server.Models.DTOs.User;   // CreateUserDto, UpdateUserDto
+using server.Services.Interfaces;
 
 namespace server.Controllers
 {
@@ -13,19 +11,24 @@ namespace server.Controllers
     [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
-        private readonly UserService _us;
+        private readonly IUserService _userService;
 
-        public AdminController(UserService us) =>
-            _us = us;
+        public AdminController(IUserService userService)
+        {
+            _userService = userService;
+        }
 
         [HttpGet("users")]
-        public async Task<IActionResult> GetAll() =>
-            Ok(await _us.GetAllAsync());
+        public async Task<IActionResult> GetAll()
+        {
+            var users = await _userService.GetAllAsync();
+            return Ok(users);
+        }
 
         [HttpGet("users/{id}")]
         public async Task<IActionResult> GetById(string id)
         {
-            var user = await _us.GetByIdAsync(id);
+            var user = await _userService.GetByIdAsync(id);
             return user == null ? NotFound() : Ok(user);
         }
 
@@ -33,30 +36,31 @@ namespace server.Controllers
         public async Task<IActionResult> Add([FromBody] CreateUserDto dto)
         {
             var password = string.IsNullOrWhiteSpace(dto.Password)
-                ? "Temp123!" // Default temporary password
+                ? "Temp123!"
                 : dto.Password;
 
-            await _us.CreateAsync(dto.Email, password, dto.Role);
+            await _userService.CreateUserAsync(dto.Email, password, dto.Role);
             return Ok();
         }
 
         [HttpPut("users/{id}")]
         public async Task<IActionResult> Update(string id, [FromBody] UpdateUserDto dto)
         {
-            var user = await _us.GetByIdAsync(id);
+            var user = await _userService.GetByIdAsync(id);
             if (user == null) return NotFound();
 
             user.Email = dto.Email;
             user.Role = dto.Role;
+            // (Optioneel: wachtwoord resetten oid.)
 
-            await _us.UpdateAsync(user);
+            await _userService.UpdateAsync(user);
             return NoContent();
         }
 
         [HttpDelete("users/{id}")]
         public async Task<IActionResult> Delete(string id)
         {
-            await _us.DeleteAsync(id);
+            await _userService.DeleteAsync(id);
             return NoContent();
         }
     }

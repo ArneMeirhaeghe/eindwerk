@@ -1,15 +1,18 @@
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { FaHome } from 'react-icons/fa';
+// File: src/components/Navbar.tsx
 
-const NavBar: React.FC = () => {
+import { Link } from "react-router-dom";
+import { FaHome } from "react-icons/fa";
+import { useAuth } from "../context/AuthContext";
+
+const Navbar: React.FC = () => {
   const { logout, token } = useAuth();
 
   if (!token) return null; // Niet ingelogd? Geen NavBar
 
-  const payload = JSON.parse(atob(token.split('.')[1]));
-  const email = payload?.email || 'gebruiker';
-  const id = payload?.id || 'onbekend';
+  const payload = JSON.parse(atob(token.split(".")[1]));
+  console.log("Payload:", payload);
+  const email = payload?.unique_name || "gebruiker";
+  const id = payload?.sub || payload?.id ||payload.nameid || "onbekend";
 
   return (
     <nav className="bg-white shadow p-4 flex justify-between items-center">
@@ -20,7 +23,9 @@ const NavBar: React.FC = () => {
       </div>
 
       <div className="flex flex-col items-end gap-1 text-right">
-        <span className="text-gray-700">Hallo, <strong>{email}</strong></span>
+        <span className="text-gray-700">
+          Hallo, <strong>{email}</strong>
+        </span>
         <span className="text-xs text-gray-400">ID: {id}</span>
         <button
           onClick={logout}
@@ -33,4 +38,4 @@ const NavBar: React.FC = () => {
   );
 };
 
-export default NavBar;
+export default Navbar;

@@ -1,14 +1,16 @@
-// File: client/src/pages/UploadZone.tsx
-import React, { useState, useEffect } from 'react';
+// File: src/pages/UploadZone.tsx
+
+import React, { useState, useEffect } from "react";
 import {
   uploadFile,
   getUploads,
   deleteUpload,
-  type MediaResponse,
-} from '../api/uploads';
+ 
+} from "../api/media"; // Assuming these functions are defined in your API module
+import type { MediaResponse } from "../api/media/types";
 
 const UploadZone: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'img' | 'video' | 'files'>('img');
+  const [activeTab, setActiveTab] = useState<"img" | "video" | "files">("img");
   const [uploads, setUploads] = useState<Record<string, MediaResponse[]>>({
     img: [],
     video: [],
@@ -16,8 +18,8 @@ const UploadZone: React.FC = () => {
   });
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [alt, setAlt] = useState('');
-  const [styles, setStyles] = useState('');
+  const [alt, setAlt] = useState("");
+  const [styles, setStyles] = useState("");
   const [isUploading, setIsUploading] = useState(false); // Loader-state
   const [error, setError] = useState<string | null>(null);
 
@@ -34,16 +36,16 @@ const UploadZone: React.FC = () => {
         files: [],
       };
       all.forEach((item) => {
-        const key = item.contentType.startsWith('image/')
-          ? 'img'
-          : item.contentType.startsWith('video/')
-          ? 'video'
-          : 'files';
+        const key = item.contentType.startsWith("image/")
+          ? "img"
+          : item.contentType.startsWith("video/")
+          ? "video"
+          : "files";
         grouped[key].push(item);
       });
       setUploads(grouped);
     } catch (err: any) {
-      setError(err.response?.data || 'Fout bij laden van media');
+      setError(err.response?.data || "Fout bij laden van media");
     }
   };
 
@@ -55,11 +57,11 @@ const UploadZone: React.FC = () => {
     try {
       await uploadFile(selectedFile, alt || selectedFile.name, type, styles);
       setSelectedFile(null);
-      setAlt('');
-      setStyles('');
+      setAlt("");
+      setStyles("");
       await fetchUploads();
     } catch (err: any) {
-      setError(err.response?.data || 'Upload mislukt');
+      setError(err.response?.data || "Upload mislukt");
     } finally {
       setIsUploading(false);
     }
@@ -73,12 +75,12 @@ const UploadZone: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Weet je zeker dat je dit bestand wilt verwijderen?')) return;
+    if (!confirm("Weet je zeker dat je dit bestand wilt verwijderen?")) return;
     try {
       await deleteUpload(id);
       await fetchUploads();
     } catch (err: any) {
-      setError(err.response?.data || 'Kon bestand niet verwijderen');
+      setError(err.response?.data || "Kon bestand niet verwijderen");
     }
   };
 
@@ -89,14 +91,12 @@ const UploadZone: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex space-x-2 mb-4">
-        {(['img', 'video', 'files'] as const).map((tab) => (
+        {(["img", "video", "files"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 rounded ${
-              activeTab === tab
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 hover:bg-gray-300'
+              activeTab === tab ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300"
             }`}
           >
             {tab.toUpperCase()}
@@ -109,11 +109,11 @@ const UploadZone: React.FC = () => {
         <input
           type="file"
           accept={
-            activeTab === 'img'
-              ? 'image/*'
-              : activeTab === 'video'
-              ? 'video/*'
-              : '*/*'
+            activeTab === "img"
+              ? "image/*"
+              : activeTab === "video"
+              ? "video/*"
+              : "*/*"
           }
           onChange={handleFileChange}
           disabled={isUploading}
@@ -141,8 +141,8 @@ const UploadZone: React.FC = () => {
             disabled={isUploading || !selectedFile}
             className={`px-4 py-2 rounded text-white transition ${
               isUploading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-green-500 hover:bg-green-600'
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-500 hover:bg-green-600"
             }`}
           >
             {isUploading ? (
@@ -152,7 +152,7 @@ const UploadZone: React.FC = () => {
                 <span>Uploaden...</span>
               </div>
             ) : (
-              'Upload'
+              "Upload"
             )}
           </button>
         </div>
@@ -168,17 +168,17 @@ const UploadZone: React.FC = () => {
             >
               &times;
             </button>
-            {activeTab === 'img' && (
+            {activeTab === "img" && (
               <img
                 src={item.url}
                 alt={item.alt}
                 className="max-h-32 mx-auto rounded"
               />
             )}
-            {activeTab === 'video' && (
+            {activeTab === "video" && (
               <video src={item.url} controls className="max-h-48 w-full rounded" />
             )}
-            {activeTab === 'files' && (
+            {activeTab === "files" && (
               <a
                 href={item.url}
                 target="_blank"

@@ -1,4 +1,5 @@
 // File: src/components/BottomNav.tsx
+
 import React, { useRef } from "react";
 import { ChevronLeft, ChevronRight, Plus, Trash2, Edit2 } from "lucide-react";
 import type { Fase, Section } from "../types/types";
@@ -41,7 +42,10 @@ export default function BottomNav({
   };
 
   const sections = sectionsByFase[activeFase] || [];
-  const displaySections = sections.length > 0 ? sections : [{ id: "", title: "Nieuwe sectie", components: [] }];
+  const displaySections =
+    sections.length > 0
+      ? sections
+      : [{ id: "", title: "Nieuwe sectie", components: [] }];
 
   return (
     <footer className="fixed bottom-0 left-0 w-full bg-white shadow-t z-20">

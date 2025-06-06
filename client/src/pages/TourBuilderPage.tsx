@@ -1,4 +1,5 @@
-// File: client/src/pages/TourBuilderPage.tsx
+// File: src/pages/TourBuilderPage.tsx
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -10,26 +11,24 @@ import {
   updateComponent,
   deleteComponent,
   updateTourNaam,
-  type Tour,
-  type SectionDto,
-  type ComponentDto,
 } from "../api/tours";
-import { v4 as uuidv4 } from "uuid";
-import ComponentPalette from "../components/ComponentPalette";
-import BuilderCanvas from "../components/BuilderCanvas";
-import SettingsPanel from "../components/SettingsPanel";
-import BottomNav from "../components/BottomNav";
-import LivePreview from "../components/LivePreview";
-import EditSectionModal from "../components/EditSectionModal";
+
 import { ToastContainer, toast } from "react-toastify";
-import { type DropResult } from "@hello-pangea/dnd";
+import type { DropResult } from "@hello-pangea/dnd";
 import {
   type ComponentItem,
   type ComponentType,
-  type Section,
   type Fase,
   type FaseSections,
+  type Section,
 } from "../types/types";
+import type { ComponentDto, SectionDto, Tour } from "../api/tours/types";
+import LivePreview from "../components/LivePreview";
+import ComponentPalette from "../components/ComponentPalette";
+import BuilderCanvas from "../components/BuilderCanvas";
+import BottomNav from "../components/BottomNav";
+import SettingsPanel from "../components/SettingsPanel";
+import EditSectionModal from "../components/EditSectionModal";
 
 export default function TourBuilderPage() {
   const { id } = useParams<{ id: string }>();
@@ -53,6 +52,75 @@ export default function TourBuilderPage() {
   const [modalValue, setModalValue] = useState("");
   const [editingSectionIndex, setEditingSectionIndex] = useState<number | null>(null);
 
+  // HULPMETHODE: zet nested JSON / string-booleans om naar platte JS-primitieven
+  function flattenProps(raw: any): Record<string, any> {
+    return {
+      ...raw,
+      // Zet “{ "$numberInt": "16" }” om naar 16
+      fontSize:
+        typeof raw.fontSize === "object" && raw.fontSize["$numberInt"]
+          ? parseInt(raw.fontSize["$numberInt"], 10)
+          : raw.fontSize,
+      // Zet “{ "$numberDouble": "1.5" }” om naar 1.5
+      lineHeight:
+        typeof raw.lineHeight === "object" && raw.lineHeight["$numberDouble"]
+          ? parseFloat(raw.lineHeight["$numberDouble"])
+          : raw.lineHeight,
+      // Zet string‐boolean “true”/“false” om naar echte boolean
+      bold:
+        raw.bold === "true" ? true : raw.bold === "false" ? false : raw.bold,
+      italic:
+        raw.italic === "true" ? true : raw.italic === "false" ? false : raw.italic,
+      underline:
+        raw.underline === "true"
+          ? true
+          : raw.underline === "false"
+          ? false
+          : raw.underline,
+      shadow:
+        raw.shadow === "true" ? true : raw.shadow === "false" ? false : raw.shadow,
+      showAlt:
+        raw.showAlt === "true" ? true : raw.showAlt === "false" ? false : raw.showAlt,
+      // Elke andere boolean of number in raw, herhaal hetzelfde patroon …
+      // (bv. controls, autoplay, loop, width, height, columns, gap, etc.)
+      controls:
+        raw.controls === "true" ? true : raw.controls === "false" ? false : raw.controls,
+      autoplay:
+        raw.autoplay === "true"
+          ? true
+          : raw.autoplay === "false"
+          ? false
+          : raw.autoplay,
+      loop:
+        raw.loop === "true" ? true : raw.loop === "false" ? false : raw.loop,
+      width:
+        typeof raw.width === "object" && raw.width["$numberInt"]
+          ? parseInt(raw.width["$numberInt"], 10)
+          : raw.width,
+      height:
+        typeof raw.height === "object" && raw.height["$numberInt"]
+          ? parseInt(raw.height["$numberInt"], 10)
+          : raw.height,
+      radius:
+        typeof raw.radius === "object" && raw.radius["$numberInt"]
+          ? parseInt(raw.radius["$numberInt"], 10)
+          : raw.radius,
+      columns:
+        typeof raw.columns === "object" && raw.columns["$numberInt"]
+          ? parseInt(raw.columns["$numberInt"], 10)
+          : raw.columns,
+      gap:
+        typeof raw.gap === "object" && raw.gap["$numberInt"]
+          ? parseInt(raw.gap["$numberInt"], 10)
+          : raw.gap,
+      borderWidth:
+        typeof raw.borderWidth === "object" && raw.borderWidth["$numberInt"]
+          ? parseInt(raw.borderWidth["$numberInt"], 10)
+          : raw.borderWidth,
+      // … enzovoort voor elk veld dat ooit nested JSON of string-boolean kan zijn …
+    };
+  }
+
   // Laad tour én zorg dat elke fase minstens één section in DB heeft
   useEffect(() => {
     if (!id) {
@@ -62,14 +130,17 @@ export default function TourBuilderPage() {
     setLoading(true);
 
     async function loadTour(tourId: string) {
-      try {
+      try
+      {
         const tour: Tour = await getTour(tourId);
         setNaamLocatie(tour.naamLocatie);
 
+        // Zet in react‐state steeds alleen platte props (nummer/boolean/string)
         const newState: FaseSections = {} as FaseSections;
         for (const f of fasesList) {
           const apiSections: SectionDto[] = tour.fases?.[f] ?? [];
           if (apiSections.length === 0) {
+            // Bij geen sectie in deze fase, maak er eentje aan
             const created = await addSection(tourId, f, "Nieuwe sectie");
             newState[f] = [
               {
@@ -82,20 +153,28 @@ export default function TourBuilderPage() {
             newState[f] = apiSections.map((secDto) => ({
               id: secDto.id,
               title: secDto.naam,
-              components: secDto.components.map((c: ComponentDto) => ({
-                id: c.id,
-                type: c.type as ComponentType,
-                props: c.props,
-              })),
+              components: secDto.components.map((c: ComponentDto) => {
+                // flatten de props van elk component uit de server
+                const cleaned = flattenProps(c.props);
+                return {
+                  id: c.id,
+                  type: c.type as ComponentType,
+                  props: cleaned,
+                };
+              }),
             }));
           }
         }
         setSectionsByFase(newState);
         setActiveSectionIndex(0);
-      } catch {
+      }
+      catch
+      {
         toast.error("Kon tour niet laden");
         navigate("/tours");
-      } finally {
+      }
+      finally
+      {
         setLoading(false);
       }
     }
@@ -139,8 +218,12 @@ export default function TourBuilderPage() {
     for (const f of fasesList) {
       const secs = sectionsByFase[f];
       for (const sectie of secs) {
-        const compMatch = sectie.components.find((c) => c.id === selectedComp.id);
+        const compMatch = sectie.components.find(
+          (c) => c.id === selectedComp.id
+        );
         if (compMatch) {
+          // flattenProps vóór updateComponent
+          const cleaned = flattenProps(selectedComp.props);
           try {
             await updateComponent(
               id,
@@ -148,7 +231,7 @@ export default function TourBuilderPage() {
               sectie.id,
               selectedComp.id,
               selectedComp.type,
-              selectedComp.props
+              cleaned
             );
             toast.success("Component opgeslagen");
           } catch {
@@ -226,6 +309,7 @@ export default function TourBuilderPage() {
   // COMPONENT-CRUD
 
   const onAddComponent = async (type: ComponentType) => {
+    // Bouw altijd props op uit pure primitives (nummer/boolean/string)
     const baseText = {
       text: "Tekst",
       fontFamily: "sans-serif",
@@ -240,9 +324,20 @@ export default function TourBuilderPage() {
     };
     const props =
       type === "checklist"
-        ? { items: [""], fontSize: 16, color: "#000000", bg: "#ffffff", spacing: 8 }
+        ? {
+            items: [""],
+            fontSize: 16,
+            color: "#000000",
+            bg: "#ffffff",
+            spacing: 8,
+          }
         : type === "checkbox-list"
-        ? { items: [{ label: "", good: false }], fontSize: 16, color: "#000000", bg: "#ffffff" }
+        ? {
+            items: [{ label: "", good: false }],
+            fontSize: 16,
+            color: "#000000",
+            bg: "#ffffff",
+          }
         : type === "divider"
         ? { color: "#000000", thickness: 1 }
         : type === "button"
@@ -300,6 +395,7 @@ export default function TourBuilderPage() {
 
     const sec = currentFaseSections[activeSectionIndex];
     try {
+      // props is gegarandeerd pure primitives, dus JSON.stringify(props) komt plat in de DB
       const nieuwComp = await addComponent(id!, activeFase, sec.id, type, props);
       const compNew: ComponentItem = {
         id: nieuwComp.id,
@@ -345,7 +441,7 @@ export default function TourBuilderPage() {
     }
   };
 
-  // Wijziging in settings, alleen lokale update
+  // Wijziging in settings → alleen lokale update
   const handleSettingsChange = (c: ComponentItem) => {
     setSectionsByFase((prev) => ({
       ...prev,
@@ -386,21 +482,21 @@ export default function TourBuilderPage() {
     }
   };
 
-  // Wanneer gebruiker een component selecteert, sla vorige op
+  // Gebruiker selecteert een component → sla vorige op
   const onSelectComponent = async (comp: ComponentItem) => {
     await savePreviousComponent();
     setSelectedComp(comp);
     setDirty(false);
   };
 
-  // Als user wegklikt uit component (bv. naar preview), sla op
+  // User klikt buiten component → sla op
   const onDeselect = async () => {
     await savePreviousComponent();
     setSelectedComp(null);
     setDirty(false);
   };
 
-  // Handlers voor edit-sectie modal
+  // Handlers edit-sectie modal
   const openSectionModal = (idx: number) => {
     const sectie = currentFaseSections[idx];
     setModalValue(sectie.title);
@@ -421,12 +517,12 @@ export default function TourBuilderPage() {
     closeSectionModal();
   };
 
-  // Handle click on section title in canvas
+  // Klik op section title in canvas
   const handleSectionTitleClick = () => {
     openSectionModal(activeSectionIndex);
   };
 
-  // Schakel previewmode in
+  // Toggle preview mode
   if (previewMode) {
     return (
       <div className="relative h-full bg-gray-100">

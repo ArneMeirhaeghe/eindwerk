@@ -1,16 +1,17 @@
 // File: src/pages/ToursPage.tsx
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  getTours,
+  getToursList,       // <<< aangepast
   createTour,
   deleteTour,
   updateTourNaam,
   addSection,
-  type TourListDto,
 } from "../api/tours";
+import type { TourListDto } from "../api/tours/types";
 
-const ToursPage = () => {
+const ToursPage: React.FC = () => {
   const [tours, setTours] = useState<TourListDto[]>([]);
   const [newNaam, setNewNaam] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,7 @@ const ToursPage = () => {
   const fetchTours = async () => {
     setLoading(true);
     try {
-      const data = await getTours();
+      const data = await getToursList(); // <<< hier
       setTours(data);
     } finally {
       setLoading(false);
@@ -39,9 +40,7 @@ const ToursPage = () => {
       const created = await createTour(newNaam.trim());
       // Voeg in elke fase één section toe
       await Promise.all(
-        fases.map((fase) =>
-          addSection(created.id, fase, "Nieuwe sectie")
-        )
+        fases.map((fase) => addSection(created.id, fase, "Nieuwe sectie"))
       );
       setNewNaam("");
       fetchTours();

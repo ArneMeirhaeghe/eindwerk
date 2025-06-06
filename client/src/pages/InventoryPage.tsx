@@ -1,4 +1,5 @@
 // File: src/pages/InventoryPage.tsx
+
 import React, { useEffect, useState } from 'react';
 import {
   getSections,
@@ -7,15 +8,19 @@ import {
   deleteSection,
   createItem,
   deleteItem,
-  type Section,
-  type Item
+
 } from '../api/inventory';
+import type { Item, Section } from '../api/inventory/types';
 
 export default function InventoryPage() {
   const [sections, setSections] = useState<Section[]>([]);
   const [newSectionName, setNewSectionName] = useState('');
-  const [editingSection, setEditingSection] = useState<Section | null>(null);
-  const [newItem, setNewItem] = useState<Record<string, Omit<Item, 'id'>>>({});
+  const [editingSection, setEditingSection] = useState<Section | null>(
+    null
+  );
+  const [newItem, setNewItem] = useState<Record<string, Omit<Item, 'id'>>>(
+    {}
+  );
 
   useEffect(() => {
     loadSections();
@@ -48,7 +53,10 @@ export default function InventoryPage() {
     const itm = newItem[sec.id];
     if (!itm?.name) return;
     await createItem(sec.id, itm);
-    setNewItem({ ...newItem, [sec.id]: { name: '', quantity: 0, lastQuantity: 0 } });
+    setNewItem({
+      ...newItem,
+      [sec.id]: { name: '', quantity: 0, lastQuantity: 0 },
+    });
     loadSections();
   };
 
@@ -66,7 +74,7 @@ export default function InventoryPage() {
         <input
           type="text"
           value={newSectionName}
-          onChange={e => setNewSectionName(e.target.value)}
+          onChange={(e) => setNewSectionName(e.target.value)}
           placeholder="Nieuwe sectie"
           className="border rounded p-2 flex-grow mr-2"
         />
@@ -79,15 +87,18 @@ export default function InventoryPage() {
       </div>
 
       {/* Secties overzicht */}
-      {sections.map(sec => (
+      {sections.map((sec) => (
         <div key={sec.id} className="border rounded p-4 mb-4">
           <div className="flex justify-between items-center">
             {editingSection?.id === sec.id ? (
               <input
                 type="text"
                 value={editingSection.name}
-                onChange={e =>
-                  setEditingSection({ ...editingSection, name: e.target.value })
+                onChange={(e) =>
+                  setEditingSection({
+                    ...editingSection,
+                    name: e.target.value,
+                  })
                 }
                 className="border rounded p-1 flex-grow mr-2"
               />
@@ -131,14 +142,20 @@ export default function InventoryPage() {
 
           {/* Items lijst */}
           <ul className="mt-4">
-            {sec.items.map(itm => (
-              <li key={itm.id} className="flex justify-between py-2">
+            {sec.items.map((itm) => (
+              <li
+                key={itm.id}
+                className="flex justify-between py-2"
+              >
                 <span>
-                  <span className="font-medium">{itm.name}</span>{' '}
+                  <span className="font-medium">{itm.name}</span>  
+                  {' '}
                   (Nu: {itm.quantity}, Laatst: {itm.lastQuantity})
                 </span>
                 <button
-                  onClick={() => handleDeleteItem(sec.id, itm.id)}
+                  onClick={() =>
+                    handleDeleteItem(sec.id, itm.id)
+                  }
                   className="text-red-600"
                 >
                   Verwijder
@@ -152,30 +169,32 @@ export default function InventoryPage() {
             <input
               type="text"
               value={newItem[sec.id]?.name || ''}
-              onChange={e =>
+              onChange={(e) =>
                 setNewItem({
                   ...newItem,
                   [sec.id]: {
                     name: e.target.value,
                     quantity: newItem[sec.id]?.quantity || 0,
-                    lastQuantity: newItem[sec.id]?.lastQuantity || 0
-                  }
+                    lastQuantity:
+                      newItem[sec.id]?.lastQuantity || 0,
+                  },
                 })
               }
               placeholder="Item naam"
-              className="border rounded p-2 mr-2 flex-grow"
+              className="border rounded p-2 mr-2"
             />
             <input
               type="number"
               value={newItem[sec.id]?.quantity || 0}
-              onChange={e =>
+              onChange={(e) =>
                 setNewItem({
                   ...newItem,
                   [sec.id]: {
                     name: newItem[sec.id]?.name || '',
                     quantity: Number(e.target.value),
-                    lastQuantity: newItem[sec.id]?.lastQuantity || 0
-                  }
+                    lastQuantity:
+                      newItem[sec.id]?.lastQuantity || 0,
+                  },
                 })
               }
               placeholder="Aantal"
@@ -184,14 +203,14 @@ export default function InventoryPage() {
             <input
               type="number"
               value={newItem[sec.id]?.lastQuantity || 0}
-              onChange={e =>
+              onChange={(e) =>
                 setNewItem({
                   ...newItem,
                   [sec.id]: {
                     name: newItem[sec.id]?.name || '',
                     quantity: newItem[sec.id]?.quantity || 0,
-                    lastQuantity: Number(e.target.value)
-                  }
+                    lastQuantity: Number(e.target.value),
+                  },
                 })
               }
               placeholder="Laatst"

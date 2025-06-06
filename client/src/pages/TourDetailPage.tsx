@@ -1,8 +1,9 @@
-// src/pages/TourDetailPage.tsx
+// File: src/pages/TourDetailPage.tsx
 
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getTour, type Tour } from "../api/tours";
+import type { Tour } from "../api/tours/types";
+import { getTour } from "../api/tours";
 
 export default function TourDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -19,11 +20,11 @@ export default function TourDetailPage() {
     }
     setLoading(true);
     getTour(id)
-      .then(data => {
+      .then((data) => {
         setTour(data);
         setError(null);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Fout bij ophalen tour:", err);
         setError(
           err.response?.status === 404
@@ -35,7 +36,7 @@ export default function TourDetailPage() {
   }, [id]);
 
   if (loading) return <div className="p-6">Laden…</div>;
-  if (error)  return <div className="p-6 text-red-600">{error}</div>;
+  if (error) return <div className="p-6 text-red-600">{error}</div>;
   if (!tour) return <div className="p-6">Geen tour data</div>;
 
   return (

@@ -1,4 +1,5 @@
-﻿// File: server/Helpers/AzureSettings.cs
+﻿// File: Helpers/AzureSettings.cs
+
 namespace server.Helpers
 {
     public class AzureSettings

@@ -1,19 +1,19 @@
-// File: client/src/pages/VerhuurPage.tsx
 import { useEffect, useState, useMemo } from "react";
 import {
   getActiveLiveSessions,
   getToursList,
   getVerhuurperiodes,
   startLiveSession,
-  type VerhuurPeriode,
-  type LiveSessionDto,
-  type TourListDto,
 } from "../api/verhuur";
-import { getTour, type Tour } from "../api/tours";
-import ErrorMessage from "../components/ErrorMessage";
-import LoadingIndicator from "../components/LoadingIndicator";
-import { useNavigate } from "react-router-dom";
+import { getTour } from "../api/tours";
 import API from "../api/axios";
+import { useNavigate } from "react-router-dom";
+
+import type { LiveSessionDto, VerhuurPeriode } from "../api/verhuur/types";
+import type { Tour, TourListDto } from "../api/tours/types";
+
+import LoadingIndicator from "../components/LoadingIndicator";
+import ErrorMessage from "../components/ErrorMessage";
 
 interface SectionOption {
   fase: string;
@@ -27,7 +27,6 @@ export default function VerhuurPage() {
   const [liveSessions, setLiveSessions] = useState<LiveSessionDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  const navigate = useNavigate();
 
   const [isSelectingSections, setIsSelectingSections] = useState(false);
   const [selectedPeriode, setSelectedPeriode] = useState<VerhuurPeriode | null>(null);
@@ -36,6 +35,9 @@ export default function VerhuurPage() {
   const [tourSections, setTourSections] = useState<SectionOption[]>([]);
   const [checkedSections, setCheckedSections] = useState<Record<string, boolean>>({});
 
+  const navigate = useNavigate();
+
+  // 1) Verhuurperiodes laden
   const fetchVerhuurperiodes = async () => {
     setLoading(true);
     setError("");
@@ -50,6 +52,7 @@ export default function VerhuurPage() {
     }
   };
 
+  // 2) Tours laden (id + naam)
   const fetchTours = async () => {
     try {
       const lijst = await getToursList();
@@ -59,13 +62,14 @@ export default function VerhuurPage() {
     }
   };
 
+  // 3) Actieve live‐sessies laden
   const fetchLiveSessions = async () => {
     try {
       const sessies = await getActiveLiveSessions();
       setLiveSessions(sessies);
     } catch (err: any) {
-      console.error("Kan live-sessies niet laden:", err);
-      setError("Kan live-sessies niet laden");
+      console.error("Kan live‐sessies niet laden:", err);
+      setError("Kan live‐sessies niet laden");
     }
   };
 
@@ -75,7 +79,7 @@ export default function VerhuurPage() {
     fetchLiveSessions();
   }, []);
 
-  // Filter verhuurperiodes: vertrek >= nu, en geen actieve sessie bestaande
+  // Alleen periodes waarvan vertrek >= nu en nog geen live‐sessie
   const availablePeriodes = useMemo(() => {
     const now = new Date();
     return verhuur.filter((p) => {
@@ -91,6 +95,7 @@ export default function VerhuurPage() {
     });
   }, [verhuur, liveSessions]);
 
+  // 1. Verhuurperiode selecteren
   const handlePeriodeSelect = (id: string) => {
     const periode = verhuur.find((v) => v.id === id) || null;
     setSelectedPeriode(periode);
@@ -98,6 +103,7 @@ export default function VerhuurPage() {
     setSelectedTourName("");
   };
 
+  // 2. Tour selecteren → secties ophalen
   const handleTourSelect = async (tourId: string) => {
     if (!selectedPeriode) return;
     try {
@@ -108,11 +114,7 @@ export default function VerhuurPage() {
       const secties: SectionOption[] = [];
       Object.entries(tour.fases).forEach(([faseNaam, sectieArray]) => {
         sectieArray.forEach((secDto) => {
-          secties.push({
-            fase: faseNaam,
-            id: secDto.id,
-            naam: secDto.naam,
-          });
+          secties.push({ fase: faseNaam, id: secDto.id, naam: secDto.naam });
         });
       });
 
@@ -130,6 +132,7 @@ export default function VerhuurPage() {
     }
   };
 
+  // Checkbox toggle
   const toggleSectionChecked = (sectionId: string) => {
     setCheckedSections((prev) => ({
       ...prev,
@@ -137,6 +140,7 @@ export default function VerhuurPage() {
     }));
   };
 
+  // Annuleer sectie‐selectie
   const cancelSectionSelection = () => {
     setIsSelectingSections(false);
     setTourSections([]);
@@ -145,6 +149,7 @@ export default function VerhuurPage() {
     setSelectedTourName("");
   };
 
+  // 3. Live sessie starten met gekozen secties
   const confirmSectionSelection = async () => {
     if (!selectedPeriode || !selectedTourId) return;
     const chosenIds = Object.keys(checkedSections).filter((id) => checkedSections[id]);
@@ -167,12 +172,12 @@ export default function VerhuurPage() {
       await navigator.clipboard.writeText(publicUrl);
       alert("Live‐sessie gestart! Link is gekopieerd.");
     } catch (err: any) {
-      console.error("Kan live-sessie niet starten:", err.response?.data || err);
+      console.error("Kan live‐sessie niet starten:", err.response?.data || err);
       const serverMsg = err.response?.data?.message;
       if (serverMsg) {
         alert("Fout vanaf server: " + serverMsg);
       } else {
-        alert("Er ging iets mis bij het starten van de live-sessie.");
+        alert("Er ging iets mis bij het starten van de live‐sessie.");
       }
     } finally {
       setSelectedPeriode(null);
@@ -183,12 +188,11 @@ export default function VerhuurPage() {
     }
   };
 
+  // Live sessie beëindigen
   const endSession = async (sessionId: string) => {
-    if (!confirm("Weet je zeker dat je deze live‐sessie wilt beëindigen?")) {
-      return;
-    }
+    if (!confirm("Weet je zeker dat je deze live‐sessie wilt beëindigen?")) return;
     try {
-      await API.patch(`/LiveSession/${sessionId}/end`);
+      await API.patch(`/livesession/${sessionId}/end`);
       await fetchLiveSessions();
     } catch (err: any) {
       console.error("Kon live‐sessie niet beëindigen:", err);
@@ -196,7 +200,7 @@ export default function VerhuurPage() {
     }
   };
 
-  // Copy full session ID
+  // Copy session code
   const copyCode = async (sessionId: string) => {
     try {
       await navigator.clipboard.writeText(sessionId);
@@ -206,7 +210,7 @@ export default function VerhuurPage() {
     }
   };
 
-  // Copy full URL
+  // Copy public link
   const copyLink = async (sessionId: string) => {
     const fullUrl = `${window.location.origin}/public/${sessionId}`;
     try {
@@ -317,7 +321,7 @@ export default function VerhuurPage() {
         </div>
       )}
 
-      {/* Actieve Live Sessies tabel */}
+      {/* 4. Actieve Live Sessies tabel */}
       <div className="bg-white shadow-md rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">Actieve Live Sessies</h2>
         {liveSessions.length === 0 ? (

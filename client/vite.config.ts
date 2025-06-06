@@ -1,10 +1,12 @@
 // vite.config.ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  optimizeDeps: {
-    include: ['@hello-pangea/dnd']
-  }
+  resolve: {
+    alias: {
+      "@": "/src",   // maakt dat "@/api/tours" → "src/api/tours/index.ts"
+    },
+  },
 });

@@ -1,12 +1,15 @@
-﻿// File: server/Controllers/LiveSessionController.cs
+﻿// File: Controllers/LiveSessionController.cs
+
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using server.Models;
-using server.Services;
+using server.Models.DTOs.LiveSession;
+using server.Services.Implementations;
+using server.Services.Interfaces;
 
 namespace server.Controllers
 {
@@ -14,11 +17,14 @@ namespace server.Controllers
     [Route("api/[controller]")]
     public class LiveSessionController : ControllerBase
     {
-        private readonly LiveSessionService _liveService;
-
-        public LiveSessionController(LiveSessionService liveService)
+        private readonly ILiveSessionService _liveService;
+        private readonly IMediaService _mediaService;
+        public LiveSessionController(
+            ILiveSessionService liveService,
+            IMediaService mediaService)
         {
             _liveService = liveService;
+            _mediaService = mediaService;
         }
 
         [HttpPost("start")]
@@ -131,18 +137,50 @@ namespace server.Controllers
             }
         }
 
-        public class StartSessionDto
+        // Upload-endpoint voor bestanden (image/video/file)
+        [HttpPost("{id:length(24)}/components/{fieldId}/upload")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UploadFile(string id, string fieldId, IFormFile file)
         {
-            public string VerhuurderId { get; set; } = null!;
-            public string Groep { get; set; } = null!;
-            public string VerantwoordelijkeNaam { get; set; } = null!;
-            public string VerantwoordelijkeTel { get; set; } = null!;
-            public string VerantwoordelijkeMail { get; set; } = null!;
-            public DateTime Aankomst { get; set; }
-            public DateTime Vertrek { get; set; }
-            public string TourId { get; set; } = null!;
-            public string TourName { get; set; } = null!;
-            public List<string> SectionIds { get; set; } = new();
+            if (file == null || file.Length == 0)
+                return BadRequest("Geen bestand geüpload.");
+
+            var folder = $"livesession/{id}";
+            var mediaItem = await _mediaService.UploadFileAsync(file, folder);
+
+            var metadata = new
+            {
+                url = mediaItem.Url,
+                fileName = mediaItem.FileName,
+                uploadedAt = mediaItem.Timestamp
+            };
+
+            await _liveService.AddOrUpdateResponseAsync(id, fieldId, metadata);
+            return Ok(metadata);
+        }
+
+        // PATCH-endpoint voor formulier-waarden
+        [HttpPatch("{id:length(24)}/components/{fieldId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SubmitField(string id, string fieldId, [FromBody] PatchFieldDto dto)
+        {
+            if (dto == null || dto.Value == null)
+                return BadRequest("Geen waarde opgegeven.");
+
+            await _liveService.AddOrUpdateResponseAsync(id, fieldId, dto.Value);
+            return NoContent();
+        }
+
+        // Bulk-submit endpoint voor meerdere velden tegelijk
+        [HttpPost("{id:length(24)}/responses/bulk")]
+        [AllowAnonymous]
+        public async Task<IActionResult> BulkSubmit(string id, [FromBody] BulkResponsesDto dto)
+        {
+            if (dto == null || dto.Responses == null)
+                return BadRequest("Geen responses opgegeven.");
+
+            await _liveService.UpdateResponsesBulkAsync(id, dto.Responses);
+            return NoContent();
         }
     }
 }

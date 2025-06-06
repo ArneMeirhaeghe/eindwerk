@@ -1,6 +1,6 @@
-// File: client/src/components/LivePreview.tsx
+// File: src/components/LivePreview.tsx
+
 import React from "react";
-import type { ComponentItem, FaseSections, Fase } from "../types/types";
 import TitlePreview from "./previews/TitlePreview";
 import SubheadingPreview from "./previews/SubheadingPreview";
 import ParagraphPreview from "./previews/ParagraphPreview";
@@ -14,6 +14,7 @@ import VideoPreview from "./previews/VideoPreview";
 import FilePreview from "./previews/FilePreview";
 import GridPreview from "./previews/GridPreview";
 import UploadZonePreview from "./previews/UploadZonePreview";
+import type { Fase, FaseSections } from "../types/types";
 
 interface Props {
   fases: Fase[];

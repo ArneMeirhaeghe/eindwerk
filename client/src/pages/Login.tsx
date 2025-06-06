@@ -1,20 +1,21 @@
-// File: client/src/pages/Login.tsx
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { loginUser } from '../api/auth';
-import { Link } from 'react-router-dom';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+// File: src/pages/Login.tsx
+
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { useAuth } from "../context/AuthContext";
+import { loginUser } from "../api/auth";
 
 export default function Login() {
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [show, setShow] = useState(false); // Toggle voor wachtwoord zichtbaar maken
-  const [remember, setRemember] = useState(true); // "Ingelogd blijven"
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const toggleShow = () => setShow(prev => !prev);
+  const toggleShow = () => setShow((prev) => !prev);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,10 +24,11 @@ export default function Login() {
 
     try {
       const token = await loginUser(email, password);
-      login(token, remember); // Opslaan token in context + localStorage indien 'remember'
-      window.location.href = '/'; // Redirect naar home/dashboard
+      // Hé, hier roepen we meteen login(token, remember) aan:
+      login(token, remember);
+      window.location.href = "/"; // redirect naar dashboard
     } catch (err: any) {
-      setError(err.response?.data || 'Login mislukt');
+      setError(err.response?.data || "Login mislukt");
     } finally {
       setLoading(false);
     }
@@ -43,16 +45,16 @@ export default function Login() {
             placeholder="E-mailadres"
             className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
           <div className="relative">
             <input
-              type={show ? 'text' : 'password'}
+              type={show ? "text" : "password"}
               placeholder="Wachtwoord"
               className="w-full px-4 py-2 border border-gray-300 rounded pr-10 focus:outline-none focus:border-indigo-500"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
             <button
@@ -68,7 +70,7 @@ export default function Login() {
             <input
               type="checkbox"
               checked={remember}
-              onChange={e => setRemember(e.target.checked)}
+              onChange={(e) => setRemember(e.target.checked)}
             />
             Ingelogd blijven
           </label>
@@ -77,11 +79,11 @@ export default function Login() {
             className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition disabled:opacity-50"
             disabled={loading}
           >
-            {loading ? 'Bezig...' : 'Inloggen'}
+            {loading ? "Bezig..." : "Inloggen"}
           </button>
         </form>
         <p className="text-center mt-4 text-sm">
-          Nog geen account?{' '}
+          Nog geen account?{" "}
           <Link to="/register" className="text-indigo-600 hover:underline">
             Registreer hier
           </Link>

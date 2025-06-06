@@ -1,12 +1,13 @@
 // File: src/components/VerhuurTable.tsx
 
-import type { TourListDto } from "../../api/tours"
-import type { VerhuurPeriode } from "../../api/verhuur"
+import type { TourListDto, VerhuurPeriode } from "../../api/verhuur/types";
+
+;
 
 interface VerhuurTableProps {
-  periodes: VerhuurPeriode[]
-  tours: TourListDto[]
-  onSelectTour: (groep: string, tourId: string) => void
+  periodes: VerhuurPeriode[];
+  tours: TourListDto[];
+  onSelectTour: (tourId: string) => void;
 }
 
 export default function VerhuurTable({
@@ -30,23 +31,21 @@ export default function VerhuurTable({
         </thead>
         <tbody>
           {periodes.map((periode) => (
-            <tr key={periode.groep} className="hover:bg-gray-50">
+            <tr key={periode.id} className="hover:bg-gray-50">
               <td className="p-2 border-b">{periode.groep}</td>
               <td className="p-2 border-b">{periode.verantwoordelijke.naam}</td>
               <td className="p-2 border-b">{periode.verantwoordelijke.tel}</td>
               <td className="p-2 border-b">{periode.verantwoordelijke.mail}</td>
               <td className="p-2 border-b">
-                {new Date(periode.aankomst).toLocaleString()}
+                {new Date(periode.aankomst).toLocaleDateString()}
               </td>
               <td className="p-2 border-b">
-                {new Date(periode.vertrek).toLocaleString()}
+                {new Date(periode.vertrek).toLocaleDateString()}
               </td>
               <td className="p-2 border-b">
                 <select
-                  value={periode.tourId || ""}
-                  onChange={(e) =>
-                    onSelectTour(periode.groep, e.target.value)
-                  }
+                  defaultValue=""
+                  onChange={(e) => onSelectTour(e.target.value)}
                   className="border px-2 py-1 rounded w-full"
                 >
                   <option value="">— kies tour —</option>
@@ -62,5 +61,5 @@ export default function VerhuurTable({
         </tbody>
       </table>
     </div>
-  )
+  );
 }

@@ -1,12 +1,12 @@
-﻿// File: server/Program.cs
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Azure.Storage.Blobs;
 using MongoDB.Driver;
 using server.Helpers;
-using server.Services;
+using server.Services.Interfaces;
+using server.Services.Implementations;
 using System;
 using System.Text;
 
@@ -15,15 +15,12 @@ var builder = WebApplication.CreateBuilder(args);
 // -----------------------------------------------------
 // 1) CONFIGURATIE BINDEN
 // -----------------------------------------------------
-// Mongo‐settings (ConnectionString, Database)
 builder.Services.Configure<MongoSettings>(
     builder.Configuration.GetSection("MongoSettings"));
 
-// JWT‐settings (Key, Issuer, Audience, DurationInMinutes)
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("JwtSettings"));
 
-// Azure‐settings (ConnectionString, ContainerName, SasExpiryHours)
 builder.Services.Configure<AzureSettings>(
     builder.Configuration.GetSection("AzureSettings"));
 
@@ -51,7 +48,7 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtConfig.Issuer,
         ValidateAudience = true,
         ValidAudience = jwtConfig.Audience,
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.FromMinutes(2) // 2min tolerantie
     };
 });
 
@@ -69,7 +66,6 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
 // -----------------------------------------------------
 // 4) AZURE BLOBSERVICECLIENT REGISTREREN
 // -----------------------------------------------------
-// We lezen AzureSettings uit appsettings.json en creëren BlobServiceClient
 builder.Services.AddSingleton(sp =>
 {
     var azureCfg = sp.GetRequiredService<IOptions<AzureSettings>>().Value;
@@ -81,17 +77,11 @@ builder.Services.AddSingleton(sp =>
 // -----------------------------------------------------
 // 5) EIGEN SERVICES REGISTREREN
 // -----------------------------------------------------
-// User/Auth blijven ongewijzigd
-builder.Services.AddSingleton<UserService>();
-builder.Services.AddSingleton<EmailService>();
-builder.Services.AddSingleton<TourService>();
-
-// LiveSession
-builder.Services.AddSingleton<LiveSessionService>();
-
-// Media (upload)
-builder.Services.AddSingleton<IAzureBlobService, AzureBlobService>();
-builder.Services.AddSingleton<IMediaService, MediaService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITourService, TourService>();
+builder.Services.AddScoped<ILiveSessionService, LiveSessionService>();
+builder.Services.AddScoped<IAzureBlobService, AzureBlobService>();
+builder.Services.AddScoped<IMediaService, MediaService>();
 
 // -----------------------------------------------------
 // 6) CORS CONFIGUREREN
@@ -108,7 +98,12 @@ builder.Services.AddCors(opts =>
 // -----------------------------------------------------
 // 7) CONTROLLERS, SWAGGER & UPLOAD-LIMIET
 // -----------------------------------------------------
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new BsonStringToBoolJsonConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.Configure<FormOptions>(opts =>

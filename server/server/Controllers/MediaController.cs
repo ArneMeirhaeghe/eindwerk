@@ -1,15 +1,17 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿// File: Controllers/MediaController.cs
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using server.Helpers;
-using server.Models;
-using server.Services;
 using System;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using server.Helpers;                       // AzureSettings
+using server.Models.Entities;               // MediaItem
+using server.Services.Interfaces;           // IAzureBlobService, IMediaService
 
 namespace server.Controllers
 {
@@ -48,7 +50,6 @@ namespace server.Controllers
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            // Bepaal folder op basis van type
             var folder = type switch
             {
                 "img" => "img",
@@ -56,29 +57,24 @@ namespace server.Controllers
                 _ => "files"
             };
 
-            // Blobnaam met folderprefix + GUID + extensie
             var blobName = $"{folder}/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-
-            // Uploaden naar Azure Blob
             await using (var stream = file.OpenReadStream())
             {
                 await _blobSvc.UploadBlobAsync(stream, file.ContentType, blobName);
             }
 
-            // Opslaan in MongoDB
             var media = new MediaItem
             {
+                BlobName = blobName,
                 FileName = file.FileName,
                 ContentType = file.ContentType,
                 Alt = string.IsNullOrEmpty(alt) ? file.FileName : alt,
                 Styles = string.IsNullOrEmpty(styles) ? "" : styles,
                 UserId = userId,
-                Timestamp = DateTime.UtcNow,
-                BlobName = blobName
+                Timestamp = DateTime.UtcNow
             };
             await _mediaSvc.CreateAsync(media);
 
-            // Response met SAS-URL
             var dto = new
             {
                 id = media.Id,
@@ -130,7 +126,6 @@ namespace server.Controllers
             if (mediaItem == null || mediaItem.UserId != userId)
                 return NotFound();
 
-            // Verwijder blob én metadata
             await _blobSvc.DeleteBlobAsync(mediaItem.BlobName);
             var removed = await _mediaSvc.DeleteAsync(id);
             if (!removed)

@@ -1,10 +1,18 @@
-// /src/components/settings/GridSettings.tsx
+// File: src/components/settings/GridSettings.tsx
+
 import React, { useState, useEffect, type FC, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 import { Plus, Image as ImageIcon } from "lucide-react";
-import { getUploads, uploadFile, deleteUpload, type MediaResponse } from "../../api/uploads";
+
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "@hello-pangea/dnd";
 import type { ComponentItem, GridProps } from "../../types/types";
-import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
+import type { MediaResponse } from "../../api/media/types";
+import { getUploads, uploadFile } from "../../api/media";
 
 interface Props {
   comp: ComponentItem;
@@ -34,7 +42,7 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
   const fetchImages = async () => {
     try {
       const all = await getUploads();
-      setUploads(all.filter(m => m.contentType.startsWith("image/")));
+      setUploads(all.filter((m) => m.contentType.startsWith("image/")));
     } catch {
       toast.error("Media laden mislukt");
     }
@@ -96,7 +104,7 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
       {/* Upload Zone */}
       <div className="p-4 border-2 border-dashed border-gray-300 rounded bg-white">
         <h3 className="text-sm font-semibold flex items-center">
-          <ImageIcon className="w-4 h-4 mr-2"/> Upload afbeelding(en)
+          <ImageIcon className="w-4 h-4 mr-2" /> Upload afbeelding(en)
         </h3>
         <input
           type="file"
@@ -118,10 +126,12 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
 
       {/* Browse Zone */}
       <div className="p-4 bg-gray-50 border border-gray-200 rounded">
-        <h3 className="text-sm font-semibold mb-2">Beschikbare afbeeldingen</h3>
+        <h3 className="text-sm font-semibold mb-2">
+          Beschikbare afbeeldingen
+        </h3>
         {uploads.length ? (
           <div className="grid grid-cols-4 gap-2 max-h-48 overflow-auto">
-            {uploads.map(item => (
+            {uploads.map((item) => (
               <div key={item.id} className="relative group">
                 <img
                   src={item.url}
@@ -134,7 +144,7 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
                     className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 opacity-0 group-hover:opacity-100 transition"
                     onClick={() => handleSelect(item)}
                   >
-                    <Plus className="w-6 h-6 text-gray-800"/>
+                    <Plus className="w-6 h-6 text-gray-800" />
                   </button>
                 )}
                 {p.images.includes(item.url) && (
@@ -146,16 +156,20 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
             ))}
           </div>
         ) : (
-          <div className="text-gray-500 italic text-sm">Geen afbeeldingen gevonden</div>
+          <div className="text-gray-500 italic text-sm">
+            Geen afbeeldingen gevonden
+          </div>
         )}
       </div>
 
       {/* Selected Grid */}
       <div>
-        <p className="text-sm font-medium mb-2">Geselecteerde afbeeldingen (sleep om te herschikken)</p>
+        <p className="text-sm font-medium mb-2">
+          Geselecteerde afbeeldingen (sleep om te herschikken)
+        </p>
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="grid" direction="horizontal">
-            {prov => (
+            {(prov) => (
               <div
                 ref={prov.innerRef}
                 {...prov.droppableProps}
@@ -163,7 +177,7 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
               >
                 {p.images.map((url, i) => (
                   <Draggable key={`${url}-${i}`} draggableId={`${url}-${i}`} index={i}>
-                    {prov2 => (
+                    {(prov2) => (
                       <div
                         ref={prov2.innerRef}
                         {...prov2.draggableProps}
@@ -178,7 +192,9 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
                             borderColor: p.borderColor,
                             borderStyle: "solid",
                             borderRadius: p.radius,
-                            boxShadow: p.shadow ? "0 2px 8px rgba(0,0,0,0.2)" : undefined,
+                            boxShadow: p.shadow
+                              ? "0 2px 8px rgba(0,0,0,0.2)"
+                              : undefined,
                           }}
                         />
                         <button
@@ -207,7 +223,7 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
             min={1}
             max={6}
             value={p.columns}
-            onChange={e => update("columns", +e.target.value)}
+            onChange={(e) => update("columns", +e.target.value)}
             className="w-full border rounded px-2 py-1"
           />
         </div>
@@ -218,7 +234,7 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
             min={0}
             max={50}
             value={p.gap}
-            onChange={e => update("gap", +e.target.value)}
+            onChange={(e) => update("gap", +e.target.value)}
             className="w-full border rounded px-2 py-1"
           />
         </div>
@@ -228,7 +244,7 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
             type="number"
             min={0}
             value={p.borderWidth}
-            onChange={e => update("borderWidth", +e.target.value)}
+            onChange={(e) => update("borderWidth", +e.target.value)}
             className="w-full border rounded px-2 py-1"
           />
         </div>
@@ -237,7 +253,7 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
           <input
             type="color"
             value={p.borderColor}
-            onChange={e => update("borderColor", e.target.value)}
+            onChange={(e) => update("borderColor", e.target.value)}
             className="w-full h-8"
           />
         </div>
@@ -247,7 +263,7 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
             type="number"
             min={0}
             value={p.radius}
-            onChange={e => update("radius", +e.target.value)}
+            onChange={(e) => update("radius", +e.target.value)}
             className="w-full border rounded px-2 py-1"
           />
         </div>
@@ -255,7 +271,7 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
           <input
             type="checkbox"
             checked={p.shadow}
-            onChange={e => update("shadow", e.target.checked)}
+            onChange={(e) => update("shadow", e.target.checked)}
             className="h-4 w-4 text-blue-600 border-gray-300 rounded"
           />
           <span>Schaduw</span>
@@ -264,7 +280,9 @@ const GridSettings: FC<Props> = ({ comp, onUpdate }) => {
           <label className="block mb-1">Object-fit</label>
           <select
             value={p.objectFit}
-            onChange={e => update("objectFit", e.target.value as GridProps["objectFit"])}
+            onChange={(e) =>
+              update("objectFit", e.target.value as GridProps["objectFit"])
+            }
             className="w-full border rounded px-2 py-1"
           >
             <option value="cover">Cover</option>

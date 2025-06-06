@@ -1,7 +1,8 @@
-// File: client/src/pages/Register.tsx
+// File: src/pages/Register.tsx
+
 import { useState } from 'react';
-import { registerUser } from '../api/auth';
 import { Link } from 'react-router-dom';
+import { registerUser } from '../api/auth';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -29,16 +30,22 @@ export default function Register() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="bg-white rounded-xl shadow-md p-8 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6 text-center">Registreren</h2>
-        {error && <p className="text-red-600 mb-4 text-center">{error}</p>}
-        {success && <p className="text-green-600 mb-4 text-center">{success}</p>}
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          Registreren
+        </h2>
+        {error && (
+          <p className="text-red-600 mb-4 text-center">{error}</p>
+        )}
+        {success && (
+          <p className="text-green-600 mb-4 text-center">{success}</p>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="email"
             placeholder="E-mailadres"
             className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-green-500"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
           <input
@@ -46,7 +53,7 @@ export default function Register() {
             placeholder="Wachtwoord"
             className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-green-500"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             required
           />
           <button

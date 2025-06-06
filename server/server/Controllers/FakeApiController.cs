@@ -1,7 +1,8 @@
-﻿// File: server/Controllers/FakeApiController.cs
+﻿// File: Controllers/FakeApiController.cs
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using server.Models;
+using server.Models.Entities;
 using System;
 using System.Linq;
 using System.Security.Claims;

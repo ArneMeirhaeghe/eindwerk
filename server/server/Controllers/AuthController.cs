@@ -1,10 +1,7 @@
-﻿// File: server/Controllers/AuthController.cs
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using server.Models.DTOs;
-using server.Services;
+﻿using Microsoft.AspNetCore.Mvc;
 using server.Helpers;
+using server.Models.Entities;
+using server.Services.Interfaces;
 using System.Threading.Tasks;
 
 namespace server.Controllers
@@ -13,72 +10,50 @@ namespace server.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly UserService _us;
-        private readonly JwtHandler _jwt;
-        private readonly EmailService _email;
+        private readonly IUserService _userService;
+        private readonly JwtHandler _jwtHandler;
 
-        public AuthController(
-            UserService us,
-            JwtHandler jwt,
-            EmailService email)
+        public AuthController(IUserService userService, JwtHandler jwtHandler)
         {
-            _us = us;
-            _jwt = jwt;
-            _email = email;
-        }
-
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
-        {
-            if (await _us.GetByEmailAsync(dto.Email) != null)
-                return BadRequest("Email al in gebruik");
-
-            var user = await _us.CreateAsync(dto.Email, dto.Password);
-            var link = $"https://yourapp.com/verify?uid={user.Id}";
-
-            await _email.SendEmailVerificationAsync(user.Email, link);
-            return Ok("Registratie gelukt, check je mailbox.");
+            _userService = userService;
+            _jwtHandler = jwtHandler;
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            var user = await _us.GetByEmailAsync(dto.Email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-                return Unauthorized("Ongeldige gegevens");
+            var user = await _userService.ValidateUserAsync(dto.Email, dto.Password);
+            if (user == null)
+                return Unauthorized("Ongeldige inloggegevens.");
 
-            // Optional: enforce email verification
-            // if (!user.IsEmailVerified) return BadRequest("Email niet geverifieerd");
-
-            var token = _jwt.GenerateToken(user);
-            return Ok(new { Token = token });
+            var jwt = _jwtHandler.GenerateToken(user);
+            return Ok(new { token = jwt });
         }
 
-        [HttpPost("forgot-password")]
-        public async Task<IActionResult> Forgot([FromBody] string email)
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            var user = await _us.GetByEmailAsync(email);
-            if (user == null) return NotFound();
+            var existing = await _userService.GetByEmailAsync(dto.Email);
+            if (existing != null)
+                return BadRequest("Email bestaat al.");
 
-            var link = $"https://yourapp.com/reset?uid={user.Id}";
-            await _email.SendPasswordResetAsync(email, link);
-            return Ok("Reset-mail verzonden.");
+            // Maak de gebruiker aan via CreateUserAsync
+            var newUser = await _userService.CreateUserAsync(dto.Email, dto.Password);
+
+            var jwt = _jwtHandler.GenerateToken(newUser);
+            return Created("api/auth/login", new { token = jwt });
         }
 
-        [Authorize]
-        [HttpPost("change-password")]
-        public async Task<IActionResult> Change([FromBody] ChangePasswordDto dto)
+        public class LoginDto
         {
-            var uid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var user = await _us.GetByIdAsync(uid);
-            if (user == null) return Unauthorized();
+            public string Email { get; set; } = null!;
+            public string Password { get; set; } = null!;
+        }
 
-            if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash))
-                return BadRequest("Huidig wachtwoord fout");
-
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
-            await _us.UpdateAsync(user);
-            return Ok("Wachtwoord aangepast.");
+        public class RegisterDto
+        {
+            public string Email { get; set; } = null!;
+            public string Password { get; set; } = null!;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿// File: server/Helpers/JwtSettings.cs
+﻿// File: Helpers/JwtSettings.cs
+
 namespace server.Helpers
 {
     public class JwtSettings
@@ -6,6 +7,6 @@ namespace server.Helpers
         public string Key { get; set; } = null!;
         public string Issuer { get; set; } = null!;
         public string Audience { get; set; } = null!;
-        public int DurationInMinutes { get; set; }
+        public int ExpiryMinutes { get; set; }
     }
 }

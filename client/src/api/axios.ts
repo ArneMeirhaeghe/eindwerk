@@ -2,14 +2,15 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api", // Backend base-URL
+  baseURL: "http://localhost:5000/api",   // of gebruik import.meta.env.VITE_API_BASE_URL
+  withCredentials: true,                  // indien je cookies gebruikt
 });
 
-// Voeg JWT toe aan elke request als die aanwezig is
+// In de run-time vullen we hier het token in zodra AuthContext dat doorgeeft
 API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const jwt = localStorage.getItem("token") ?? sessionStorage.getItem("token");
+  if (jwt && config.headers) {
+    config.headers["Authorization"] = `Bearer ${jwt}`;
   }
   return config;
 });
