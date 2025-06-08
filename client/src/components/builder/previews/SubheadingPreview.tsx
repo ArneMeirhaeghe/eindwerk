@@ -1,11 +1,11 @@
 import type { CSSProperties, FC } from "react";
-import type { TitleProps } from "../../types/types";
+import type { SubheadingProps } from "../../../types/types";
 
 interface Props {
-  p: TitleProps;
+  p: SubheadingProps;
 }
 
-const TitlePreview: FC<Props> = ({ p }) => {
+const SubheadingPreview: FC<Props> = ({ p }) => {
   const style: CSSProperties = {
     fontFamily: p.fontFamily,
     fontSize: p.fontSize,
@@ -18,7 +18,7 @@ const TitlePreview: FC<Props> = ({ p }) => {
     textDecoration: p.underline ? "underline" : "none",
   };
 
-  return <h1 style={style}>{p.text}</h1>;
+  return <h2 style={style}>{p.text}</h2>;
 };
 
-export default TitlePreview;
+export default SubheadingPreview;

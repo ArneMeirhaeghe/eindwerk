@@ -1,5 +1,4 @@
-// File: src/components/EditSectionModal.tsx
-
+// File: src/components/builder/EditSectionModal.tsx
 import React, { useState, useEffect, type FC } from "react";
 import { X } from "lucide-react";
 

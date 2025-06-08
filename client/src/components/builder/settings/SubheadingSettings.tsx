@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import type { ComponentItem, SubheadingProps } from "../../types/types";
+import type { ComponentItem, SubheadingProps } from "../../../types/types";
 
 interface Props {
   comp: ComponentItem;

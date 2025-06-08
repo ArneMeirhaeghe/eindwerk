@@ -1,6 +1,6 @@
 // src/components/previews/ChecklistPreview.tsx
 import  { type FC } from "react";
-import type { ChecklistProps } from "../../types/types";
+import type { ChecklistProps } from "../../../types/types";
 
 interface Props { p: ChecklistProps; }
 

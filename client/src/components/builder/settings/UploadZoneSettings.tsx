@@ -1,6 +1,6 @@
 // File: client/src/components/settings/UploadZoneSettings.tsx
 import type { FC } from "react";
-import type { ComponentItem, UploadZoneProps } from "../../types/types";
+import type { ComponentItem, UploadZoneProps } from "../../../types/types";
 
 interface Props {
   comp: ComponentItem;

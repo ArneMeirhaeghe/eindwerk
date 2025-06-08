@@ -1,6 +1,6 @@
 // /src/components/previews/VideoPreview.tsx
 import type { CSSProperties, FC } from "react";
-import type { VideoProps } from "../../types/types";
+import type { VideoProps } from "../../../types/types";
 
 const VideoPreview: FC<{ p: VideoProps }> = ({ p }) => {
   if (!p.url) {

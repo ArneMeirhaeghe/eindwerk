@@ -1,6 +1,6 @@
 // src/components/previews/ButtonPreview.tsx
 import  { type FC } from "react";
-import type { ButtonProps } from "../../types/types";
+import type { ButtonProps } from "../../../types/types";
 
 interface Props { p: ButtonProps; }
 

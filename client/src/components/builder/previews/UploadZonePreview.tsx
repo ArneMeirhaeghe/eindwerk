@@ -1,6 +1,6 @@
 // File: client/src/components/previews/UploadZonePreview.tsx
 import type { FC, CSSProperties } from "react";
-import type { UploadZoneProps } from "../../types/types";
+import type { UploadZoneProps } from "../../../types/types";
 
 interface Props {
   p: UploadZoneProps;

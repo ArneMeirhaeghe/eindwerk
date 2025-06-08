@@ -1,6 +1,6 @@
 // src/components/settings/CheckboxListSettings.tsx
 import React, { type FC } from "react";
-import type { ComponentItem, CheckboxListItem } from "../../types/types";
+import type { ComponentItem, CheckboxListItem } from "../../../types/types";
 
 interface Props {
   comp: ComponentItem;

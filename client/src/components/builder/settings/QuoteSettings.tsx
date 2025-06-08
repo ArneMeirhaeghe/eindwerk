@@ -1,7 +1,7 @@
 // File: src/components/settings/QuoteSettings.tsx
 
 import type { FC } from "react";
-import type { ComponentItem, QuoteProps } from "../../types/types";
+import type { ComponentItem, QuoteProps } from "../../../types/types";
 
 interface Props {
   comp: ComponentItem;

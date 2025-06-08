@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, type FC, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
-import type { ComponentItem, ImageProps } from "../../types/types";
-import type { MediaResponse } from "../../api/media/types";
-import { deleteUpload, getUploads, uploadFile } from "../../api/media";
+import type { ComponentItem, ImageProps } from "../../../types/types";
+import type { MediaResponse } from "../../../api/media/types";
+import { deleteUpload, getUploads, uploadFile } from "../../../api/media";
 
 
 interface Props {

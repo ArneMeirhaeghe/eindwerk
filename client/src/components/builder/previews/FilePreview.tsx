@@ -1,6 +1,6 @@
 // /src/components/previews/FilePreview.tsx
 import type { FC } from "react";
-import type { FileProps } from "../../types/types";
+import type { FileProps } from "../../../types/types";
 
 const FilePreview: FC<{ p: FileProps }> = ({ p }) => {
   if (!p.url) {

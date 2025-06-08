@@ -1,6 +1,6 @@
 // /src/components/previews/ImagePreview.tsx
 import type { CSSProperties, FC } from "react";
-import type { ImageProps } from "../../types/types";
+import type { ImageProps } from "../../../types/types";
 
 const ImagePreview: FC<{ p: ImageProps }> = ({ p }) => {
   if (!p.url) {

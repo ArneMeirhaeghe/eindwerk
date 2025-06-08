@@ -1,11 +1,11 @@
 import type { CSSProperties, FC } from "react";
-import type { ParagraphProps } from "../../types/types";
+import type { TitleProps } from "../../../types/types";
 
 interface Props {
-  p: ParagraphProps;
+  p: TitleProps;
 }
 
-const ParagraphPreview: FC<Props> = ({ p }) => {
+const TitlePreview: FC<Props> = ({ p }) => {
   const style: CSSProperties = {
     fontFamily: p.fontFamily,
     fontSize: p.fontSize,
@@ -18,7 +18,7 @@ const ParagraphPreview: FC<Props> = ({ p }) => {
     textDecoration: p.underline ? "underline" : "none",
   };
 
-  return <p style={style}>{p.text}</p>;
+  return <h1 style={style}>{p.text}</h1>;
 };
 
-export default ParagraphPreview;
+export default TitlePreview;

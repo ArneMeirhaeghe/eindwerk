@@ -1,5 +1,5 @@
 import React, { type FC, type ChangeEvent } from "react";
-import type { ComponentItem } from "../../types/types";
+import type { ComponentItem } from "../../../types/types";
 
 type ButtonFunctionType = "dummy" | "link";
 

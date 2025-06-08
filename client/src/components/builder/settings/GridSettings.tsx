@@ -10,9 +10,9 @@ import {
   Draggable,
   type DropResult,
 } from "@hello-pangea/dnd";
-import type { ComponentItem, GridProps } from "../../types/types";
-import type { MediaResponse } from "../../api/media/types";
-import { getUploads, uploadFile } from "../../api/media";
+import type { ComponentItem, GridProps } from "../../../types/types";
+import type { MediaResponse } from "../../../api/media/types";
+import { getUploads, uploadFile } from "../../../api/media";
 
 interface Props {
   comp: ComponentItem;

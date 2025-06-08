@@ -1,5 +1,4 @@
-// File: src/components/ComponentPalette.tsx
-
+// File: src/components/builder/ComponentPalette.tsx
 import { CloudUpload } from "lucide-react";
 import type { ComponentType } from "../../types/types";
 

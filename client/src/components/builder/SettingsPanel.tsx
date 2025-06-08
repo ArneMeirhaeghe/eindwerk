@@ -1,19 +1,19 @@
-// File: client/src/components/SettingsPanel.tsx
+// File: src/components/builder/SettingsPanel.tsx
 import type { ComponentItem } from "../../types/types";
-import TitleSettings from "../settings/TitleSettings";
-import SubheadingSettings from "../settings/SubheadingSettings";
-import ParagraphSettings from "../settings/ParagraphSettings";
-import QuoteSettings from "../settings/QuoteSettings";
-import ButtonSettings from "../settings/ButtonSettings";
-import ChecklistSettings from "../settings/ChecklistSettings";
-import CheckboxListSettings from "../settings/CheckboxListSettings";
-import DividerSettings from "../settings/DividerSettings";
-import ImageSettings from "../settings/ImageSettings";
-import VideoSettings from "../settings/VideoSettings";
-import FileSettings from "../settings/FileSettings";
-import GridSettings from "../settings/GridSettings";
+import TitleSettings from "./settings/TitleSettings";
+import SubheadingSettings from "./settings/SubheadingSettings";
+import ParagraphSettings from "./settings/ParagraphSettings";
+import QuoteSettings from "./settings/QuoteSettings";
+import ButtonSettings from "./settings/ButtonSettings";
+import ChecklistSettings from "./settings/ChecklistSettings";
+import CheckboxListSettings from "./settings/CheckboxListSettings";
+import DividerSettings from "./settings/DividerSettings";
+import ImageSettings from "./settings/ImageSettings";
+import VideoSettings from "./settings/VideoSettings";
+import FileSettings from "./settings/FileSettings";
+import GridSettings from "./settings/GridSettings";
+import UploadZoneSettings from "./settings/UploadZoneSettings";
 import type { FC } from "react";
-import UploadZoneSettings from "../settings/UploadZoneSettings";
 
 interface Props {
   comp: ComponentItem | null;
@@ -60,11 +60,7 @@ const SettingsPanel: FC<Props> = ({ comp, onUpdate }) => {
           case "uploadzone":
             return <UploadZoneSettings comp={comp} onUpdate={onUpdate} />;
           default:
-            return (
-              <div className="text-red-500">
-                Geen instellingen voor {comp.type}
-              </div>
-            );
+            return <div className="text-red-500">Geen instellingen voor {comp.type}</div>;
         }
       })()}
     </aside>

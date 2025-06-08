@@ -1,22 +1,21 @@
-// File: src/components/BuilderCanvas.tsx
-
+// File: src/components/builder/BuilderCanvas.tsx
 import React from "react";
 import type { DropResult } from "@hello-pangea/dnd";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { GripVertical, Trash2 } from "lucide-react";
-import TitlePreview from "../previews/TitlePreview";
-import SubheadingPreview from "../previews/SubheadingPreview";
-import ParagraphPreview from "../previews/ParagraphPreview";
-import QuotePreview from "../previews/QuotePreview";
-import ButtonPreview from "../previews/ButtonPreview";
-import ChecklistPreview from "../previews/ChecklistPreview";
-import CheckboxListPreview from "../previews/CheckboxListPreview";
-import DividerPreview from "../previews/DividerPreview";
-import ImagePreview from "../previews/ImagePreview";
-import VideoPreview from "../previews/VideoPreview";
-import FilePreview from "../previews/FilePreview";
-import GridPreview from "../previews/GridPreview";
-import UploadZonePreview from "../previews/UploadZonePreview";
+import TitlePreview from "./previews/TitlePreview";
+import SubheadingPreview from "./previews/SubheadingPreview";
+import ParagraphPreview from "./previews/ParagraphPreview";
+import QuotePreview from "./previews/QuotePreview";
+import ButtonPreview from "./previews/ButtonPreview";
+import ChecklistPreview from "./previews/ChecklistPreview";
+import CheckboxListPreview from "./previews/CheckboxListPreview";
+import DividerPreview from "./previews/DividerPreview";
+import ImagePreview from "./previews/ImagePreview";
+import VideoPreview from "./previews/VideoPreview";
+import FilePreview from "./previews/FilePreview";
+import GridPreview from "./previews/GridPreview";
+import UploadZonePreview from "./previews/UploadZonePreview";
 import type { ComponentItem } from "../../types/types";
 
 interface Props {
@@ -69,7 +68,6 @@ export default function BuilderCanvas({
         className="absolute inset-0 overflow-auto p-4"
         style={{ top: 120, bottom: 120, left: 40, right: 40 }}
       >
-        {/* Sectietitel (klik opent modal) */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -80,7 +78,6 @@ export default function BuilderCanvas({
           {sectionTitle || "Sectietitel"}
         </button>
 
-        {/* Drag & Drop context voor componenten */}
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="canvas" direction="vertical">
             {(provided) => (
@@ -100,9 +97,7 @@ export default function BuilderCanvas({
                           className="bg-white w-full rounded shadow flex justify-between items-start"
                         >
                           <div
-                            className={`flex-1 p-3 ${
-                              preview ? "" : "cursor-pointer"
-                            }`}
+                            className={`flex-1 p-3 ${preview ? "" : "cursor-pointer"}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               if (!preview) onSelect(comp);
@@ -112,17 +107,10 @@ export default function BuilderCanvas({
                           </div>
                           {!preview && (
                             <div className="flex flex-col space-y-2 p-2">
-                              <div
-                                {...prov.dragHandleProps}
-                                className="cursor-move"
-                                title="Versleep"
-                              >
+                              <div {...prov.dragHandleProps} className="cursor-move" title="Versleep">
                                 <GripVertical className="text-gray-500" />
                               </div>
-                              <div
-                                onClick={() => onDelete(comp.id)}
-                                title="Verwijder component"
-                              >
+                              <div onClick={() => onDelete(comp.id)} title="Verwijder component">
                                 <Trash2 className="cursor-pointer text-red-600" />
                               </div>
                             </div>

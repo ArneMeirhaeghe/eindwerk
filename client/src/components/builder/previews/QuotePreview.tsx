@@ -1,5 +1,5 @@
 import type { CSSProperties, FC } from "react";
-import type { QuoteProps } from "../../types/types";
+import type { QuoteProps } from "../../../types/types";
 
 interface Props {
   p: QuoteProps;

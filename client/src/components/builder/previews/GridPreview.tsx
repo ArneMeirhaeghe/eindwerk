@@ -1,6 +1,6 @@
 // src/components/previews/GridPreview.tsx
 import  { type FC } from "react";
-import type { GridProps } from "../../types/types";
+import type { GridProps } from "../../../types/types";
 
 interface Props { p: GridProps; }
 

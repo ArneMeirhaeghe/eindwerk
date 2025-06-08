@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import type { ComponentItem, TitleProps } from "../../types/types";
+import type { ComponentItem, TitleProps } from "../../../types/types";
 
 interface Props {
   comp: ComponentItem;

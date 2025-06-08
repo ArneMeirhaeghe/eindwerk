@@ -3,9 +3,9 @@
 import React, { useState, useEffect, type FC, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 import { FileText } from "lucide-react";
-import type { ComponentItem, FileProps } from "../../types/types";
-import type { MediaResponse } from "../../api/media/types";
-import { deleteUpload, getUploads, uploadFile } from "../../api/media";
+import type { ComponentItem, FileProps } from "../../../types/types";
+import type { MediaResponse } from "../../../api/media/types";
+import { deleteUpload, getUploads, uploadFile } from "../../../api/media";
 
 
 

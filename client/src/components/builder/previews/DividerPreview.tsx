@@ -1,6 +1,6 @@
 // src/components/previews/DividerPreview.tsx
 import  { type FC } from "react";
-import type { DividerProps } from "../../types/types";
+import type { DividerProps } from "../../../types/types";
 
 interface Props { p: DividerProps; }
 

@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import type { ComponentItem, ParagraphProps } from "../../types/types";
+import type { ComponentItem, ParagraphProps } from "../../../types/types";
 
 interface Props {
   comp: ComponentItem;

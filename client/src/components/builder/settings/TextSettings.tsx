@@ -1,6 +1,6 @@
 // src/components/settings/TextSettings.tsx
 import React, { type FC } from "react";
-import type { ComponentItem } from "../../types/types";
+import type { ComponentItem } from "../../../types/types";
 
 interface Props {
   comp: ComponentItem;
