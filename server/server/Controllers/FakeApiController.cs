@@ -41,7 +41,7 @@ namespace server.Controllers
                 },
                 new VerhuurPeriode
                 {
-                    VerhuurderId = "6840172f906bbdfe78d5e838",
+                    VerhuurderId = "6842c63f444e6395df35c550",
                     Groep = "KSA Oudenaarde",
                     Verantwoordelijke = new Verantwoordelijke
                     {
@@ -54,7 +54,7 @@ namespace server.Controllers
                 },
                 new VerhuurPeriode
                 {
-                    VerhuurderId = "6840172f906bbdfe78d5e838",
+                    VerhuurderId = "6842c63f444e6395df35c550",
                     Groep = "KSA Zottegem",
                     Verantwoordelijke = new Verantwoordelijke
                     {
@@ -67,7 +67,7 @@ namespace server.Controllers
                 },
                 new VerhuurPeriode
                 {
-                    VerhuurderId = "6840172f906bbdfe78d5e838",
+                    VerhuurderId = "6842c63f444e6395df35c550",
                     Groep = "KSA Brugge",
                     Verantwoordelijke = new Verantwoordelijke
                     {

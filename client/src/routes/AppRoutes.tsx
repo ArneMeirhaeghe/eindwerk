@@ -8,15 +8,12 @@ import RoleRoute from "./RoleRoute"
 import NotFound from "../pages/NotFound"
 import UserManagement from "../pages/UserManagement"
 import VerhuurPage from "../pages/VerhuurPage"
-import GroepDetailPage from "../pages/GroepDetailPage"
-import SessiePage from "../pages/SessiePage"
 import ToursPage from "../pages/ToursPage"
 import TourBuilderPage from "../pages/TourBuilderPage"
-import TestUploadPage from "../pages/TestUploadPage"
 import UploadZone from "../pages/UploadZone"
-import InventoryPage from "../pages/InventoryPage"
 import PublicSessionPage from "../pages/PublicSessionPage" // Route voor publieke live-sessie
 import PublicEntryPage from "../pages/PublicEntryPage"
+import InventoryPage from "../pages/InventoryPage"
 
 function AppRoutes() {
   return (
@@ -112,7 +109,7 @@ function AppRoutes() {
         }
       />
 
-      {/* Test upload pagina */}
+      {/* Test upload pagina
       <Route
         path="/test-upload"
         element={
@@ -120,7 +117,7 @@ function AppRoutes() {
             <TestUploadPage />
           </PrivateRoute>
         }
-      />
+      /> */}
 
       {/* Fallback */}
       <Route path="*" element={<NotFound />} />
