@@ -1,4 +1,4 @@
-﻿// File: Models/Entities/LiveSession.cs
+﻿// File: /mnt/data/LiveSession.cs
 
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
@@ -57,6 +57,6 @@ namespace server.Models.Entities
         public Dictionary<string, List<SectionSnapshot>> Fases { get; set; } = new();
 
         [BsonElement("responses")]
-        public Dictionary<string, object> Responses { get; set; } = new();
+        public Dictionary<string, Dictionary<string, object>> Responses { get; set; } = new();
     }
 }

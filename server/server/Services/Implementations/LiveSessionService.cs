@@ -26,17 +26,17 @@ namespace server.Services.Implementations
         }
 
         public async Task<LiveSession> StartSessionAsync(
-            string verhuurderId,
-            string groep,
-            string verantwoordelijkeNaam,
-            string verantwoordelijkeTel,
-            string verantwoordelijkeMail,
-            DateTime aankomst,
-            DateTime vertrek,
-            string tourId,
-            string tourName,
-            string creatorId,
-            List<string> chosenSectionIds)
+               string verhuurderId,
+               string groep,
+               string verantwoordelijkeNaam,
+               string verantwoordelijkeTel,
+               string verantwoordelijkeMail,
+               DateTime aankomst,
+               DateTime vertrek,
+               string tourId,
+               string tourName,
+               string creatorId,
+               List<string> chosenSectionIds)
         {
             var existingFilter = Builders<LiveSession>.Filter.And(
                 Builders<LiveSession>.Filter.Eq(x => x.Groep, groep),
@@ -96,7 +96,7 @@ namespace server.Services.Implementations
                 IsActive = true,
                 CreatorId = creatorId,
                 Fases = snapshotFases,
-                Responses = new Dictionary<string, object>()
+                Responses = new Dictionary<string, Dictionary<string, object>>()
             };
 
             await _liveCol.InsertOneAsync(session);
@@ -129,21 +129,31 @@ namespace server.Services.Implementations
                 throw new KeyNotFoundException("Live-sessie niet gevonden of geen rechten om te beëindigen.");
         }
 
-        public async Task AddOrUpdateResponseAsync(string sessionId, string fieldId, object value)
+        public async Task AddOrUpdateResponseAsync(string sessionId, string sectionId, string componentId, object value)
         {
             var filter = Builders<LiveSession>.Filter.Eq(x => x.Id, sessionId);
-            var update = Builders<LiveSession>.Update.Set($"responses.{fieldId}", value);
+            var update = Builders<LiveSession>.Update
+                .Set($"responses.{sectionId}.{componentId}", value);
             await _liveCol.UpdateOneAsync(filter, update);
         }
 
-        public async Task UpdateResponsesBulkAsync(string sessionId, Dictionary<string, object> newResponses)
+        public async Task UpdateResponsesBulkAsync(string sessionId, Dictionary<string, Dictionary<string, object>> newResponses)
         {
             var filter = Builders<LiveSession>.Filter.Eq(x => x.Id, sessionId);
             var updates = new List<UpdateDefinition<LiveSession>>();
-            foreach (var kvp in newResponses)
+
+            foreach (var sectionEntry in newResponses)
             {
-                updates.Add(Builders<LiveSession>.Update.Set($"responses.{kvp.Key}", kvp.Value));
+                var sectionId = sectionEntry.Key;
+                foreach (var componentEntry in sectionEntry.Value)
+                {
+                    var componentId = componentEntry.Key;
+                    var value = componentEntry.Value;
+                    updates.Add(Builders<LiveSession>.Update
+                        .Set($"responses.{sectionId}.{componentId}", value));
+                }
             }
+
             var combined = Builders<LiveSession>.Update.Combine(updates);
             await _liveCol.UpdateOneAsync(filter, combined);
         }

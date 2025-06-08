@@ -137,50 +137,72 @@ namespace server.Controllers
             }
         }
 
-        // Upload-endpoint voor bestanden (image/video/file)
-        [HttpPost("{id:length(24)}/components/{fieldId}/upload")]
-        [AllowAnonymous]
-        public async Task<IActionResult> UploadFile(string id, string fieldId, IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("Geen bestand geüpload.");
+        //// Upload-endpoint voor bestanden (image/video/file)
+        //[HttpPost("{id:length(24)}/components/{fieldId}/upload")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> UploadFile(string id, string fieldId, IFormFile file)
+        //{
+        //    if (file == null || file.Length == 0)
+        //        return BadRequest("Geen bestand geüpload.");
 
-            var folder = $"livesession/{id}";
-            var mediaItem = await _mediaService.UploadFileAsync(file, folder);
+        //    var folder = $"livesession/{id}";
+        //    var mediaItem = await _mediaService.UploadFileAsync(file, folder);
 
-            var metadata = new
-            {
-                url = mediaItem.Url,
-                fileName = mediaItem.FileName,
-                uploadedAt = mediaItem.Timestamp
-            };
+        //    var metadata = new
+        //    {
+        //        url = mediaItem.Url,
+        //        fileName = mediaItem.FileName,
+        //        uploadedAt = mediaItem.Timestamp
+        //    };
 
-            await _liveService.AddOrUpdateResponseAsync(id, fieldId, metadata);
-            return Ok(metadata);
-        }
+        //    await _liveService.AddOrUpdateResponseAsync(id, fieldId, metadata);
+        //    return Ok(metadata);
+        //}
 
         // PATCH-endpoint voor formulier-waarden
-        [HttpPatch("{id:length(24)}/components/{fieldId}")]
         [AllowAnonymous]
-        public async Task<IActionResult> SubmitField(string id, string fieldId, [FromBody] PatchFieldDto dto)
+        [HttpPatch("{id:length(24)}/sections/{sectionId}/components/{componentId}")]
+        public async Task<IActionResult> SubmitField(
+            string id,
+            string sectionId,
+            string componentId,
+            [FromBody] PatchFieldDto dto)
         {
             if (dto == null || dto.Value == null)
                 return BadRequest("Geen waarde opgegeven.");
 
-            await _liveService.AddOrUpdateResponseAsync(id, fieldId, dto.Value);
+            await _liveService.AddOrUpdateResponseAsync(id, sectionId, componentId, dto.Value);
             return NoContent();
         }
 
-        // Bulk-submit endpoint voor meerdere velden tegelijk
-        [HttpPost("{id:length(24)}/responses/bulk")]
         [AllowAnonymous]
-        public async Task<IActionResult> BulkSubmit(string id, [FromBody] BulkResponsesDto dto)
+        [HttpPost("{id:length(24)}/responses/bulk")]
+        public async Task<IActionResult> BulkSubmit(
+            string id,
+            [FromBody] BulkResponsesDto dto)
         {
             if (dto == null || dto.Responses == null)
                 return BadRequest("Geen responses opgegeven.");
 
             await _liveService.UpdateResponsesBulkAsync(id, dto.Responses);
             return NoContent();
+        }
+
+        [AllowAnonymous]
+        [HttpPost("{id:length(24)}/sections/{sectionId}/components/{componentId}/upload")]
+        public async Task<IActionResult> UploadResponseFile(
+            string id,
+            string sectionId,
+            string componentId,
+            IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Geen bestand geüpload.");
+
+            var mediaItem = await _mediaService.UploadFileAsync(file, $"responses/{id}");
+            await _liveService.AddOrUpdateResponseAsync(id, sectionId, componentId, mediaItem);
+
+            return Ok(mediaItem);
         }
     }
 }

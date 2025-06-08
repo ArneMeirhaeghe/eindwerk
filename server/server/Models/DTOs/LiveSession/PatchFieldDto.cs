@@ -1,8 +1,11 @@
-﻿// File: Models/DTOs/LiveSession/PatchFieldDto.cs
+﻿// File: /mnt/data/PatchFieldDto.cs
+
 namespace server.Models.DTOs.LiveSession
 {
     public class PatchFieldDto
     {
-        public object? Value { get; set; }
+        public string SectionId { get; set; } = null!;
+        public string ComponentId { get; set; } = null!;
+        public object Value { get; set; } = null!;
     }
 }

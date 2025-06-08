@@ -1,4 +1,4 @@
-﻿// File: Services/Interfaces/ILiveSessionService.cs
+﻿// File: /mnt/data/ILiveSessionService.cs
 
 using System;
 using System.Collections.Generic;
@@ -25,7 +25,8 @@ namespace server.Services.Interfaces
         Task<List<LiveSession>> GetActiveSessionsAsync(string creatorId);
         Task<LiveSession?> GetByIdAsync(string id);
         Task EndSessionAsync(string id, string creatorId);
-        Task AddOrUpdateResponseAsync(string sessionId, string fieldId, object value);
-        Task UpdateResponsesBulkAsync(string sessionId, Dictionary<string, object> newResponses);
+
+        Task AddOrUpdateResponseAsync(string sessionId, string sectionId, string componentId, object value);
+        Task UpdateResponsesBulkAsync(string sessionId, Dictionary<string, Dictionary<string, object>> newResponses);
     }
 }
