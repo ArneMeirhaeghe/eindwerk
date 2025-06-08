@@ -1,7 +1,7 @@
 // File: src/components/ComponentPalette.tsx
 
 import { CloudUpload } from "lucide-react";
-import type { ComponentType } from "../types/types";
+import type { ComponentType } from "../../types/types";
 
 interface Props {
   onAdd: (type: ComponentType) => void;

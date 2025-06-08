@@ -1,20 +1,20 @@
 // File: src/components/LivePreview.tsx
 
 import React from "react";
-import TitlePreview from "./previews/TitlePreview";
-import SubheadingPreview from "./previews/SubheadingPreview";
-import ParagraphPreview from "./previews/ParagraphPreview";
-import QuotePreview from "./previews/QuotePreview";
-import ButtonPreview from "./previews/ButtonPreview";
-import ChecklistPreview from "./previews/ChecklistPreview";
-import CheckboxListPreview from "./previews/CheckboxListPreview";
-import DividerPreview from "./previews/DividerPreview";
-import ImagePreview from "./previews/ImagePreview";
-import VideoPreview from "./previews/VideoPreview";
-import FilePreview from "./previews/FilePreview";
-import GridPreview from "./previews/GridPreview";
-import UploadZonePreview from "./previews/UploadZonePreview";
-import type { Fase, FaseSections } from "../types/types";
+import TitlePreview from "../previews/TitlePreview";
+import SubheadingPreview from "../previews/SubheadingPreview";
+import ParagraphPreview from "../previews/ParagraphPreview";
+import QuotePreview from "../previews/QuotePreview";
+import ButtonPreview from "../previews/ButtonPreview";
+import ChecklistPreview from "../previews/ChecklistPreview";
+import CheckboxListPreview from "../previews/CheckboxListPreview";
+import DividerPreview from "../previews/DividerPreview";
+import ImagePreview from "../previews/ImagePreview";
+import VideoPreview from "../previews/VideoPreview";
+import FilePreview from "../previews/FilePreview";
+import GridPreview from "../previews/GridPreview";
+import UploadZonePreview from "../previews/UploadZonePreview";
+import type { Fase, FaseSections } from "../../types/types";
 
 interface Props {
   fases: Fase[];

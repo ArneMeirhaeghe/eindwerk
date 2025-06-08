@@ -23,12 +23,12 @@ import {
   type Section,
 } from "../types/types";
 import type { ComponentDto, SectionDto, Tour } from "../api/tours/types";
-import LivePreview from "../components/LivePreview";
-import ComponentPalette from "../components/ComponentPalette";
-import BuilderCanvas from "../components/BuilderCanvas";
-import BottomNav from "../components/BottomNav";
-import SettingsPanel from "../components/SettingsPanel";
-import EditSectionModal from "../components/EditSectionModal";
+import LivePreview from "../components/builder/LivePreview";
+import ComponentPalette from "../components/builder/ComponentPalette";
+import BuilderCanvas from "../components/builder/BuilderCanvas";
+import BottomNav from "../components/builder/BottomNav";
+import SettingsPanel from "../components/builder/SettingsPanel";
+import EditSectionModal from "../components/builder/EditSectionModal";
 
 export default function TourBuilderPage() {
   const { id } = useParams<{ id: string }>();

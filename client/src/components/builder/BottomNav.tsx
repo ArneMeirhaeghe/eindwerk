@@ -2,7 +2,7 @@
 
 import React, { useRef } from "react";
 import { ChevronLeft, ChevronRight, Plus, Trash2, Edit2 } from "lucide-react";
-import type { Fase, Section } from "../types/types";
+import type { Fase, Section } from "../../types/types";
 
 interface Props {
   fases: Fase[];
