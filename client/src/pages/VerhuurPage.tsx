@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
 import {
+         // ← zorg dat deze functie bestaat in src/api/verhuur/index.ts
   getActiveLiveSessions,
-  getToursList,
   getVerhuurperiodes,
   startLiveSession,
 } from "../api/verhuur";
-import { getTour } from "../api/tours";
+import { getTour, getToursList } from "../api/tours";
 import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 

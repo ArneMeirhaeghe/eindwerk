@@ -1,53 +1,45 @@
-// File: src/pages/PublicEntryPage.tsx
-
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 export default function PublicEntryPage() {
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code.trim()) {
-      alert('Vul een geldige sessiecode in.');
-      return;
-    }
-    // Verwijder spaties en maak lowercase
-    const cleaned = code.trim();
-    navigate(`/public/${cleaned}`);
+    if (!code) return;
+    setLoading(true);
+    // Best check je hier nog even of de sessie bestaat, maar
+    // navigeren is voldoende; 404 wordt in PublicSessionPage afgehandeld
+    navigate(`/public/${code}`);
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-lg shadow-md w-full max-w-md"
+        onSubmit={onSubmit}
+        className="bg-white p-6 rounded-lg shadow-md w-full max-w-sm"
       >
-        <h1 className="text-2xl font-bold text-center mb-6">
-          Live‐sessie Toegang
+        <h1 className="text-xl font-semibold mb-4 text-center">
+          Vul sessie-code in
         </h1>
-        <label
-          htmlFor="sessionCode"
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
-          Voer sessiecode in:
-        </label>
         <input
-          id="sessionCode"
           type="text"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          placeholder="Bv. 684198a7f903dc62885121a"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-4"
+          placeholder="Sessie-code"
+          className="w-full border rounded px-3 py-2 mb-4 focus:outline-none focus:ring focus:ring-blue-200"
         />
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition"
         >
-          Open sessie
+          {loading ? <LoadingIndicator  /> : "Start"}
         </button>
       </form>
     </div>
-  );
+);
 }

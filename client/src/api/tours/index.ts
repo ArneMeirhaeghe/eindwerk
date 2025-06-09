@@ -3,13 +3,13 @@
 import API from "../axios";
 import type { TourListDto, Tour, SectionDto, ComponentDto } from "./types";
 
-// 1) Alle tours (id + naamLocatie)
+// GET /api/tour
 export const getToursList = async (): Promise<TourListDto[]> => {
   const res = await API.get<TourListDto[]>("/tour");
   return res.data;
 };
 
-// 2) Eén tour ophalen (inclusief fases & secties)
+// GET /api/tour/{id}
 export const getTour = async (id: string): Promise<Tour> => {
   const res = await API.get<Tour>(`/tour/${id}`);
   return res.data;

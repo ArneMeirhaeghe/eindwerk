@@ -23,101 +23,27 @@ function AppRoutes() {
       <Route path="/register" element={<Register />} />
 
 
-
-      {/* Dashboard */}
-      <Route
-        path="/"
-        element={
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        }
-      />
+ {/* Dashboard */}
+      <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
 
       {/* Verhuur */}
-      <Route
-        path="/verhuur"
-        element={
-          <PrivateRoute>
-            <VerhuurPage />
-          </PrivateRoute>
-        }
-      />
+      <Route path="/verhuur" element={<PrivateRoute><VerhuurPage /></PrivateRoute>} />
 
-      {/* Tours overzicht */}
-      <Route
-        path="/tours"
-        element={
-          <PrivateRoute>
-            <ToursPage />
-          </PrivateRoute>
-        }
-      />
+      {/* Tours */}
+      <Route path="/tours" element={<PrivateRoute><ToursPage /></PrivateRoute>} />
+      <Route path="/tours/:id" element={<PrivateRoute><TourBuilderPage /></PrivateRoute>} />
+      <Route path="/tours/:id/builder" element={<PrivateRoute><TourBuilderPage /></PrivateRoute>} />
 
-      {/* Tour detail (raw JSON of info) */}
-      <Route
-        path="/tours/:id"
-        element={
-          <PrivateRoute>
-            <TourBuilderPage />
-          </PrivateRoute>
-        }
-      />
-
-      {/* Tour Builder */}
-      <Route
-        path="/tours/:id/builder"
-        element={
-          <PrivateRoute>
-            <TourBuilderPage />
-          </PrivateRoute>
-        }
-      />
-
-      {/* Publieke entry-pagina voor codes */}
-        <Route path="/public" element={<PublicEntryPage />} />
-        {/* Publieke sessiepagina heeft parameter */}
-        <Route path="/public/:id" element={<PublicSessionPage />} />
+      {/* Publieke toegang */}
+      <Route path="/public" element={<PublicEntryPage />} />
+      <Route path="/public/:id" element={<PublicSessionPage />} />
 
       {/* Admin */}
-      <Route
-        path="/users"
-        element={
-          <RoleRoute role="Admin">
-            <UserManagement />
-          </RoleRoute>
-        }
-      />
+      <Route path="/users" element={<RoleRoute role="Admin"><UserManagement /></RoleRoute>} />
 
-      {/* Test upload pagina */}
-      <Route
-        path="/upload-zone"
-        element={
-          <PrivateRoute>
-            <UploadZone />
-          </PrivateRoute>
-        }
-      />
-
-      {/* Inventory */}
-      <Route
-        path="/inventory"
-        element={
-          <PrivateRoute>
-            <InventoryPage />
-          </PrivateRoute>
-        }
-      />
-
-      {/* Test upload pagina
-      <Route
-        path="/test-upload"
-        element={
-          <PrivateRoute>
-            <TestUploadPage />
-          </PrivateRoute>
-        }
-      /> */}
+      {/* Upload & Inventory */}
+      <Route path="/upload-zone" element={<PrivateRoute><UploadZone /></PrivateRoute>} />
+      <Route path="/inventory" element={<PrivateRoute><InventoryPage /></PrivateRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<NotFound />} />

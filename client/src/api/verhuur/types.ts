@@ -47,7 +47,8 @@ export interface LiveSessionDto {
   isActive: boolean;
   creatorId: string;
   fases: Record<string, SectionSnapshot[]>;
-  publicUrl: string;
+  responses: Record<string, Record<string, any>>;   // ← toegevoegd
+  publicUrl?: string;
 }
 
 export interface StartSessionDto {
