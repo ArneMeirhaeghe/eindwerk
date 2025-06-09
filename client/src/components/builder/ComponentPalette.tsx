@@ -8,19 +8,11 @@ interface Props {
 
 export default function ComponentPalette({ onAdd }: Props) {
   const types: ComponentType[] = [
-    "title",
-    "subheading",
-    "paragraph",
-    "quote",
-    "image",
-    "video",
-    "file",
-    "button",
-    "checklist",
-    "divider",
-    "checkbox-list",
-    "grid",
-    "uploadzone",
+    "title", "subheading", "paragraph", "quote",
+    "image", "video", "file", "button",
+    "checklist", "divider", "checkbox-list", "grid", "uploadzone",
+    // nieuw:
+    "text-input", "textarea", "dropdown", "radio-group", "checkbox-group",
   ];
 
   const labelMap: Record<ComponentType, string> = {
@@ -37,6 +29,12 @@ export default function ComponentPalette({ onAdd }: Props) {
     "checkbox-list": "Checkbox-lijst",
     grid: "Grid",
     uploadzone: "Upload Foto",
+    // nieuw:
+    "text-input": "Tekstveld",
+    textarea: "Tekstvak",
+    dropdown: "Dropdown",
+    "radio-group": "Radioknoppen",
+    "checkbox-group": "Checkboxen",
   };
 
   return (

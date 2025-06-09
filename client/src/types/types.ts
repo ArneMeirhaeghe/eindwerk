@@ -12,7 +12,13 @@ export type ComponentType =
   | "divider"
   | "checkbox-list"
   | "grid"
-  | "uploadzone"; // toegevoegd
+  | "uploadzone"
+  // nieuw:
+  | "text-input"
+  | "textarea"
+  | "dropdown"
+  | "radio-group"
+  | "checkbox-group";
 
 // Item voor checkbox-list
 export interface CheckboxListItem {
@@ -146,7 +152,29 @@ export interface UploadZoneProps {
   label: string;
 }
 
-// Union van alle mogelijke component props
+// Interfaces voor de nieuwe input-componenten
+export interface BaseInputProps {
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+  defaultValue?: string | string[];
+}
+
+export interface TextInputProps extends BaseInputProps {}
+export interface TextareaProps extends BaseInputProps {
+  rows?: number;
+}
+export interface DropdownProps extends BaseInputProps {
+  options: string[];
+}
+export interface RadioGroupProps extends BaseInputProps {
+  options: string[];
+}
+export interface CheckboxGroupProps extends BaseInputProps {
+  options: string[];
+}
+
+// Voeg de nieuwe Props toe aan de union
 export type ComponentProps =
   | TitleProps
   | SubheadingProps
@@ -160,9 +188,14 @@ export type ComponentProps =
   | CheckboxListProps
   | GridProps
   | FileProps
-  | UploadZoneProps; // toegevoegd
-
-// Eén component-item in app
+  | UploadZoneProps
+  // nieuw:
+  | TextInputProps
+  | TextareaProps
+  | DropdownProps
+  | RadioGroupProps
+  | CheckboxGroupProps;
+  
 export interface ComponentItem {
   id: string;
   type: ComponentType;

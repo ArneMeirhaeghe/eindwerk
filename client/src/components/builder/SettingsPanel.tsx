@@ -14,6 +14,11 @@ import FileSettings from "./settings/FileSettings";
 import GridSettings from "./settings/GridSettings";
 import UploadZoneSettings from "./settings/UploadZoneSettings";
 import type { FC } from "react";
+import TextInputSettings from "./settings/TextInputSettings";
+import TextareaSettings from "./settings/TextareaSettings";
+import DropdownSettings from "./settings/DropdownSettings";
+import RadioGroupSettings from "./settings/RadioGroupSettings";
+import CheckboxGroupSettings from "./settings/CheckboxGroupSettings";
 
 interface Props {
   comp: ComponentItem | null;
@@ -59,9 +64,20 @@ const SettingsPanel: FC<Props> = ({ comp, onUpdate }) => {
             return <GridSettings comp={comp} onUpdate={onUpdate} />;
           case "uploadzone":
             return <UploadZoneSettings comp={comp} onUpdate={onUpdate} />;
-          default:
-            return <div className="text-red-500">Geen instellingen voor {comp.type}</div>;
-        }
+       case "text-input":
+      return <TextInputSettings comp={comp} onUpdate={onUpdate} />;
+    case "textarea":
+      return <TextareaSettings comp={comp} onUpdate={onUpdate} />;
+    case "dropdown":
+      return <DropdownSettings comp={comp} onUpdate={onUpdate} />;
+    case "radio-group":
+      return <RadioGroupSettings comp={comp} onUpdate={onUpdate} />;
+    case "checkbox-group":
+      return <CheckboxGroupSettings comp={comp} onUpdate={onUpdate} />;
+    default:
+      return <div className="text-red-500">Geen instellingen voor {comp.type}</div>;
+  }
+
       })()}
     </aside>
   );

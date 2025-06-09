@@ -15,8 +15,14 @@ import ImagePreview from "./previews/ImagePreview";
 import VideoPreview from "./previews/VideoPreview";
 import FilePreview from "./previews/FilePreview";
 import GridPreview from "./previews/GridPreview";
-import UploadZonePreview from "./previews/UploadZonePreview";
+
 import type { ComponentItem } from "../../types/types";
+import UploadZonePreview from "./previews/UploadZonePreview";
+import { TextInputPreview } from "./previews/TextInputPreview";
+import { TextareaPreview } from "./previews/TextareaPreview";
+import { DropdownPreview } from "./previews/DropdownPreview";
+import { RadioGroupPreview } from "./previews/RadioGroupPreview";
+import { CheckboxGroupPreview } from "./previews/CheckboxGroupPreview";
 
 interface Props {
   components: ComponentItem[];
@@ -42,6 +48,11 @@ const previewMap: Record<string, React.FC<{ p: any }>> = {
   file: FilePreview,
   grid: GridPreview,
   uploadzone: UploadZonePreview,
+    "text-input": TextInputPreview,
+  textarea: TextareaPreview,
+  dropdown: DropdownPreview,
+  "radio-group": RadioGroupPreview,
+  "checkbox-group": CheckboxGroupPreview,
 };
 
 export default function BuilderCanvas({

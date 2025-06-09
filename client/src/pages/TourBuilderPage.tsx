@@ -289,7 +289,17 @@ export default function TourBuilderPage() {
         ? { images: [] as string[], columns: 3, gap: 8, borderWidth: 0, borderColor: "#000000", radius: 0, shadow: false, objectFit: "cover" as const }
         : type === "uploadzone"
         ? { label: "Upload Foto" }
-        : baseText;
+        :type === "text-input"
+      ? { label: "Tekstveld", placeholder: "", required: false, defaultValue: "" }
+    : type === "textarea"
+      ? { label: "Tekstvak", placeholder: "", required: false, defaultValue: "", rows: 3 }
+    : type === "dropdown"
+      ? { label: "Selecteer", placeholder: "", required: false, defaultValue: "", options: ["Optie 1", "Optie 2"] }
+    : type === "radio-group"
+      ? { label: "Kies één", required: false, defaultValue: "", options: ["Optie 1", "Optie 2"] }
+    : type === "checkbox-group"
+      ? { label: "Kies", required: false, defaultValue: [], options: ["Optie A", "Optie B"] }
+    :  baseText;
 
     const sec = currentFaseSections[activeSectionIndex];
     try {
