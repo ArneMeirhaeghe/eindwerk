@@ -2,13 +2,15 @@
 
 using System;
 using System.Collections.Generic;
-using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using server.Helpers;
 using server.Models.DTOs.LiveSession;
+using server.Models.Entities;
 using server.Services.Interfaces;
 
 namespace server.Controllers
@@ -19,13 +21,18 @@ namespace server.Controllers
     {
         private readonly ILiveSessionService _liveService;
         private readonly IMediaService _mediaService;
-
+        private readonly IAzureBlobService _blobService;        // voeg toe
+        private readonly AzureSettings _azureSettings;
         public LiveSessionController(
             ILiveSessionService liveService,
-            IMediaService mediaService)
+            IMediaService mediaService,
+            IAzureBlobService blobService,          // DI
+        IOptions<AzureSettings> azureOpts)
         {
             _liveService = liveService;
             _mediaService = mediaService;
+            _blobService = blobService;            // sla op
+            _azureSettings = azureOpts.Value;
         }
 
         // POST /api/livesession/start
@@ -33,7 +40,7 @@ namespace server.Controllers
         [Authorize]
         public async Task<IActionResult> Start([FromBody] StartSessionDto dto)
         {
-            var creatorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var creatorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(creatorId))
                 return Unauthorized("Geen gebruiker gevonden");
 
@@ -74,7 +81,7 @@ namespace server.Controllers
         [Authorize]
         public async Task<IActionResult> GetActive()
         {
-            var creatorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var creatorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(creatorId))
                 return Unauthorized("Geen gebruiker gevonden");
 
@@ -95,7 +102,7 @@ namespace server.Controllers
         [Authorize]
         public async Task<IActionResult> GetAll()
         {
-            var creatorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var creatorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(creatorId))
                 return Unauthorized("Geen gebruiker gevonden");
 
@@ -120,7 +127,7 @@ namespace server.Controllers
             if (session == null)
                 return NotFound();
 
-            var creatorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var creatorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (creatorId == null || session.CreatorId != creatorId)
                 return Forbid();
 
@@ -144,7 +151,7 @@ namespace server.Controllers
         [Authorize]
         public async Task<IActionResult> EndSession(string id)
         {
-            var creatorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var creatorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(creatorId))
                 return Unauthorized("Geen gebruiker gevonden");
 
@@ -216,18 +223,35 @@ namespace server.Controllers
         [HttpPost("{id:length(24)}/sections/{sectionId}/components/{componentId}/upload")]
         [AllowAnonymous]
         public async Task<IActionResult> UploadResponseFile(
-            string id,
-            string sectionId,
-            string componentId,
-            IFormFile file)
+        string id,
+        string sectionId,
+        string componentId,
+        IFormFile file)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("Geen bestand geüpload.");
 
-            var mediaItem = await _mediaService.UploadFileAsync(file, $"responses/{id}");
-            await _liveService.AddOrUpdateResponseAsync(id, sectionId, componentId, mediaItem);
-            return Ok(mediaItem);
+            // 1) Upload via IMediaService:
+            var mediaItem = await _mediaService.UploadFileAsync(file, $"responses/{id}", id);
+
+            // 2) Genereer SAS-url via IAzureBlobService (niet via _blobContainer!)
+            var sasUri = _blobService.GetBlobSasUri(
+                mediaItem.BlobName,
+                _azureSettings.SasExpiryHours
+            );
+
+            // 3) Sla alleen de metadata (dictionary) op in de sessie
+            var metadata = new Dictionary<string, object>
+            {
+                ["url"] = sasUri.ToString(),
+                ["fileName"] = mediaItem.FileName,
+                ["timestamp"] = mediaItem.Timestamp
+            };
+            await _liveService.AddOrUpdateResponseAsync(id, sectionId, componentId, metadata);
+
+            return Ok(new { id = mediaItem.Id, url = sasUri });
         }
+
 
         // ─────────────────────────────────────────────────────────────
         // Helper methods to unwrap JsonElement into .NET types

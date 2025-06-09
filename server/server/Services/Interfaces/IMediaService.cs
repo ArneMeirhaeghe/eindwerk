@@ -13,6 +13,6 @@ namespace server.Services.Interfaces
         Task<List<MediaItem>> GetByUserAsync(string userId);
         Task<MediaItem?> GetByIdAsync(string id);
         Task<bool> DeleteAsync(string id);
-        Task<MediaItem> UploadFileAsync(IFormFile file, string folder);
+        Task<MediaItem> UploadFileAsync(IFormFile file, string folder, string ownerId);
     }
 }

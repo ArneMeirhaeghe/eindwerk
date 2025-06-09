@@ -4,7 +4,6 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using server.Helpers;
 using server.Models.Entities;
@@ -20,74 +19,75 @@ namespace server.Services.Implementations
     {
         private readonly IMongoCollection<MediaItem> _mediaCollection;
         private readonly BlobContainerClient _blobContainer;
-        private readonly AzureSettings _azureSettings;
 
         public MediaService(
-       IMongoClient client,
-       IOptions<MongoSettings> mongoOpts,
-       IOptions<AzureSettings> azureOpts,
-       BlobServiceClient blobServiceClient)
+            IMongoClient client,
+            IOptions<MongoSettings> mongoOpts,
+            IOptions<AzureSettings> azureOpts,
+            BlobServiceClient blobServiceClient)
         {
-            var mongoCfg = mongoOpts.Value;
-            var db = client.GetDatabase(mongoCfg.Database);
-            _mediaCollection = db.GetCollection<MediaItem>(mongoCfg.MediaCollectionName);
+            var db = client.GetDatabase(mongoOpts.Value.Database);
+            _mediaCollection = db.GetCollection<MediaItem>(mongoOpts.Value.MediaCollectionName);
 
-            var azureCfg = azureOpts.Value;
-            _azureSettings = azureCfg;
-            _blobContainer = blobServiceClient.GetBlobContainerClient(azureCfg.ContainerName);
-
-            // Maak de container aan zonder publieke toegang (PublicAccessType.None)
+            _blobContainer = blobServiceClient.GetBlobContainerClient(azureOpts.Value.ContainerName);
             _blobContainer.CreateIfNotExists(PublicAccessType.None);
         }
 
+        // Insert een bestaand MediaItem
         public async Task<MediaItem> CreateAsync(MediaItem item)
         {
             await _mediaCollection.InsertOneAsync(item);
             return item;
         }
 
+        // Haal alle media-items op voor een gegeven userId (hier ownerId=sessionId)
         public async Task<List<MediaItem>> GetByUserAsync(string userId)
         {
-            return await _mediaCollection.Find(x => x.UserId == userId).ToListAsync();
+            return await _mediaCollection
+                .Find(x => x.UserId == userId)
+                .ToListAsync();
         }
 
+        // Haal één media-item op via de MongoDB ObjectId
         public async Task<MediaItem?> GetByIdAsync(string id)
         {
-            if (!ObjectId.TryParse(id, out _))
+            if (!MongoDB.Bson.ObjectId.TryParse(id, out _))
                 return null;
-            return await _mediaCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+            return await _mediaCollection
+                .Find(x => x.Id == id)
+                .FirstOrDefaultAsync();
         }
 
+        // Verwijder een media-item én blob
         public async Task<bool> DeleteAsync(string id)
         {
-            if (!ObjectId.TryParse(id, out _))
+            if (!MongoDB.Bson.ObjectId.TryParse(id, out _))
                 return false;
 
-            var filter = Builders<MediaItem>.Filter.Eq(x => x.Id, id);
-            var toDelete = await _mediaCollection.Find(filter).FirstOrDefaultAsync();
-            if (toDelete == null) return false;
+            var toDelete = await _mediaCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+            if (toDelete == null)
+                return false;
 
             var blobClient = _blobContainer.GetBlobClient(toDelete.BlobName);
             await blobClient.DeleteIfExistsAsync();
 
-            var result = await _mediaCollection.DeleteOneAsync(filter);
+            var result = await _mediaCollection.DeleteOneAsync(x => x.Id == id);
             return result.DeletedCount > 0;
         }
 
-        public async Task<MediaItem> UploadFileAsync(IFormFile file, string folder)
+        // Upload en creëer een MediaItem met ownerId=sessionId (geldige ObjectId)
+        public async Task<MediaItem> UploadFileAsync(IFormFile file, string folder, string ownerId)
         {
             var originalFileName = Path.GetFileName(file.FileName);
             var uniqueName = $"{Guid.NewGuid()}_{originalFileName}";
             var blobName = $"{folder}/{uniqueName}";
 
             var blobClient = _blobContainer.GetBlobClient(blobName);
-            using (var stream = file.OpenReadStream())
+            await using var stream = file.OpenReadStream();
+            await blobClient.UploadAsync(stream, new BlobHttpHeaders
             {
-                await blobClient.UploadAsync(stream, new BlobHttpHeaders
-                {
-                    ContentType = file.ContentType
-                });
-            }
+                ContentType = file.ContentType
+            });
 
             var mediaItem = new MediaItem
             {
@@ -96,12 +96,12 @@ namespace server.Services.Implementations
                 ContentType = file.ContentType,
                 Alt = originalFileName,
                 Styles = string.Empty,
-                UserId = "", // wordt in controller gezet
+                UserId = ownerId,
                 Timestamp = DateTime.UtcNow,
-                Url = blobClient.Uri.ToString() // sla directe URL op
+                Url = blobClient.Uri.ToString()
             };
-            await _mediaCollection.InsertOneAsync(mediaItem);
 
+            await _mediaCollection.InsertOneAsync(mediaItem);
             return mediaItem;
         }
     }

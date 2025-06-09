@@ -1,3 +1,5 @@
+// File: src/pages/PublicSessionPage.tsx
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -20,7 +22,7 @@ export default function PublicSessionPage() {
     uploadFile,
   } = useLiveSession(id!);
 
-  // Redirect if sessie niet bestaat (na laden)
+  // redirect als sessie niet bestaat
   useEffect(() => {
     if (!loading && !session) {
       navigate("/public");
@@ -44,9 +46,7 @@ export default function PublicSessionPage() {
   };
   const next = async () => {
     await saveSection(current.section.id, saved);
-    setCurrentIndex((i) =>
-      Math.min(i + 1, flatSections.length - 1)
-    );
+    setCurrentIndex((i) => Math.min(i + 1, flatSections.length - 1));
   };
 
   return (
@@ -65,7 +65,7 @@ export default function PublicSessionPage() {
           </h1>
         </div>
 
-        {/* Inputs */}
+        {/* Inputs + Preview */}
         <LiveSection
           sessionId={id!}
           sectionData={current}
@@ -76,9 +76,14 @@ export default function PublicSessionPage() {
           onSectionSave={(vals) =>
             saveSection(current.section.id, vals)
           }
-          onUploadFile={(file, compId) =>
-            uploadFile(current.section.id, compId, file)
-          }
+          onUploadFile={async (file, compId) => {
+            // direct preview-set
+            const preview = URL.createObjectURL(file);
+            saveField(current.section.id, compId, { url: preview });
+            // upload naar server
+            await uploadFile(current.section.id, compId, file);
+            // na upload, reload saved response from hook
+          }}
         />
 
         {/* Navigation */}

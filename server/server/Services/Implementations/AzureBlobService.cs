@@ -7,8 +7,6 @@ using Microsoft.Extensions.Options;
 using server.Helpers;
 using server.Services.Interfaces;
 using System;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace server.Services.Implementations
 {
@@ -17,14 +15,19 @@ namespace server.Services.Implementations
         private readonly BlobContainerClient _containerClient;
         private readonly AzureSettings _settings;
 
-        public AzureBlobService(BlobServiceClient blobServiceClient, IOptions<AzureSettings> opts)
+        public AzureBlobService(
+            BlobServiceClient blobServiceClient,
+            IOptions<AzureSettings> opts)
         {
             _settings = opts.Value;
             _containerClient = blobServiceClient.GetBlobContainerClient(_settings.ContainerName);
             _containerClient.CreateIfNotExists(PublicAccessType.None);
         }
 
-        public async Task UploadBlobAsync(Stream content, string contentType, string blobName)
+        public async Task UploadBlobAsync(
+            System.IO.Stream content,
+            string contentType,
+            string blobName)
         {
             var blobClient = _containerClient.GetBlobClient(blobName);
             await blobClient.UploadAsync(content, new BlobHttpHeaders { ContentType = contentType });
@@ -38,10 +41,11 @@ namespace server.Services.Implementations
 
         public Uri GetBlobSasUri(string blobName, int expiryHours)
         {
+            // Use the correctly named field _containerClient
             var blobClient = _containerClient.GetBlobClient(blobName);
             var sasBuilder = new BlobSasBuilder
             {
-                BlobContainerName = _settings.ContainerName,
+                BlobContainerName = _containerClient.Name,
                 BlobName = blobName,
                 Resource = "b",
                 ExpiresOn = DateTimeOffset.UtcNow.AddHours(expiryHours)

@@ -1,53 +1,64 @@
-// File: src/components/livesession/inputs/FileUpload.tsx
+// File: src/components/livesession/FileUpload.tsx
 
-import { useRef } from "react";
-import type { FC } from "react";
+import { useState, type ChangeEvent,  } from "react";
 
 interface Props {
-  sessionId: string;
-  sectionId: string;
   componentId: string;
-  files?: any[];
-  onUpload: (file: File) => void;
+  savedValue: any;
+  onUpload: (files: File[]) => Promise<void>;
 }
 
-const FileUpload: FC<Props> = ({
-  sessionId,
-  sectionId,
-  componentId,
-  files = [],
-  onUpload,
-}) => {
-  const inp = useRef<HTMLInputElement>(null);
-  const handleChange = () => {
-    if (!inp.current) return;
-    const f = inp.current.files?.[0];
-    if (f) onUpload(f);
+export default function FileUpload({ componentId, savedValue, onUpload }: Props) {
+  const [previews, setPreviews] = useState<string[]>(
+    Array.isArray(savedValue) ? savedValue.map((v: any) => v.url) : []
+  );
+  const [uploading, setUploading] = useState(false);
+
+  const handleChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+
+    // Zet FileList om naar een echte array
+    const files = Array.from(fileList);
+    // Direct preview-URL's aanmaken
+    const urls = files.map((f) => URL.createObjectURL(f));
+    setPreviews((prev) => [...prev, ...urls]);
+
+    setUploading(true);
+    try {
+      await onUpload(files);
+    } finally {
+      setUploading(false);
+    }
   };
+
   return (
-    <div className="mb-4">
-      <div className="flex space-x-2 mb-2">
-        <button
-          type="button"
-          onClick={() => inp.current?.click()}
-          className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 transition"
-        >
-          Kies bestand
-        </button>
-        <input
-          ref={inp}
-          type="file"
-          className="hidden"
-          onChange={handleChange}
-        />
-      </div>
-      <ul className="list-disc list-inside">
-        {files.map((f: any, i: number) => (
-          <li key={i}>{f.fileName || f.url || f.blobName}</li>
-        ))}
-      </ul>
+    <div className="space-y-2">
+      <label htmlFor={componentId} className="font-medium">
+        Bestand(en) uploaden
+      </label>
+      <input
+        id={componentId}
+        type="file"
+        multiple
+        accept="image/*,video/*"
+        onChange={handleChange}
+        className="block w-full text-sm text-gray-600"
+      />
+      {uploading && <p className="text-sm text-gray-500">Bezig met uploaden…</p>}
+      {previews.length > 0 && (
+        <div className="grid grid-cols-2 gap-2">
+          {previews.map((url, i) => (
+            <div key={i} className="relative">
+              <img
+                src={url}
+                alt={`Preview ${i + 1}`}
+                className="w-full h-24 object-cover rounded"
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
-};
-
-export default FileUpload;
+}
