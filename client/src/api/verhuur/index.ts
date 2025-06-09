@@ -11,7 +11,7 @@ export const getVerhuurperiodes = async (): Promise<VerhuurPeriode[]> => {
   }));
 };
 
-// GET  /api/LiveSession/active
+// GET  /api/livesession/active
 export const getActiveLiveSessions = async (): Promise<LiveSessionDto[]> => {
   const res = await API.get<LiveSessionDto[]>("/livesession/active");
   return res.data.map((s) => ({
@@ -23,7 +23,34 @@ export const getActiveLiveSessions = async (): Promise<LiveSessionDto[]> => {
   }));
 };
 
-// POST /api/LiveSession/start
+// GET  /api/livesession/all
+export const getAllLiveSessions = async (): Promise<LiveSessionDto[]> => {
+  const res = await API.get<LiveSessionDto[]>("/livesession/all");
+  return res.data.map((s) => ({
+    ...s,
+    aankomst: new Date(s.aankomst).toISOString(),
+    vertrek: new Date(s.vertrek).toISOString(),
+    startDate: new Date(s.startDate).toISOString(),
+    responses: s.responses || {},
+  }));
+};
+
+// GET  /api/livesession/{id}
+export const getLiveSession = async (
+  id: string
+): Promise<LiveSessionDto> => {
+  const res = await API.get<LiveSessionDto>(`/livesession/${id}`);
+  const s = res.data;
+  return {
+    ...s,
+    aankomst: new Date(s.aankomst).toISOString(),
+    vertrek: new Date(s.vertrek).toISOString(),
+    startDate: new Date(s.startDate).toISOString(),
+    responses: s.responses || {},
+  };
+};
+
+// POST /api/livesession/start
 export const startLiveSession = async (
   periode: VerhuurPeriode,
   tourId: string,

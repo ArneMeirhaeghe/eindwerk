@@ -28,5 +28,7 @@ namespace server.Services.Interfaces
 
         Task AddOrUpdateResponseAsync(string sessionId, string sectionId, string componentId, object value);
         Task UpdateResponsesBulkAsync(string sessionId, Dictionary<string, Dictionary<string, object>> newResponses);
+        Task<List<LiveSession>> GetAllSessionsAsync(string creatorId);
+
     }
 }

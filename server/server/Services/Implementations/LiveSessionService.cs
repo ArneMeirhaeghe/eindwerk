@@ -162,6 +162,15 @@ namespace server.Services.Implementations
             }
             // Anders niets doen om de ArgumentException te vermijden
         }
+
+        public async Task<List<LiveSession>> GetAllSessionsAsync(string creatorId)
+        {
+            var filter = Builders<LiveSession>.Filter.Eq(x => x.CreatorId, creatorId);
+            return await _liveCol
+                .Find(filter)
+                .SortByDescending(x => x.StartDate)
+                .ToListAsync();
+        }
     }
 }
 

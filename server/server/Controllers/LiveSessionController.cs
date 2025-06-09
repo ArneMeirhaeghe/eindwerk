@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using server.Models.DTOs.LiveSession;
-using server.Services.Implementations;
 using server.Services.Interfaces;
 
 namespace server.Controllers
@@ -20,6 +19,7 @@ namespace server.Controllers
     {
         private readonly ILiveSessionService _liveService;
         private readonly IMediaService _mediaService;
+
         public LiveSessionController(
             ILiveSessionService liveService,
             IMediaService mediaService)
@@ -28,6 +28,7 @@ namespace server.Controllers
             _mediaService = mediaService;
         }
 
+        // POST /api/livesession/start
         [HttpPost("start")]
         [Authorize]
         public async Task<IActionResult> Start([FromBody] StartSessionDto dto)
@@ -68,6 +69,7 @@ namespace server.Controllers
             }
         }
 
+        // GET /api/livesession/active
         [HttpGet("active")]
         [Authorize]
         public async Task<IActionResult> GetActive()
@@ -88,6 +90,28 @@ namespace server.Controllers
             }
         }
 
+        // GET /api/livesession/all
+        [HttpGet("all")]
+        [Authorize]
+        public async Task<IActionResult> GetAll()
+        {
+            var creatorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(creatorId))
+                return Unauthorized("Geen gebruiker gevonden");
+
+            try
+            {
+                var sessions = await _liveService.GetAllSessionsAsync(creatorId);
+                return Ok(sessions);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] LiveSessionController.GetAll: {ex}");
+                return StatusCode(500, new { message = ex.ToString() });
+            }
+        }
+
+        // GET /api/livesession/{id}
         [HttpGet("{id:length(24)}")]
         [Authorize]
         public async Task<IActionResult> GetById(string id)
@@ -103,6 +127,7 @@ namespace server.Controllers
             return Ok(session);
         }
 
+        // GET /api/livesession/public/{id}
         [HttpGet("public/{id:length(24)}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetPublic(string id)
@@ -114,6 +139,7 @@ namespace server.Controllers
             return Ok(session);
         }
 
+        // PATCH /api/livesession/{id}/end
         [HttpPatch("{id:length(24)}/end")]
         [Authorize]
         public async Task<IActionResult> EndSession(string id)
@@ -138,31 +164,9 @@ namespace server.Controllers
             }
         }
 
-        //// Upload-endpoint voor bestanden (image/video/file)
-        //[HttpPost("{id:length(24)}/components/{fieldId}/upload")]
-        //[AllowAnonymous]
-        //public async Task<IActionResult> UploadFile(string id, string fieldId, IFormFile file)
-        //{
-        //    if (file == null || file.Length == 0)
-        //        return BadRequest("Geen bestand geüpload.");
-
-        //    var folder = $"livesession/{id}";
-        //    var mediaItem = await _mediaService.UploadFileAsync(file, folder);
-
-        //    var metadata = new
-        //    {
-        //        url = mediaItem.Url,
-        //        fileName = mediaItem.FileName,
-        //        uploadedAt = mediaItem.Timestamp
-        //    };
-
-        //    await _liveService.AddOrUpdateResponseAsync(id, fieldId, metadata);
-        //    return Ok(metadata);
-        //}
-
-        // PATCH-endpoint voor formulier-waarden
-        [AllowAnonymous]
+        // PATCH /api/livesession/{id}/sections/{sectionId}/components/{componentId}
         [HttpPatch("{id:length(24)}/sections/{sectionId}/components/{componentId}")]
+        [AllowAnonymous]
         public async Task<IActionResult> SubmitField(
             string id,
             string sectionId,
@@ -180,16 +184,16 @@ namespace server.Controllers
             return NoContent();
         }
 
-        [AllowAnonymous]
+        // POST /api/livesession/{id}/responses/bulk
         [HttpPost("{id:length(24)}/responses/bulk")]
+        [AllowAnonymous]
         public async Task<IActionResult> BulkSubmit(
             string id,
             [FromBody] BulkResponsesDto dto)
         {
-            if (dto == null || dto.Responses == null)
+            if (dto?.Responses == null)
                 return BadRequest("Geen responses opgegeven.");
 
-            // Converteer alle JsonElement-waarden naar .NET types
             var converted = new Dictionary<string, Dictionary<string, object>>();
             foreach (var sectionPair in dto.Responses)
             {
@@ -208,8 +212,9 @@ namespace server.Controllers
             return NoContent();
         }
 
-        [AllowAnonymous]
+        // POST /api/livesession/{id}/sections/{sectionId}/components/{componentId}/upload
         [HttpPost("{id:length(24)}/sections/{sectionId}/components/{componentId}/upload")]
+        [AllowAnonymous]
         public async Task<IActionResult> UploadResponseFile(
             string id,
             string sectionId,
@@ -224,7 +229,9 @@ namespace server.Controllers
             return Ok(mediaItem);
         }
 
-        // Helper: converteert System.Text.Json.JsonElement naar een .NET type
+        // ─────────────────────────────────────────────────────────────
+        // Helper methods to unwrap JsonElement into .NET types
+        // ─────────────────────────────────────────────────────────────
         private static object? ConvertJsonElement(object? value)
         {
             if (value is JsonElement je)
@@ -243,6 +250,7 @@ namespace server.Controllers
             }
             return value;
         }
+
         private static List<object?> ConvertJsonArray(JsonElement array)
         {
             var list = new List<object?>();

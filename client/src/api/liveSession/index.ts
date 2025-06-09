@@ -28,9 +28,9 @@ export const getActiveLiveSessions = async (): Promise<LiveSessionDto[]> => {
 // 3) Haal een private sessie op (creator-only)
 //    GET /api/LiveSession/{id}
 export const getLiveSession = async (
-  sessionId: string
+  id: string
 ): Promise<LiveSessionDto> => {
-  const res = await API.get<LiveSessionDto>(`/livesession/${sessionId}`);
+  const res = await API.get<LiveSessionDto>(`/livesession/${id}`);
   return res.data;
 };
 
