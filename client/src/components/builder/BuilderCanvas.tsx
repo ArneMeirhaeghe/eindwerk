@@ -4,7 +4,6 @@ import type { DropResult } from "@hello-pangea/dnd";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { GripVertical, Trash2 } from "lucide-react";
 import TitlePreview from "./previews/TitlePreview";
-import SubheadingPreview from "./previews/SubheadingPreview";
 import ParagraphPreview from "./previews/ParagraphPreview";
 import QuotePreview from "./previews/QuotePreview";
 import ButtonPreview from "./previews/ButtonPreview";
@@ -16,6 +15,7 @@ import VideoPreview from "./previews/VideoPreview";
 import GridPreview from "./previews/GridPreview";
 import FilePreview from "./previews/FilePreview";
 import type { ComponentItem } from "../../types/types";
+import SubheadingPreview from "./previews/SubheadingPreview";
 
 interface Props {
   components: ComponentItem[];
@@ -24,10 +24,10 @@ interface Props {
   onSelect: (c: ComponentItem) => void;
   onDelete: (id: string) => void;
   onDragEnd: (res: DropResult) => void;
-  onSectionTitleChange: (t: string) => void;
+  onSectionTitleClick: () => void;
 }
 
-// Mapping van component-type naar corresponderende preview-component
+// Mapping component types to preview components
 const previewMap: Record<string, React.FC<{ p: any }>> = {
   title: TitlePreview,
   subheading: SubheadingPreview,
@@ -50,7 +50,7 @@ export default function BuilderCanvas({
   onSelect,
   onDelete,
   onDragEnd,
-  onSectionTitleChange,
+  onSectionTitleClick,
 }: Props) {
   return (
     <div
@@ -63,20 +63,20 @@ export default function BuilderCanvas({
         backgroundPosition: "center",
       }}
     >
-      {/* Binnenin telefoonsjabloon: marges om content te tonen */}
+      {/* Phone interior: content margins */}
       <div
         className="absolute overflow-auto"
         style={{ top: 120, bottom: 120, left: 40, right: 40 }}
       >
-        {/* Sectietitel (editable) */}
-        <input
-          value={sectionTitle}
-          onChange={(e) => onSectionTitleChange(e.target.value)}
-          className="w-full mb-4 text-xl font-semibold border-b px-2 py-1 focus:outline-none bg-transparent"
-          placeholder="Sectietitel"
-        />
+        {/* Clickable section title */}
+        <div
+          onClick={onSectionTitleClick}
+          className="w-full mb-4 text-xl font-semibold px-2 py-1 cursor-pointer bg-transparent text-gray-800"
+        >
+          {sectionTitle || "Sectietitel"}
+        </div>
 
-        {/* Drag & Drop context voor componenten */}
+        {/* Drag & Drop context for components */}
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="canvas" direction="vertical">
             {(provided) => (
