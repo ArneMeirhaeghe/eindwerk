@@ -1,13 +1,38 @@
-// File: src/components/builder/previews/DropdownPreview.tsx
-import type { FC } from "react";
-import type { DropdownProps } from "../../../types/types";
+import React from "react";
 
-export const DropdownPreview: FC<{ p: DropdownProps }> = ({ p }) => (
-  <div className="flex flex-col">
-    <label className="mb-1 font-medium">{p.label}{p.required && "*"}</label>
-    <select disabled className="border rounded px-2 py-1 w-full" value={p.defaultValue as string || ""}>
-      <option value="" disabled>{p.placeholder || "Selecteer..."}</option>
-      {p.options.map((opt) => <option key={opt}>{opt}</option>)}
-    </select>
-  </div>
-);
+interface Props {
+  p: {
+    label?: string;
+    options?: string[];
+    placeholder?: string;
+    defaultValue?: string;
+    required?: boolean;
+  };
+}
+
+export default function DropdownPreview({ p }: Props) {
+  const options = p.options || [];
+  const value = p.defaultValue || "";
+
+  return (
+    <div className="mb-4">
+      {p.label && <label className="block mb-1 text-sm">{p.label}</label>}
+      <select
+        value={value}
+        disabled
+        className="w-full border rounded px-2 py-1"
+      >
+        {p.placeholder && !value && (
+          <option value="" disabled hidden>
+            {p.placeholder}
+          </option>
+        )}
+        {options.map((opt, i) => (
+          <option key={i} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}

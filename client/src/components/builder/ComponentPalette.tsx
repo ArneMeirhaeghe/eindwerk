@@ -1,5 +1,5 @@
 // File: src/components/builder/ComponentPalette.tsx
-
+import React from "react";
 import { CloudUpload } from "lucide-react";
 import type { ComponentType } from "../../types/types";
 
@@ -7,79 +7,55 @@ interface Props {
   onAdd: (type: ComponentType) => void;
 }
 
-// Groepeer componenten per categorie voor betere UX
-const groups: {
-  title: string;
-  types: ComponentType[];
-}[] = [
-  {
-    title: "Tekst",
-    types: ["title", "subheading", "paragraph", "quote"],
-  },
-  {
-    title: "Media",
-    types: ["image", "video", "uploadzone", "file"],
-  },
-  {
-    title: "Input",
-    types: ["text-input", "textarea", "dropdown", "radio-group", "checkbox-group"],
-  },
-  {
-    title: "Interactief",
-    types: ["button", "grid"],
-  },
-  {
-    title: "Lijsten",
-    types: ["checklist", "checkbox-list"],
-  },
-  {
-    title: "Overig",
-    types: ["divider"],
-  },
-];
-
+// Labels voor de knopjes
 const labelMap: Record<ComponentType, string> = {
-  title: "Titel",
+  title: "Koptekst",
+  text: "Tekst",
   subheading: "Subkop",
   paragraph: "Paragraaf",
-  quote: "Quote",
+  quote: "Citaat",
   image: "Afbeelding",
   video: "Video",
-  uploadzone: "Upload Foto",
   file: "Bestand",
-  "text-input": "Tekstveld",
-  textarea: "Tekstvak",
-  dropdown: "Dropdown",
-  "radio-group": "Radioknoppen",
-  "checkbox-group": "Checkboxen",
   button: "Knop",
-  grid: "Grid",
   checklist: "Checklist",
-  "checkbox-list": "Checkbox-lijst",
   divider: "Scheiding",
+  "checkbox-list": "Checkbox-lijst",
+  grid: "Grid",
+  uploadzone: "Upload-zone",
+  "text-input": "Tekst-invoer",
+  textarea: "Tekstvlak",
+  dropdown: "Dropdown",
+  "radio-group": "Radiogroep",
+  "checkbox-group": "Checkbox-groep",
 };
+
+const groups: { title: string; types: ComponentType[] }[] = [
+  { title: "Tekst", types: ["title", "subheading", "paragraph", "quote"] },
+  { title: "Media", types: ["image", "video", "file"] },
+  { title: "Interactie", types: ["button", "checklist", "checkbox-list", "dropdown", "radio-group", "checkbox-group"] },
+  { title: "Structuur", types: ["divider", "grid", "uploadzone", "text-input", "textarea"] },
+];
 
 export default function ComponentPalette({ onAdd }: Props) {
   return (
-    <aside className="w-60 border-r p-4 overflow-auto">
-      <h3 className="font-semibold mb-3">Componenten</h3>
-
-      {groups.map(({ title, types }) => (
-        <div key={title} className="mb-4">
-          <h4 className="text-sm font-medium mb-2">{title}</h4>
-          <div className="flex flex-col gap-2">
-            {types.map((type) => (
+    <aside className="w-64 border-r p-4 overflow-auto">
+      {groups.map((group) => (
+        <section key={group.title} className="mb-6">
+          <h3 className="font-semibold mb-2">{group.title}</h3>
+          <div className="space-y-2">
+            {group.types.map((type) => (
               <button
                 key={type}
                 onClick={() => onAdd(type)}
-                className="flex items-center justify-between px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 transition"
+                className="flex justify-between items-center w-full px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 transition"
               >
                 <span>+ {labelMap[type]}</span>
                 {type === "uploadzone" && <CloudUpload size={16} />}
               </button>
             ))}
           </div>
-        </div>
+        </section>
       ))}
     </aside>
   );

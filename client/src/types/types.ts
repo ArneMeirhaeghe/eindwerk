@@ -1,6 +1,9 @@
-// File: client/src/types/types.ts
+// File: src/types/types.ts
+
+// Alle component-typen
 export type ComponentType =
   | "title"
+  | "text"
   | "subheading"
   | "paragraph"
   | "quote"
@@ -9,208 +12,75 @@ export type ComponentType =
   | "file"
   | "button"
   | "checklist"
-  | "divider"
   | "checkbox-list"
+  | "divider"
   | "grid"
   | "uploadzone"
-  // nieuw:
   | "text-input"
   | "textarea"
   | "dropdown"
   | "radio-group"
   | "checkbox-group";
 
-// Item voor checkbox-list
-export interface CheckboxListItem {
-  label: string;
-  good: boolean;
-}
-
-// Basis-text props gedeeld door meerdere componenten
-interface TextStyleProps {
-  fontFamily: string;
-  fontSize: number;
-  color: string;
-  bg?: string;
-  align?: "left" | "center" | "right";
+// Props voor elk component
+export interface ComponentProps {
+  // Tekst-achtige
+  text?: string;
+  fontSize?: number;
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
-  lineHeight?: number;
-}
 
-// Title component props
-export interface TitleProps extends TextStyleProps {
-  text: string;
-}
-
-// Subheading component props
-export interface SubheadingProps extends TextStyleProps {
-  text: string;
-}
-
-// Paragraph component props
-export interface ParagraphProps extends TextStyleProps {
-  text: string;
-}
-
-// Quote component props
-export interface QuoteProps extends TextStyleProps {
-  text: string;
-  author?: string;
-}
-
-// Button component props
-export interface ButtonProps {
-  label: string;
-  functionType?: "link" | "action";
+  // Media
   url?: string;
-  fontSize?: number;
-  color?: string;
-  bg?: string;
-  radius?: number;
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-}
-
-// Checklist component props
-export interface ChecklistProps {
-  items: string[];
-  fontSize?: number;
-  color?: string;
-  bg?: string;
-  spacing?: number;
-}
-
-// Checkbox-list component props
-export interface CheckboxListProps {
-  items: CheckboxListItem[];
-  fontSize?: number;
-  color?: string;
-  bg?: string;
-  spacing?: number;
-}
-
-// Divider component props
-export interface DividerProps {
-  color?: string;
-  thickness?: number;
-  bg?: string;
-}
-
-// Image component props
-export interface ImageProps {
-  url: string;
   alt?: string;
   width?: number;
   height?: number;
-  borderWidth?: number;
-  borderColor?: string;
-  radius?: number;
-  shadow?: boolean;
-  objectFit?: "cover" | "contain";
   showAlt?: boolean;
-}
-
-// Video component props
-export interface VideoProps {
-  url: string;
-  alt?: string;
   controls?: boolean;
   autoplay?: boolean;
   loop?: boolean;
-  width?: number;
-  height?: number;
-  radius?: number;
-  shadow?: boolean;
-  objectFit?: "cover" | "contain";
-  showAlt?: boolean;
-}
 
-// Grid (multi-image) component props
-export interface GridProps {
-  images: string[];
-  columns: number;
+  // Grid
+  images?: string[];
+  columns?: number;
   gap?: number;
-  borderWidth?: number;
-  borderColor?: string;
-  radius?: number;
-  shadow?: boolean;
-  objectFit?: "cover" | "contain";
-}
 
-// File component props
-export interface FileProps {
-  url: string;
-  filename: string;
-  showName: boolean;
-}
+  // Checklist / lijst
+  items?: string[];
 
-// UploadZone component props
-export interface UploadZoneProps {
-  label: string;
-}
+  // Divider
+  thickness?: number;
 
-// Interfaces voor de nieuwe input-componenten
-export interface BaseInputProps {
-  label: string;
+  // File / upload
+  filename?: string;
+  showName?: boolean;
+  label?: string;
+
+  // Button
+  functionType?: string;
+
+  // Form inputs
   placeholder?: string;
   required?: boolean;
-  defaultValue?: string | string[];
+  defaultValue?: any;
+  options?: string[];
 }
 
-export interface TextInputProps extends BaseInputProps {}
-export interface TextareaProps extends BaseInputProps {
-  rows?: number;
-}
-export interface DropdownProps extends BaseInputProps {
-  options: string[];
-}
-export interface RadioGroupProps extends BaseInputProps {
-  options: string[];
-}
-export interface CheckboxGroupProps extends BaseInputProps {
-  options: string[];
-}
-
-// Voeg de nieuwe Props toe aan de union
-export type ComponentProps =
-  | TitleProps
-  | SubheadingProps
-  | ParagraphProps
-  | QuoteProps
-  | ImageProps
-  | VideoProps
-  | ButtonProps
-  | ChecklistProps
-  | DividerProps
-  | CheckboxListProps
-  | GridProps
-  | FileProps
-  | UploadZoneProps
-  // nieuw:
-  | TextInputProps
-  | TextareaProps
-  | DropdownProps
-  | RadioGroupProps
-  | CheckboxGroupProps;
-  
+// Eén instance van een component
 export interface ComponentItem {
   id: string;
   type: ComponentType;
   props: ComponentProps;
 }
 
-// Section met title in plaats van naam
+// Section met title i.p.v. naam
 export interface Section {
   id: string;
   title: string;
   components: ComponentItem[];
 }
 
-// Vijf fases van een tour
+// 5 fases
 export type Fase = "voor" | "aankomst" | "terwijl" | "vertrek" | "na";
-
-// Mapping van fase naar lijst van sections
 export type FaseSections = Record<Fase, Section[]>;
