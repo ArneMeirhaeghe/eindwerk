@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -168,10 +169,14 @@ namespace server.Controllers
             string componentId,
             [FromBody] PatchFieldDto dto)
         {
-            if (dto == null || dto.Value == null)
-                return BadRequest("Geen waarde opgegeven.");
+            if (dto == null)
+                return BadRequest("Geen payload.");
 
-            await _liveService.AddOrUpdateResponseAsync(id, sectionId, componentId, dto.Value);
+            var value = ConvertJsonElement(dto.Value);
+            if (value == null)
+                return BadRequest("Ongeldige waarde.");
+
+            await _liveService.AddOrUpdateResponseAsync(id, sectionId, componentId, value);
             return NoContent();
         }
 
@@ -184,7 +189,22 @@ namespace server.Controllers
             if (dto == null || dto.Responses == null)
                 return BadRequest("Geen responses opgegeven.");
 
-            await _liveService.UpdateResponsesBulkAsync(id, dto.Responses);
+            // Converteer alle JsonElement-waarden naar .NET types
+            var converted = new Dictionary<string, Dictionary<string, object>>();
+            foreach (var sectionPair in dto.Responses)
+            {
+                var compDict = new Dictionary<string, object>();
+                foreach (var compPair in sectionPair.Value)
+                {
+                    var v = ConvertJsonElement(compPair.Value);
+                    if (v != null)
+                        compDict[compPair.Key] = v;
+                }
+                if (compDict.Count > 0)
+                    converted[sectionPair.Key] = compDict;
+            }
+
+            await _liveService.UpdateResponsesBulkAsync(id, converted);
             return NoContent();
         }
 
@@ -201,8 +221,46 @@ namespace server.Controllers
 
             var mediaItem = await _mediaService.UploadFileAsync(file, $"responses/{id}");
             await _liveService.AddOrUpdateResponseAsync(id, sectionId, componentId, mediaItem);
-
             return Ok(mediaItem);
+        }
+
+        // Helper: converteert System.Text.Json.JsonElement naar een .NET type
+        private static object? ConvertJsonElement(object? value)
+        {
+            if (value is JsonElement je)
+            {
+                return je.ValueKind switch
+                {
+                    JsonValueKind.String => je.GetString(),
+                    JsonValueKind.Number => je.TryGetInt64(out var l) ? (object)l : je.GetDouble(),
+                    JsonValueKind.True => true,
+                    JsonValueKind.False => false,
+                    JsonValueKind.Null => null,
+                    JsonValueKind.Array => ConvertJsonArray(je),
+                    JsonValueKind.Object => ConvertJsonObject(je),
+                    _ => je.GetRawText()
+                };
+            }
+            return value;
+        }
+        private static List<object?> ConvertJsonArray(JsonElement array)
+        {
+            var list = new List<object?>();
+            foreach (var item in array.EnumerateArray())
+            {
+                list.Add(ConvertJsonElement(item));
+            }
+            return list;
+        }
+
+        private static Dictionary<string, object?> ConvertJsonObject(JsonElement obj)
+        {
+            var dict = new Dictionary<string, object?>();
+            foreach (var prop in obj.EnumerateObject())
+            {
+                dict[prop.Name] = ConvertJsonElement(prop.Value);
+            }
+            return dict;
         }
     }
 }

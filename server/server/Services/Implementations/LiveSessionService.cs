@@ -154,8 +154,14 @@ namespace server.Services.Implementations
                 }
             }
 
-            var combined = Builders<LiveSession>.Update.Combine(updates);
-            await _liveCol.UpdateOneAsync(filter, combined);
+            // Alleen uitvoeren als er daadwerkelijk updates zijn
+            if (updates.Count > 0)
+            {
+                var combined = Builders<LiveSession>.Update.Combine(updates);
+                await _liveCol.UpdateOneAsync(filter, combined);
+            }
+            // Anders niets doen om de ArgumentException te vermijden
         }
     }
 }
+
