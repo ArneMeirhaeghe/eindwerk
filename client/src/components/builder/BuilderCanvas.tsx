@@ -1,9 +1,11 @@
-// File: src/components/BuilderCanvas.tsx
+// File: src/components/builder/BuilderCanvas.tsx
 import React from "react";
 import type { DropResult } from "@hello-pangea/dnd";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { GripVertical, Trash2 } from "lucide-react";
+
 import TitlePreview from "./previews/TitlePreview";
+import SubheadingPreview from "./previews/SubheadingPreview";
 import ParagraphPreview from "./previews/ParagraphPreview";
 import QuotePreview from "./previews/QuotePreview";
 import ButtonPreview from "./previews/ButtonPreview";
@@ -12,22 +14,18 @@ import CheckboxListPreview from "./previews/CheckboxListPreview";
 import DividerPreview from "./previews/DividerPreview";
 import ImagePreview from "./previews/ImagePreview";
 import VideoPreview from "./previews/VideoPreview";
-import GridPreview from "./previews/GridPreview";
 import FilePreview from "./previews/FilePreview";
+import GridPreview from "./previews/GridPreview";
+import UploadZonePreview from "./previews/UploadZonePreview";
+
+
 import type { ComponentItem } from "../../types/types";
-import SubheadingPreview from "./previews/SubheadingPreview";
+import { TextInputPreview } from "./previews/TextInputPreview";
+import { TextareaPreview } from "./previews/TextareaPreview";
+import DropdownPreview from "./previews/DropdownPreview";
+import { RadioGroupPreview } from "./previews/RadioGroupPreview";
+import { CheckboxGroupPreview } from "./previews/CheckboxGroupPreview";
 
-interface Props {
-  components: ComponentItem[];
-  sectionTitle: string;
-  preview: boolean;
-  onSelect: (c: ComponentItem) => void;
-  onDelete: (id: string) => void;
-  onDragEnd: (res: DropResult) => void;
-  onSectionTitleClick: () => void;
-}
-
-// Mapping component types to preview components
 const previewMap: Record<string, React.FC<{ p: any }>> = {
   title: TitlePreview,
   subheading: SubheadingPreview,
@@ -41,7 +39,24 @@ const previewMap: Record<string, React.FC<{ p: any }>> = {
   video: VideoPreview,
   file: FilePreview,
   grid: GridPreview,
+  uploadzone: UploadZonePreview,
+  "text-input": TextInputPreview,
+  textarea: TextareaPreview,
+  dropdown: DropdownPreview,
+  "radio-group": RadioGroupPreview,
+  "checkbox-group": CheckboxGroupPreview,
 };
+
+interface Props {
+  components: ComponentItem[];
+  sectionTitle: string;
+  preview: boolean;
+  onSelect: (c: ComponentItem) => void;
+  onDelete: (id: string) => void;
+  onDragEnd: (res: DropResult) => void;
+  onSectionTitleClick: () => void;
+  onTogglePreview: () => void;
+}
 
 export default function BuilderCanvas({
   components,
@@ -53,86 +68,72 @@ export default function BuilderCanvas({
   onSectionTitleClick,
 }: Props) {
   return (
-    <div
-      className="relative mx-auto bg-white shadow-md rounded"
-      style={{
-        width: 420,
-        height: 880,
-        backgroundImage: "url('/phonemockup.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      {/* Phone interior: content margins */}
-      <div
-        className="absolute overflow-auto"
-        style={{ top: 120, bottom: 120, left: 40, right: 40 }}
-      >
-        {/* Clickable section title */}
-        <div
+    <div className="flex-1 flex justify-center items-start p-4 overflow-auto">
+      {/* Phone mockup groot genoeg voor realistisch beeld */}
+      <div className="relative w-[360px] h-[720px] mx-auto">
+       
+
+        {/* Sectie-titel klikbaar voor modal */}
+        <h2
           onClick={onSectionTitleClick}
-          className="w-full mb-4 text-xl font-semibold px-2 py-1 cursor-pointer bg-transparent text-gray-800"
+          className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 px-4 py-1 rounded-full text-sm font-semibold cursor-pointer shadow"
         >
-          {sectionTitle || "Sectietitel"}
+          {sectionTitle}
+        </h2>
+
+      
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="canvas">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="flex flex-col space-y-3"
+                >
+                  {components.map((comp, idx) => {
+                    const Preview = previewMap[comp.type];
+                    return (
+                      <Draggable key={comp.id} draggableId={comp.id} index={idx}>
+                        {(prov) => (
+                          <div
+                            ref={prov.innerRef}
+                            {...prov.draggableProps}
+                            className="relative bg-white bg-opacity-90 backdrop-blur px-3 py-2 rounded-xl shadow w-full"
+                          >
+                            {/* Drag-handle */}
+                            <div
+                              {...prov.dragHandleProps}
+                              className="absolute top-2 left-2 cursor-move text-gray-400"
+                            >
+                              <GripVertical size={16} />
+                            </div>
+                            {/* Preview zelf */}
+                            <div onClick={() => onSelect(comp)} className="cursor-pointer">
+                              {Preview && <Preview p={comp.props} />}
+                            </div>
+                            {/* Delete-knop */}
+                            {!preview && (
+                              <button
+                                onClick={() => onDelete(comp.id)}
+                                className="absolute top-2 right-2 text-red-500 hover:bg-red-100 p-1 rounded-full"
+                                aria-label="Verwijder component"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         </div>
 
-        {/* Drag & Drop context for components */}
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="canvas" direction="vertical">
-            {(provided) => (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                className="flex flex-col space-y-4"
-              >
-                {components.map((comp, i) => {
-                  const Preview = previewMap[comp.type];
-                  return (
-                    <Draggable key={comp.id} draggableId={comp.id} index={i}>
-                      {(prov) => (
-                        <div
-                          ref={prov.innerRef}
-                          {...prov.draggableProps}
-                          className="bg-white bg-opacity-90 rounded-xl shadow flex items-start w-full"
-                        >
-                          <div
-                            className={`flex-1 p-3 ${preview ? '' : 'cursor-pointer'}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (!preview) onSelect(comp);
-                            }}
-                          >
-                            {Preview && <Preview p={comp.props} />}
-                          </div>
-                          {!preview && (
-                            <div className="flex flex-col space-y-2 p-2">
-                              <div
-                                {...prov.dragHandleProps}
-                                className="cursor-move"
-                                title="Versleep"
-                              >
-                                <GripVertical />
-                              </div>
-                              <div
-                                onClick={() => onDelete(comp.id)}
-                                title="Verwijder component"
-                                className="cursor-pointer"
-                              >
-                                <Trash2 />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </Draggable>
-                  );
-                })}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+      
       </div>
-    </div>
   );
 }

@@ -58,6 +58,7 @@ export default function TourBuilderPage() {
           onDelete={handlers.onDeleteComponent}
           onDragEnd={handlers.onDragEnd}
           onSectionTitleClick={() => handlers.openSectionModal(activeSectionIndex)}
+          onTogglePreview={() => handlers.setPreviewMode(true)}
         />
 
         <div className="absolute top-4 right-4">
