@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSwipeable } from "react-swipeable";
 import TitlePreview from "./previews/TitlePreview";
+import SubheadingPreview from "./previews/SubheadingPreview";
 import ParagraphPreview from "./previews/ParagraphPreview";
 import QuotePreview from "./previews/QuotePreview";
 import ButtonPreview from "./previews/ButtonPreview";
@@ -14,8 +15,12 @@ import VideoPreview from "./previews/VideoPreview";
 import FilePreview from "./previews/FilePreview";
 import GridPreview from "./previews/GridPreview";
 import UploadZonePreview from "./previews/UploadZonePreview";
+import { TextInputPreview } from "./previews/TextInputPreview";
+import { TextareaPreview } from "./previews/TextareaPreview";
+import DropdownPreview from "./previews/DropdownPreview";
+import { RadioGroupPreview } from "./previews/RadioGroupPreview";
+import { CheckboxGroupPreview } from "./previews/CheckboxGroupPreview";
 import type { Fase, FaseSections, Section, ComponentItem } from "../../types/types";
-import SubheadingPreview from "./previews/SubheadingPreview";
 
 interface Props {
   fases: Fase[];
@@ -36,6 +41,11 @@ const previewMap: Record<string, React.FC<{ p: any }>> = {
   file: FilePreview,
   grid: GridPreview,
   uploadzone: UploadZonePreview,
+  "text-input": TextInputPreview,
+  textarea: TextareaPreview,
+  dropdown: DropdownPreview,
+  "radio-group": RadioGroupPreview,
+  "checkbox-group": CheckboxGroupPreview,
 };
 
 export default function LivePreview({ fases, sectionsByFase }: Props) {
@@ -112,12 +122,11 @@ export default function LivePreview({ fases, sectionsByFase }: Props) {
             {sections.map((_, idx) => (
               <span
                 key={idx}
-                className={
-                  `mx-1 block rounded-full transition-all ` +
-                  (idx === sectionIndex
+                className={`mx-1 block rounded-full transition-all ${
+                  idx === sectionIndex
                     ? "w-3 h-3 bg-blue-600"
-                    : "w-2 h-2 bg-gray-300")
-                }
+                    : "w-2 h-2 bg-gray-300"
+                }`}
               />
             ))}
           </div>
