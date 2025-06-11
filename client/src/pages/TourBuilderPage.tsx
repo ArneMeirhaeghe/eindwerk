@@ -44,49 +44,47 @@ export default function TourBuilderPage() {
   const current = sectionsByFase[activeFase][activeSectionIndex];
 
   return (
-    <div className="grid grid-cols-[auto_1fr_auto] h-full">
-      {/* Palette column */}
-      <ComponentPalette onAdd={handlers.onAddComponent} />
-
-      {/* Main editor column */}
-      <div className="relative overflow-auto pb-16">
-        <BuilderCanvas
-          components={current.components}
-          sectionTitle={current.title}
-          preview={false}
-          onSelect={handlers.onSelectComponent}
-          onDelete={handlers.onDeleteComponent}
-          onDragEnd={handlers.onDragEnd}
-          onSectionTitleClick={() => handlers.openSectionModal(activeSectionIndex)}
-        />
-
-        <div className="absolute top-4 right-4">
-          <button
-            onClick={() => handlers.setPreviewMode(true)}
-            className="px-4 py-2 bg-gray-200 rounded"
-          >
-            Voorbeeld
-          </button>
+    <div className="flex flex-col h-full ">
+      {/* Top columns: Palette, Canvas, Settings */}
+      <div className="flex flex-1 overflow-hidden justify-between"> 
+        {/* Component Palette: 1/5 width */}
+        <div className=" border-r overflow-auto">
+          <ComponentPalette onAdd={handlers.onAddComponent} />
         </div>
 
-        {/* Bottom navigation centered */}
-        <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4 bg-gradient-to-t from-white/70 to-transparent">
-          <BottomNav
-            fases={fasesList}
-            sectionsByFase={sectionsByFase}
-            activeFase={activeFase}
-            activeSectionIndex={activeSectionIndex}
-            onFaseChange={handlers.onFaseChange}
-            onSectionChange={handlers.onSectionChange}
-            onAddSection={handlers.onAddSection}
-            onEditSection={handlers.openSectionModal}
-            onDeleteSection={handlers.onDeleteSection}
+        {/* Builder Canvas: 3/5 width */}
+        <div className=" overflow-auto">
+          <BuilderCanvas
+            components={current.components}
+            sectionTitle={current.title}
+            preview={false}
+            onSelect={handlers.onSelectComponent}
+            onDelete={handlers.onDeleteComponent}
+            onDragEnd={handlers.onDragEnd}
+            onSectionTitleClick={() => handlers.openSectionModal(activeSectionIndex)}
           />
+        </div>
+
+        {/* Settings Panel: 1/5 width */}
+        <div className=" border-l overflow-auto">
+          <SettingsPanel comp={selectedComp} onUpdate={handlers.handleSettingsChange} />
         </div>
       </div>
 
-      {/* Settings column */}
-      <SettingsPanel comp={selectedComp} onUpdate={handlers.handleSettingsChange} />
+      {/* Bottom Navigation: fixed height */}
+      <div className="h-32 border-t">
+        <BottomNav
+          fases={fasesList}
+          sectionsByFase={sectionsByFase}
+          activeFase={activeFase}
+          activeSectionIndex={activeSectionIndex}
+          onFaseChange={handlers.onFaseChange}
+          onSectionChange={handlers.onSectionChange}
+          onAddSection={handlers.onAddSection}
+          onEditSection={handlers.openSectionModal}
+          onDeleteSection={handlers.onDeleteSection}
+        />
+      </div>
 
       {/* Modals and toasts */}
       <EditSectionModal
@@ -95,7 +93,7 @@ export default function TourBuilderPage() {
         onSave={handlers.submitSectionModal}
         onClose={handlers.closeSectionModal}
       />
-      <ToastContainer position="bottom-right" autoClose={3000} />
+      {/* <ToastContainer position="bottom-right" autoClose={3000} /> */}
     </div>
   );
 }

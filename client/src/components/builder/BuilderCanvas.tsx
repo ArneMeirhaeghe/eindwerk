@@ -130,6 +130,7 @@ export default function BuilderCanvas({
             )}
           </Droppable>
         </DragDropContext>
+     
       </div>
     </div>
   );
