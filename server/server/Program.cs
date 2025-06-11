@@ -82,6 +82,7 @@ builder.Services.AddScoped<ITourService, TourService>();
 builder.Services.AddScoped<ILiveSessionService, LiveSessionService>();
 builder.Services.AddScoped<IAzureBlobService, AzureBlobService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
+builder.Services.AddScoped<IFormService, FormService>();    // ← FormService
 
 // -----------------------------------------------------
 // 6) CORS CONFIGUREREN

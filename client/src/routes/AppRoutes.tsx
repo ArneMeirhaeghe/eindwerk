@@ -15,6 +15,7 @@ import PublicSessionPage from "../pages/PublicSessionPage" // Route voor publiek
 import PublicEntryPage from "../pages/PublicEntryPage"
 import InventoryPage from "../pages/InventoryPage"
 import SessionResponsesPage from "../pages/SessionResponsesPage"
+import FormBuilderPage from "../pages/FormBuilderPage"
 
 function AppRoutes() {
   return (
@@ -45,6 +46,7 @@ function AppRoutes() {
       {/* Upload & Inventory */}
       <Route path="/upload-zone" element={<PrivateRoute><UploadZone /></PrivateRoute>} />
       <Route path="/inventory" element={<PrivateRoute><InventoryPage /></PrivateRoute>} />
+      <Route path="/formbuilder" element={<PrivateRoute><FormBuilderPage /></PrivateRoute>} />
 
       <Route
        path="/sessions/:id/responses"
