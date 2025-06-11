@@ -17,14 +17,12 @@ import VideoPreview from "./previews/VideoPreview";
 import FilePreview from "./previews/FilePreview";
 import GridPreview from "./previews/GridPreview";
 import UploadZonePreview from "./previews/UploadZonePreview";
-
-
-import type { ComponentItem } from "../../types/types";
 import { TextInputPreview } from "./previews/TextInputPreview";
 import { TextareaPreview } from "./previews/TextareaPreview";
 import DropdownPreview from "./previews/DropdownPreview";
 import { RadioGroupPreview } from "./previews/RadioGroupPreview";
 import { CheckboxGroupPreview } from "./previews/CheckboxGroupPreview";
+import type { ComponentItem } from "../../types/types";
 
 const previewMap: Record<string, React.FC<{ p: any }>> = {
   title: TitlePreview,
@@ -55,7 +53,6 @@ interface Props {
   onDelete: (id: string) => void;
   onDragEnd: (res: DropResult) => void;
   onSectionTitleClick: () => void;
-  onTogglePreview: () => void;
 }
 
 export default function BuilderCanvas({
@@ -69,10 +66,8 @@ export default function BuilderCanvas({
 }: Props) {
   return (
     <div className="flex-1 flex justify-center items-start p-4 overflow-auto">
-      {/* Phone mockup groot genoeg voor realistisch beeld */}
-      <div className="relative w-[360px] h-[720px] mx-auto">
-       
-
+      {/* wrapper met minimale hoogte */}
+      <div className="relative w-[360px] min-h-[720px] mx-auto">
         {/* Sectie-titel klikbaar voor modal */}
         <h2
           onClick={onSectionTitleClick}
@@ -81,59 +76,61 @@ export default function BuilderCanvas({
           {sectionTitle}
         </h2>
 
-      
-          <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="canvas">
-              {(provided) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className="flex flex-col space-y-3"
-                >
-                  {components.map((comp, idx) => {
-                    const Preview = previewMap[comp.type];
-                    return (
-                      <Draggable key={comp.id} draggableId={comp.id} index={idx}>
-                        {(prov) => (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="canvas">
+            {(provided) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className="flex flex-col space-y-3"
+              >
+                {components.map((comp, idx) => {
+                  const Preview = previewMap[comp.type];
+                  return (
+                    <Draggable key={comp.id} draggableId={comp.id} index={idx}>
+                      {(prov) => (
+                        <div
+                          ref={prov.innerRef}
+                          {...prov.draggableProps}
+                          onClick={() => onSelect(comp)}
+                          className="relative bg-white bg-opacity-90 backdrop-blur px-3 py-2 rounded-xl shadow w-full cursor-pointer min-h-[40px]"
+                        >
+                          {/* Drag-handle met preventPropagation */}
                           <div
-                            ref={prov.innerRef}
-                            {...prov.draggableProps}
-                            className="relative bg-white bg-opacity-90 backdrop-blur px-3 py-2 rounded-xl shadow w-full"
+                            {...prov.dragHandleProps}
+                            className="absolute top-2 left-2 cursor-move text-gray-400"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            {/* Drag-handle */}
-                            <div
-                              {...prov.dragHandleProps}
-                              className="absolute top-2 left-2 cursor-move text-gray-400"
-                            >
-                              <GripVertical size={16} />
-                            </div>
-                            {/* Preview zelf */}
-                            <div onClick={() => onSelect(comp)} className="cursor-pointer">
-                              {Preview && <Preview p={comp.props} />}
-                            </div>
-                            {/* Delete-knop */}
-                            {!preview && (
-                              <button
-                                onClick={() => onDelete(comp.id)}
-                                className="absolute top-2 right-2 text-red-500 hover:bg-red-100 p-1 rounded-full"
-                                aria-label="Verwijder component"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            )}
+                            <GripVertical size={16} />
                           </div>
-                        )}
-                      </Draggable>
-                    );
-                  })}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </div>
 
-      
+                          {/* Preview zelf */}
+                          {Preview && <Preview p={comp.props} />}
+
+                          {/* Delete-knop met preventPropagation */}
+                          {!preview && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(comp.id);
+                              }}
+                              className="absolute top-2 right-2 text-red-500 hover:bg-red-100 p-1 rounded-full"
+                              aria-label="Verwijder component"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </Draggable>
+                  );
+                })}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       </div>
+    </div>
   );
 }
