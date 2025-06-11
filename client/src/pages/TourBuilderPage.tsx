@@ -44,7 +44,7 @@ export default function TourBuilderPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header: Preview knop links, sectie/titel midden, lege ruimte rechts */}
+      {/* Header: Preview knop links, sectie/titel midden */}
       <div className="grid grid-cols-3 items-center px-4 py-2 border-b">
         <div className="flex justify-start">
           <button
@@ -61,20 +61,21 @@ export default function TourBuilderPage() {
           >
             {current.title}
           </h1>
-          
+         
         </div>
         <div />
       </div>
 
-      {/* Top columns: Palette, Canvas, Settings */}
-      <div className="flex  overflow-hidden justify-between">
+      {/* Scrollable area: Palette, Canvas & Settings scroll together */}
+            {/* Layout: Palette, Canvas (scrollable), Settings (fixed) */}
+      <div className="flex flex-1 justify-between">
         {/* Component Palette */}
-        <div className=" border-r overflow-auto pb-16">
+        <div className=" border-r overflow-y-auto">
           <ComponentPalette onAdd={handlers.onAddComponent} />
         </div>
 
         {/* Builder Canvas */}
-        <div className=" overflow-auto pb-16">
+        <div className=" h-full overflow-y-auto">
           <BuilderCanvas
             components={current.components}
             sectionTitle={current.title}
@@ -82,14 +83,12 @@ export default function TourBuilderPage() {
             onSelect={handlers.onSelectComponent}
             onDelete={handlers.onDeleteComponent}
             onDragEnd={handlers.onDragEnd}
-            onSectionTitleClick={() =>
-              handlers.openSectionModal(activeSectionIndex)
-            }
+            onSectionTitleClick={() => handlers.openSectionModal(activeSectionIndex)}
           />
         </div>
 
         {/* Settings Panel */}
-        <div className=" border-l overflow-auto pb-16">
+        <div className=" border-l">
           <SettingsPanel
             comp={selectedComp}
             onUpdate={handlers.handleSettingsChange}

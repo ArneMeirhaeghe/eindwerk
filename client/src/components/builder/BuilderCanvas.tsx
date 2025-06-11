@@ -63,9 +63,16 @@ export default function BuilderCanvas({
   onDragEnd,
 }: Props) {
   return (
-    <div className="flex-1 flex justify-center items-start p-4 overflow-auto">
+    <div className="flex-1 flex justify-center items-start p-4 overflow-auto bg-gray-50">
       {/* telefoon-achtig kader */}
-      <div className="relative w-[360px] min-h-[720px] mx-auto border border-gray-300 rounded-2xl shadow-lg overflow-hidden">
+      <div className="relative
+             w-[360px]
+             max-h-[720px]
+             mx-auto
+             border border-gray-300
+             rounded-2xl
+             shadow-lg
+             overflow-y-auto">
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="canvas">
             {(provided) => (
