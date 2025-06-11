@@ -66,8 +66,8 @@ export default function BuilderCanvas({
 }: Props) {
   return (
     <div className="flex-1 flex justify-center items-start p-4 overflow-auto">
-      {/* wrapper met minimale hoogte */}
-      <div className="relative w-[360px] min-h-[720px] mx-auto">
+      {/* telefoon-achtig kader */}
+      <div className="relative w-[360px] min-h-[720px] mx-auto border border-gray-300 rounded-2xl shadow-lg overflow-hidden">
         {/* Sectie-titel klikbaar voor modal */}
         <h2
           onClick={onSectionTitleClick}
@@ -82,7 +82,7 @@ export default function BuilderCanvas({
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className="flex flex-col space-y-3"
+                className="flex flex-col space-y-3 p-4 bg-white"
               >
                 {components.map((comp, idx) => {
                   const Preview = previewMap[comp.type];
@@ -95,7 +95,6 @@ export default function BuilderCanvas({
                           onClick={() => onSelect(comp)}
                           className="relative bg-white bg-opacity-90 backdrop-blur px-3 py-2 rounded-xl shadow w-full cursor-pointer min-h-[40px]"
                         >
-                          {/* Drag-handle met preventPropagation */}
                           <div
                             {...prov.dragHandleProps}
                             className="absolute top-2 left-2 cursor-move text-gray-400"
@@ -103,11 +102,7 @@ export default function BuilderCanvas({
                           >
                             <GripVertical size={16} />
                           </div>
-
-                          {/* Preview zelf */}
                           {Preview && <Preview p={comp.props} />}
-
-                          {/* Delete-knop met preventPropagation */}
                           {!preview && (
                             <button
                               onClick={(e) => {
@@ -130,7 +125,6 @@ export default function BuilderCanvas({
             )}
           </Droppable>
         </DragDropContext>
-     
       </div>
     </div>
   );

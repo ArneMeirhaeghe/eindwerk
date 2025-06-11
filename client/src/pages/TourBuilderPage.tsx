@@ -1,6 +1,5 @@
 // File: src/pages/TourBuilderPage.tsx
 import React from "react";
-import { ToastContainer } from "react-toastify";
 import LivePreview from "../components/builder/LivePreview";
 import ComponentPalette from "../components/builder/ComponentPalette";
 import BuilderCanvas from "../components/builder/BuilderCanvas";
@@ -44,16 +43,38 @@ export default function TourBuilderPage() {
   const current = sectionsByFase[activeFase][activeSectionIndex];
 
   return (
-    <div className="flex flex-col h-full ">
+    <div className="flex flex-col h-full">
+      {/* Header: Preview knop links, sectie/titel midden, lege ruimte rechts */}
+      <div className="grid grid-cols-3 items-center px-4 py-2 border-b">
+        <div className="flex justify-start">
+          <button
+            onClick={() => handlers.setPreviewMode(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            Preview
+          </button>
+        </div>
+        <div className="flex flex-col items-center">
+          <h1
+            className="text-lg font-semibold cursor-pointer"
+            onClick={() => handlers.openSectionModal(activeSectionIndex)}
+          >
+            {current.title}
+          </h1>
+          
+        </div>
+        <div />
+      </div>
+
       {/* Top columns: Palette, Canvas, Settings */}
-      <div className="flex flex-1 overflow-hidden justify-between"> 
-        {/* Component Palette: 1/5 width */}
-        <div className=" border-r overflow-auto">
+      <div className="flex  overflow-hidden justify-between">
+        {/* Component Palette */}
+        <div className=" border-r overflow-auto pb-16">
           <ComponentPalette onAdd={handlers.onAddComponent} />
         </div>
 
-        {/* Builder Canvas: 3/5 width */}
-        <div className=" overflow-auto">
+        {/* Builder Canvas */}
+        <div className=" overflow-auto pb-16">
           <BuilderCanvas
             components={current.components}
             sectionTitle={current.title}
@@ -61,18 +82,23 @@ export default function TourBuilderPage() {
             onSelect={handlers.onSelectComponent}
             onDelete={handlers.onDeleteComponent}
             onDragEnd={handlers.onDragEnd}
-            onSectionTitleClick={() => handlers.openSectionModal(activeSectionIndex)}
+            onSectionTitleClick={() =>
+              handlers.openSectionModal(activeSectionIndex)
+            }
           />
         </div>
 
-        {/* Settings Panel: 1/5 width */}
-        <div className=" border-l overflow-auto">
-          <SettingsPanel comp={selectedComp} onUpdate={handlers.handleSettingsChange} />
+        {/* Settings Panel */}
+        <div className=" border-l overflow-auto pb-16">
+          <SettingsPanel
+            comp={selectedComp}
+            onUpdate={handlers.handleSettingsChange}
+          />
         </div>
       </div>
 
-      {/* Bottom Navigation: fixed height */}
-      <div className="h-32 border-t">
+      {/* Bottom Navigation */}
+      <div className="h-16 border-t">
         <BottomNav
           fases={fasesList}
           sectionsByFase={sectionsByFase}
@@ -86,14 +112,13 @@ export default function TourBuilderPage() {
         />
       </div>
 
-      {/* Modals and toasts */}
+      {/* Modals */}
       <EditSectionModal
         isOpen={modalOpen}
         initialValue={modalValue}
         onSave={handlers.submitSectionModal}
         onClose={handlers.closeSectionModal}
       />
-      {/* <ToastContainer position="bottom-right" autoClose={3000} /> */}
     </div>
   );
 }
