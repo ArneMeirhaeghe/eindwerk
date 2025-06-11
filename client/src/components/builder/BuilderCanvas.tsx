@@ -57,25 +57,15 @@ interface Props {
 
 export default function BuilderCanvas({
   components,
-  sectionTitle,
   preview,
   onSelect,
   onDelete,
   onDragEnd,
-  onSectionTitleClick,
 }: Props) {
   return (
     <div className="flex-1 flex justify-center items-start p-4 overflow-auto">
       {/* telefoon-achtig kader */}
       <div className="relative w-[360px] min-h-[720px] mx-auto border border-gray-300 rounded-2xl shadow-lg overflow-hidden">
-        {/* Sectie-titel klikbaar voor modal */}
-        <h2
-          onClick={onSectionTitleClick}
-          className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 px-4 py-1 rounded-full text-sm font-semibold cursor-pointer shadow"
-        >
-          {sectionTitle}
-        </h2>
-
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="canvas">
             {(provided) => (
@@ -92,29 +82,40 @@ export default function BuilderCanvas({
                         <div
                           ref={prov.innerRef}
                           {...prov.draggableProps}
+                          className="relative bg-white bg-opacity-90 backdrop-blur rounded-xl shadow w-full cursor-pointer min-h-[40px] my-2 mx-1"
                           onClick={() => onSelect(comp)}
-                          className="relative bg-white bg-opacity-90 backdrop-blur px-3 py-2 rounded-xl shadow w-full cursor-pointer min-h-[40px]"
                         >
-                          <div
-                            {...prov.dragHandleProps}
-                            className="absolute top-2 left-2 cursor-move text-gray-400"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <GripVertical size={16} />
-                          </div>
-                          {Preview && <Preview p={comp.props} />}
-                          {!preview && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDelete(comp.id);
-                              }}
-                              className="absolute top-2 right-2 text-red-500 hover:bg-red-100 p-1 rounded-full"
-                              aria-label="Verwijder component"
+                          <div className="flex justify-between items-center h-full">
+                            {/* Content area */}
+                            <div
+                              className="flex-1 pl-4"
+                              onClick={() => onSelect(comp)}
                             >
-                              <Trash2 size={14} />
-                            </button>
-                          )}
+                              {Preview && <Preview p={comp.props} />}
+                            </div>
+
+                            {/* Icons vertically stacked */}
+                            <div className="flex flex-col items-center space-y-2 pr-2">
+                              <div
+                                {...prov.dragHandleProps}
+                                className="cursor-move p-1 hover:bg-gray-100 rounded"
+                              >
+                                <GripVertical size={16} />
+                              </div>
+                              {!preview && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDelete(comp.id);
+                                  }}
+                                  className="p-1 hover:bg-gray-100 rounded"
+                                  aria-label="Verwijder component"
+                                >
+                                  <Trash2 size={16} className="text-red-500" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </Draggable>
