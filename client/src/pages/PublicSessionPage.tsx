@@ -1,15 +1,15 @@
 // File: src/pages/PublicSessionPage.tsx
 
-import { useParams, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import LoadingIndicator from "../components/LoadingIndicator";
-import useLiveSession from "../hooks/useLiveSession";
-import LiveSection from "../components/livesession/LiveSection";
+import React, { useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import LoadingIndicator from "../components/LoadingIndicator"
+import useLiveSession from "../hooks/useLiveSession"
+import LiveSection from "../components/livesession/LiveSection"
 
 export default function PublicSessionPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const {
     session,
     flatSections,
@@ -20,34 +20,34 @@ export default function PublicSessionPage() {
     saveField,
     saveSection,
     uploadFile,
-  } = useLiveSession(id!);
+  } = useLiveSession(id!)
 
   // redirect als sessie niet bestaat
   useEffect(() => {
     if (!loading && !session) {
-      navigate("/public");
+      navigate("/public")
     }
-  }, [loading, session, navigate]);
+  }, [loading, session, navigate])
 
   if (loading || !session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <LoadingIndicator />
       </div>
-    );
+    )
   }
 
-  const current = flatSections[currentIndex];
-  const saved = responses[current.section.id] || {};
+  const current = flatSections[currentIndex]
+  const saved = responses[current.section.id] || {}
 
   const prev = async () => {
-    await saveSection(current.section.id, saved);
-    setCurrentIndex((i) => Math.max(i - 1, 0));
-  };
+    await saveSection(current.section.id, saved)
+    setCurrentIndex(i => Math.max(i - 1, 0))
+  }
   const next = async () => {
-    await saveSection(current.section.id, saved);
-    setCurrentIndex((i) => Math.min(i + 1, flatSections.length - 1));
-  };
+    await saveSection(current.section.id, saved)
+    setCurrentIndex(i => Math.min(i + 1, flatSections.length - 1))
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4">
@@ -73,16 +73,13 @@ export default function PublicSessionPage() {
           onFieldSave={(compId, v) =>
             saveField(current.section.id, compId, v)
           }
-          onSectionSave={(vals) =>
-            saveSection(current.section.id, vals)
-          }
           onUploadFile={async (file, compId) => {
             // direct preview-set
-            const preview = URL.createObjectURL(file);
-            saveField(current.section.id, compId, { url: preview });
+            const previewUrl = URL.createObjectURL(file)
+            saveField(current.section.id, compId, { url: previewUrl })
             // upload naar server
-            await uploadFile(current.section.id, compId, file);
-            // na upload, reload saved response from hook
+            await uploadFile(current.section.id, compId, file)
+            // na upload, hook updated responses automatisch
           }}
         />
 
@@ -116,5 +113,5 @@ export default function PublicSessionPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

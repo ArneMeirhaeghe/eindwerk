@@ -147,7 +147,18 @@ export interface Section {
   title: string
   components: ComponentItem[]
 }
+// Props voor form‐component
+export interface FormProps {
+  formId: string
+}
 
+// Props voor inventory‐component
+export interface InventoryProps {
+  templateId: string                          // ID van gekozen inventaris‐template
+  selectedLokalen?: string[]                  // optionele lijst van geselecteerde lokalen
+  selectedSubs?: Record<string, string[]>     // optionele selectie subsections per lokaal
+  interactive?: boolean                       // toon invulvelden of niet
+}
 // 5 fases in een tour
 export type Fase = "voor" | "aankomst" | "terwijl" | "vertrek" | "na"
 export type FaseSections = Record<Fase, Section[]>

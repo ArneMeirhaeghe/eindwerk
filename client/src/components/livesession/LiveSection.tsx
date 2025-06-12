@@ -1,34 +1,43 @@
 // File: src/components/livesession/LiveSection.tsx
-
-import React, {  useState, useEffect, type FC } from "react"
-import type { FlatSection } from "../../hooks/useLiveSession"
+import React, {  useState, type FC } from "react"
+import TitlePreview from "../builder/previews/TitlePreview"
+import SubheadingPreview from "../builder/previews/SubheadingPreview"
+import ParagraphPreview from "../builder/previews/ParagraphPreview"
+import QuotePreview from "../builder/previews/QuotePreview"
+import ImagePreview from "../builder/previews/ImagePreview"
+import VideoPreview from "../builder/previews/VideoPreview"
+import FilePreview from "../builder/previews/FilePreview"
+import GridPreview from "../builder/previews/GridPreview"
+import UploadZonePreview from "../builder/previews/UploadZonePreview"
+import FormSession from "./inputs/FormSession"
 import TextInput from "./inputs/TextInput"
 import Textarea from "./inputs/Textarea"
 import Dropdown from "./inputs/Dropdown"
-import RadioGroup from "./inputs/RadioGroup"
 import CheckboxGroup from "./inputs/CheckboxGroup"
 import FileUpload from "./inputs/FileUpload"
-import FormSession from "./inputs/FormSession"  // ← form-input component
-import type { FormDto } from "../../api/forms/types"
-import { getForm } from "../../api/forms"
+
+import type {
+  TitleProps,
+  SubheadingProps,
+  ParagraphProps,
+  QuoteProps,
+  ImageProps,
+  VideoProps,
+  FileProps,
+  GridProps,
+  UploadZoneProps,
+} from "../../types/types"
+import type { FlatSection } from "../../hooks/useLiveSession"
+import type { ComponentSnapshot } from "../../api/liveSession/types"
+import RadioGroup from "./inputs/RadioGroup"
+import InventorySession from "./inputs/InventorySession"
 
 interface Props {
   sessionId: string
   sectionData: FlatSection
   saved: Record<string, any>
   onFieldSave: (componentId: string, value: any) => Promise<void>
-  onSectionSave: (values: Record<string, any>) => Promise<void>
   onUploadFile: (file: File, componentId: string) => Promise<void>
-}
-
-const inputMap: Record<string, any> = {
-  "text-input": TextInput,
-  textarea: Textarea,
-  dropdown: Dropdown,
-  "radio-group": RadioGroup,
-  "checkbox-group": CheckboxGroup,
-  uploadzone: FileUpload,
-  form: FormSession
 }
 
 const LiveSection: FC<Props> = ({
@@ -36,59 +45,188 @@ const LiveSection: FC<Props> = ({
   sectionData,
   saved,
   onFieldSave,
-  onSectionSave,
-  onUploadFile
+  onUploadFile,
 }) => {
   const { section } = sectionData
-  const [local, setLocal] = useState({ ...saved })
+  const [local, setLocal] = useState<Record<string, any>>(saved)
 
-  const handleFieldSave = async (componentId: string, value: any) => {
+  const handleSave = async (componentId: string, value: any) => {
     const updated = { ...local, [componentId]: value }
     setLocal(updated)
     await onFieldSave(componentId, value)
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 bg-white">
-      <h2 className="text-2xl font-bold mb-4">{section.naam}</h2>
+    <div className="p-6 bg-white rounded-lg shadow-md space-y-8">
+      <h2 className="text-2xl font-bold">{section.naam}</h2>
+      <div className="space-y-6">
+        {section.components.map((comp: ComponentSnapshot) => {
+          const val = local[comp.id]
 
-      {section.components.map(comp => {
-        const val = local[comp.id]
+          switch (comp.type) {
+            // Read-only previews
+            case "title":
+              return (
+                <TitlePreview
+                  key={comp.id}
+                  p={comp.props as TitleProps}
+                />
+              )
+            case "subheading":
+              return (
+                <SubheadingPreview
+                  key={comp.id}
+                  p={comp.props as SubheadingProps}
+                />
+              )
+            case "paragraph":
+              return (
+                <ParagraphPreview
+                  key={comp.id}
+                  p={comp.props as ParagraphProps}
+                />
+              )
+            case "quote":
+              return (
+                <QuotePreview
+                  key={comp.id}
+                  p={comp.props as QuoteProps}
+                />
+              )
+            case "image":
+              return (
+                <ImagePreview
+                  key={comp.id}
+                  p={comp.props as ImageProps}
+                />
+              )
+            case "video":
+              return (
+                <VideoPreview
+                  key={comp.id}
+                  p={comp.props as VideoProps}
+                />
+              )
+            case "file":
+              return (
+                <FilePreview
+                  key={comp.id}
+                  p={comp.props as FileProps}
+                />
+              )
+            case "grid":
+              return (
+                <GridPreview
+                  key={comp.id}
+                  p={comp.props as GridProps}
+                />
+              )
+            case "uploadzone":
+              return (
+                <UploadZonePreview
+                  key={comp.id}
+                  p={comp.props as UploadZoneProps}
+                />
+              )
 
-        if (comp.type === "form") {
-          // alleen het form-input renderen, geen overzicht hier
-          return (
-            <FormSession
-              key={comp.id}
-              formId={comp.props.formId}
-              value={val}
-              onChange={v => handleFieldSave(comp.id, v)}
-              sessionId={sessionId}
-              sectionId={section.id}
-              componentId={comp.id}
-              onUploadFile={(file, fieldId) =>
-                onUploadFile(file, `${comp.id}.${fieldId}`)
-              }
-            />
-          )
-        }
+            // Interactive inputs
+            case "text-input":
+              return (
+                <TextInput
+                  key={comp.id}
+                  label={comp.props.label}
+                  placeholder={comp.props.placeholder}
+                  value={val ?? ""}
+                  onChange={(v: string) => handleSave(comp.id, v)}
+                />
+              )
+            case "textarea":
+              return (
+                <Textarea
+                  key={comp.id}
+                  label={comp.props.label}
+                  placeholder={comp.props.placeholder}
+                  rows={comp.props.rows}
+                  value={val ?? ""}
+                  onChange={(v: string) => handleSave(comp.id, v)}
+                />
+              )
+            case "dropdown":
+              return (
+                <Dropdown
+                  key={comp.id}
+                  label={comp.props.label}
+                  options={comp.props.options as string[]}
+                  value={val ?? ""}
+                  onChange={(v: string) => handleSave(comp.id, v)}
+                />
+              )
+            case "radio-group":
+              return (
+                <RadioGroup
+                  key={comp.id}
+                  label={comp.props.label}
+                  options={comp.props.options as string[]}
+                  value={val ?? ""}
+                  onChange={(v: string) => handleSave(comp.id, v)}
+                />
+              )
+            case "checkbox-group":
+              return (
+                <CheckboxGroup
+                  key={comp.id}
+                  label={comp.props.label}
+                  options={comp.props.options as string[]}
+                  values={Array.isArray(val) ? (val as string[]) : []}
+                  onChange={(v: string[]) => handleSave(comp.id, v)}
+                />
+              )
+            case "uploadzone":
+              return (
+                <FileUpload
+                  key={comp.id}
+                  componentId={comp.id}
+                  savedValue={val}
+                  onUpload={async (files: File[]) => {
+                    await onUploadFile(files[0], comp.id)
+                    handleSave(comp.id, { url: URL.createObjectURL(files[0]) })
+                  }}
+                />
+              )
 
-        const Input = inputMap[comp.type]
-        if (!Input) return null
+            // Nested form component
+            case "form":
+              return (
+                <FormSession
+                  key={comp.id}
+                  formId={comp.props.formId as string}
+                  value={val as Record<string, any>}
+                  onChange={(v) => handleSave(comp.id, v)}
+                  sessionId={sessionId}
+                  sectionId={section.id}
+                  componentId={comp.id}
+                  onUploadFile={onUploadFile}
+                />
+              )
 
-        return (
-          <Input
-            key={comp.id}
-            {...comp.props}
-            value={val}
-            sessionId={sessionId}
-            sectionId={section.id}
-            componentId={comp.id}
-           onChange={(v: any) => handleFieldSave(comp.id, v)}          // ← explicit `any`
-            onUpload={(file: File) => onUploadFile(file, comp.id)}      // ← typed `File`
-          />
-        )
-      })}
+            // Inventory component
+            case "inventory":
+              return (
+                <InventorySession
+                  key={comp.id}
+                  templateId={comp.props.templateId as string}
+                  selectedLokalen={comp.props.selectedLokalen as string[]}
+                  selectedSubs={comp.props.selectedSubs as Record<string, string[]>}
+                  interactive={comp.props.interactive as boolean}
+                  value={val as Record<string, any>}
+                  onChange={(v: Record<string, any>) => handleSave(comp.id, v)}
+                />
+              )
+            default:
+              return null
+          }
+        })}
+      </div>
     </div>
   )
 }

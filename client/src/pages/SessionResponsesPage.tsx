@@ -1,5 +1,4 @@
 // File: src/pages/SessionResponsesPage.tsx
-
 import React, { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import LoadingIndicator from "../components/LoadingIndicator"
@@ -9,22 +8,25 @@ import type { LiveSessionDto, ComponentSnapshot } from "../api/liveSession/types
 import { getForm } from "../api/forms"
 import type { FormDto } from "../api/forms/types"
 import FormResponseSummary from "../components/livesession/inputs/FormResponseSummary"
+import InventoryResponseSummary from "../components/livesession/inputs/InventoryResponseSummary"
+import { getInventoryTemplate } from "../api/inventory"
+import type { InventoryTemplateDto } from "../api/inventory/types"
 
 export default function SessionResponsesPage() {
   const { id } = useParams<{ id: string }>()
   const [session, setSession] = useState<LiveSessionDto | null>(null)
   const [forms, setForms] = useState<Record<string, FormDto>>({})
+  const [inventories, setInventories] = useState<Record<string, InventoryTemplateDto>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
-  // 1) laadt sessie
   useEffect(() => {
     (async () => {
       try {
         const s = await getLiveSession(id!)
         setSession(s)
 
-        // pre-fetch alle form metadata
+        // prefetch all forms
         const formIds = new Set<string>()
         Object.values(s.fases).flat().forEach(sec =>
           sec.components.forEach(comp => {
@@ -33,12 +35,29 @@ export default function SessionResponsesPage() {
             }
           })
         )
-        const entries = await Promise.all(
+        const formEntries = await Promise.all(
           Array.from(formIds).map(fid =>
             getForm(fid).then(f => [fid, f] as [string, FormDto])
           )
         )
-        setForms(Object.fromEntries(entries))
+        setForms(Object.fromEntries(formEntries))
+
+        // prefetch all inventory templates
+        const invIds = new Set<string>()
+        Object.values(s.fases).flat().forEach(sec =>
+          sec.components.forEach(comp => {
+            if (comp.type === "inventory" && comp.props.templateId) {
+              invIds.add(comp.props.templateId)
+            }
+          })
+        )
+        const invEntries = await Promise.all(
+          Array.from(invIds).map(tid =>
+            getInventoryTemplate(tid).then(tpl => [tid, tpl] as [string, InventoryTemplateDto])
+          )
+        )
+        setInventories(Object.fromEntries(invEntries))
+
       } catch {
         setError("Kon sessie niet laden")
       } finally {
@@ -95,8 +114,29 @@ export default function SessionResponsesPage() {
                       )
                     }
 
+                    // INVENTORY component
+                    if (comp.type === "inventory") {
+                      const tpl = inventories[comp.props.templateId]
+                      if (!tpl) {
+                        return (
+                          <p key={comp.id} className="text-sm text-gray-500">
+                            Inventaris laden…
+                          </p>
+                        )
+                      }
+                      return (
+                        <InventoryResponseSummary
+                          key={comp.id}
+                          template={tpl}
+                          selectedLokalen={comp.props.selectedLokalen}
+                          selectedSubs={comp.props.selectedSubs}
+                          values={resp as Record<string, any>}
+                        />
+                      )
+                    }
+
                     // UPLOAD component
-                    if (resp.url) {
+                    if ((resp as any).url) {
                       return (
                         <div
                           key={comp.id}
@@ -129,7 +169,7 @@ export default function SessionResponsesPage() {
                             {comp.props.label || comp.type}
                           </div>
                           <ul className="list-disc list-inside">
-                            {resp.map((v, i) => (
+                            {(resp as any[]).map((v, i) => (
                               <li key={i}>{v}</li>
                             ))}
                           </ul>

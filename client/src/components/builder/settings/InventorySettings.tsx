@@ -2,6 +2,7 @@
 import React, {  useEffect, useState, type FC } from "react"
 import { useNavigate } from "react-router-dom"
 import type { ComponentItem } from "../../../types/types"
+import type { InventoryProps } from "../../../types/types"
 import {
   getInventoryTemplates,
   getInventoryTemplate,
@@ -17,44 +18,68 @@ interface Props {
 const InventorySettings: FC<Props> = ({ comp, onUpdate }) => {
   const navigate = useNavigate()
 
+  // extract and type props from component
+  const inventoryProps = comp.props as InventoryProps
+  const selectedId = inventoryProps.templateId
+  const initialLokalen = inventoryProps.selectedLokalen ?? []
+  const initialSubs = inventoryProps.selectedSubs ?? {}
+  const initialInteractive = inventoryProps.interactive ?? false
+
+  // all templates list
   const [templates, setTemplates] = useState<InventoryTemplateDto[]>([])
   const [loadingTemplates, setLoadingTemplates] = useState<boolean>(true)
 
-  const selectedId = comp.props.templateId as string | undefined
-  const [template, setTemplate] = useState<InventoryTemplateDto | null>(null)
-
-  const [selectedLokalen, setSelectedLokalen] = useState<string[]>(
-    comp.props.selectedLokalen ?? []
+  // loaded template detail
+  const [template, setTemplate] = useState<InventoryTemplateDto | null>(
+    null
   )
+
+  // local UI state
+  const [selectedLokalen, setSelectedLokalen] =
+    useState<string[]>(initialLokalen)
   const [selectedSubs, setSelectedSubs] = useState<Record<string, string[]>>(
-    comp.props.selectedSubs ?? {}
+    initialSubs
   )
   const [interactive, setInteractive] = useState<boolean>(
-    comp.props.interactive ?? false
+    initialInteractive
   )
 
-  // laad alle templates
+  // fetch templates once
   useEffect(() => {
     getInventoryTemplates()
       .then((ts: InventoryTemplateDto[]) => setTemplates(ts))
       .finally(() => setLoadingTemplates(false))
   }, [])
 
-  // als templateId verandert, haal volledige template en init selecties
+  // when templateId changes, fetch that template and initialize selections
   useEffect(() => {
     if (selectedId) {
       getInventoryTemplate(selectedId).then((tpl: InventoryTemplateDto) => {
         setTemplate(tpl)
-        // initieer gekozen lokalen en subs als nog niet gezet
-        if (!comp.props.selectedLokalen) {
-          setSelectedLokalen(tpl.lokalen.map((l: Lokaal) => l.name))
+
+        // initialize lokalen if not already in props
+        if (!inventoryProps.selectedLokalen) {
+          const allLokalen = tpl.lokalen.map((l: Lokaal) => l.name)
+          setSelectedLokalen(allLokalen)
+          onUpdate({
+            ...comp,
+            props: { ...inventoryProps, selectedLokalen: allLokalen },
+          })
         }
-        if (!comp.props.selectedSubs) {
+
+        // initialize subsections if not already in props
+        if (!inventoryProps.selectedSubs) {
           const initSubs: Record<string, string[]> = {}
           tpl.lokalen.forEach((l: Lokaal) => {
-            initSubs[l.name] = l.subsections.map((s: Subsection) => s.name)
+            initSubs[l.name] = l.subsections.map(
+              (s: Subsection) => s.name
+            )
           })
           setSelectedSubs(initSubs)
+          onUpdate({
+            ...comp,
+            props: { ...inventoryProps, selectedSubs: initSubs },
+          })
         }
       })
     } else {
@@ -62,21 +87,8 @@ const InventorySettings: FC<Props> = ({ comp, onUpdate }) => {
       setSelectedLokalen([])
       setSelectedSubs({})
     }
+    // only re-run when selectedId changes
   }, [selectedId])
-
-  // push alle wijzigingen naar parent
-  useEffect(() => {
-    onUpdate({
-      ...comp,
-      props: {
-        ...comp.props,
-        templateId: selectedId,
-        selectedLokalen,
-        selectedSubs,
-        interactive,
-      },
-    })
-  }, [selectedId, selectedLokalen, selectedSubs, interactive])
 
   if (loadingTemplates) {
     return <div className="p-4 text-gray-500">Laden…</div>
@@ -84,25 +96,27 @@ const InventorySettings: FC<Props> = ({ comp, onUpdate }) => {
 
   return (
     <div className="space-y-6 p-4">
+      {/* Button to manage templates */}
       <button
         type="button"
-        onClick={() => navigate("/inventory")}
+        onClick={() => navigate("/admin/inventory")}
         className="w-full mb-4 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
       >
         Beheer inventaris-templates
       </button>
 
-      {/* Template select */}
+      {/* Choose template */}
       <div>
         <label className="block mb-1 font-medium">Template</label>
         <select
           value={selectedId ?? ""}
-          onChange={(e) =>
+          onChange={e => {
+            const newId = e.target.value
             onUpdate({
               ...comp,
-              props: { ...comp.props, templateId: e.target.value },
+              props: { ...inventoryProps, templateId: newId },
             })
-          }
+          }}
           className="w-full border rounded px-2 py-1"
         >
           <option value="" disabled>
@@ -121,77 +135,101 @@ const InventorySettings: FC<Props> = ({ comp, onUpdate }) => {
         <input
           type="checkbox"
           checked={interactive}
-          onChange={(e) => setInteractive(e.target.checked)}
+          onChange={e => {
+            const nextInteractive = e.target.checked
+            setInteractive(nextInteractive)
+            onUpdate({
+              ...comp,
+              props: { ...inventoryProps, interactive: nextInteractive },
+            })
+          }}
           className="h-4 w-4"
         />
         <span className="font-medium">Invulvelden tonen</span>
       </label>
 
+      {/* Lokalen selection */}
       {template && (
-        <>
-          {/* Lokalen select */}
-          <fieldset className="border rounded p-3">
-            <legend className="px-1 font-medium">Toon lokalen</legend>
-            {template.lokalen.map((lokaal: Lokaal) => (
-              <label
-                key={lokaal.name}
-                className="flex items-center space-x-2 mb-1"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedLokalen.includes(lokaal.name)}
-                  onChange={(e) => {
-                    const next = e.target.checked
-                      ? [...selectedLokalen, lokaal.name]
-                      : selectedLokalen.filter((n) => n !== lokaal.name)
-                    setSelectedLokalen(next)
-                  }}
-                  className="h-4 w-4"
-                />
-                <span>{lokaal.name}</span>
-              </label>
-            ))}
-          </fieldset>
-
-          {/* Subsecties per lokaal */}
-          {selectedLokalen.map((lokaalName: string) => {
-            const lokaal = template.lokalen.find(
-              (l: Lokaal) => l.name === lokaalName
-            )!
-            const subs = selectedSubs[lokaalName] ?? []
-
-            return (
-              <fieldset key={lokaalName} className="border rounded p-3">
-                <legend className="px-1 font-medium">
-                  Subsecties in {lokaalName}
-                </legend>
-                {lokaal.subsections.map((sub: Subsection) => (
-                  <label
-                    key={sub.name}
-                    className="flex items-center space-x-2 mb-1"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={subs.includes(sub.name)}
-                      onChange={(e) => {
-                        const nextSubs = e.target.checked
-                          ? [...subs, sub.name]
-                          : subs.filter((n) => n !== sub.name)
-                        setSelectedSubs({
-                          ...selectedSubs,
-                          [lokaalName]: nextSubs,
-                        })
-                      }}
-                      className="h-4 w-4"
-                    />
-                    <span>{sub.name}</span>
-                  </label>
-                ))}
-              </fieldset>
-            )
-          })}
-        </>
+        <fieldset className="border rounded p-3">
+          <legend className="px-1 font-medium">Toon lokalen</legend>
+          {template.lokalen.map((lokaal: Lokaal) => (
+            <label
+              key={lokaal.name}
+              className="flex items-center space-x-2 mb-1"
+            >
+              <input
+                type="checkbox"
+                checked={selectedLokalen.includes(lokaal.name)}
+                onChange={e => {
+                  const nextLokalen = e.target.checked
+                    ? [...selectedLokalen, lokaal.name]
+                    : selectedLokalen.filter(n => n !== lokaal.name)
+                  setSelectedLokalen(nextLokalen)
+                  onUpdate({
+                    ...comp,
+                    props: {
+                      ...inventoryProps,
+                      selectedLokalen: nextLokalen,
+                    },
+                  })
+                }}
+                className="h-4 w-4"
+              />
+              <span>{lokaal.name}</span>
+            </label>
+          ))}
+        </fieldset>
       )}
+
+      {/* Subsections per lokaal */}
+      {template &&
+        selectedLokalen.map((lokaalName: string) => {
+          const lokaal = template.lokalen.find(
+            (l: Lokaal) => l.name === lokaalName
+          )!
+          const subs = selectedSubs[lokaalName] ?? []
+
+          return (
+            <fieldset
+              key={lokaalName}
+              className="border rounded p-3"
+            >
+              <legend className="px-1 font-medium">
+                Subsecties in {lokaalName}
+              </legend>
+              {lokaal.subsections.map((sub: Subsection) => (
+                <label
+                  key={sub.name}
+                  className="flex items-center space-x-2 mb-1"
+                >
+                  <input
+                    type="checkbox"
+                    checked={subs.includes(sub.name)}
+                    onChange={e => {
+                      const nextSubs = e.target.checked
+                        ? [...subs, sub.name]
+                        : subs.filter(n => n !== sub.name)
+                      const updatedSubs = {
+                        ...selectedSubs,
+                        [lokaalName]: nextSubs,
+                      }
+                      setSelectedSubs(updatedSubs)
+                      onUpdate({
+                        ...comp,
+                        props: {
+                          ...inventoryProps,
+                          selectedSubs: updatedSubs,
+                        },
+                      })
+                    }}
+                    className="h-4 w-4"
+                  />
+                  <span>{sub.name}</span>
+                </label>
+              ))}
+            </fieldset>
+          )
+        })}
     </div>
   )
 }
