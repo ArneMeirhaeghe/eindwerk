@@ -1,31 +1,29 @@
-// /src/components/previews/ImagePreview.tsx
-import type { CSSProperties, FC } from "react";
-import type { ImageProps } from "../../../types/types";
+// File: src/components/builder/previews/ImagePreview.tsx
+import React from "react"
+import type { ImageProps } from "../../../types/types"
 
-const ImagePreview: FC<{ p: ImageProps }> = ({ p }) => {
-  if (!p.url) {
-    return <div className="italic text-gray-400 mb-2">Geen afbeelding</div>;
-  }
-  const style: CSSProperties = {
-    width: `${p.width}px`,
-    height: `${p.height}px`,
-    borderWidth: `${p.borderWidth}px`,
-    borderColor: p.borderColor,
-    borderStyle: "solid",
-    borderRadius: `${p.radius}px`,
-    objectFit: p.objectFit,
-    ...(p.shadow ? { boxShadow: "0 4px 6px rgba(0,0,0,0.1)" } : {}),
-  };
+const ImagePreview: React.FC<{ p: ImageProps }> = ({ p }) => {
+  if (!p.url) return <div className="italic text-gray-400 mb-2">Geen afbeelding</div>
   return (
     <div className="mb-2">
-      <img src={p.url} alt={p.alt} style={style} className="mx-auto" />
+      <img
+        src={p.url}
+        alt={p.alt}
+        className="mx-auto"
+        style={{
+          width: p.width,
+          height: p.height,
+          border: `${p.borderWidth}px solid ${p.borderColor}`,
+          borderRadius: p.radius,
+          objectFit: p.objectFit,
+          boxShadow: p.shadow ? "0 4px 6px rgba(0,0,0,0.1)" : undefined,
+        }}
+      />
       {p.showAlt && p.alt && (
-        <div className="text-sm text-gray-600 italic mt-1 text-center">
-          {p.alt}
-        </div>
+        <div className="text-sm text-gray-600 italic mt-1 text-center">{p.alt}</div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default ImagePreview;
+export default ImagePreview

@@ -17,15 +17,17 @@ import VideoPreview from "./previews/VideoPreview";
 import FilePreview from "./previews/FilePreview";
 import GridPreview from "./previews/GridPreview";
 import UploadZonePreview from "./previews/UploadZonePreview";
-import { TextInputPreview } from "./previews/TextInputPreview";
-import { TextareaPreview } from "./previews/TextareaPreview";
-import DropdownPreview from "./previews/DropdownPreview";
-import { RadioGroupPreview } from "./previews/RadioGroupPreview";
+
 import { CheckboxGroupPreview } from "./previews/CheckboxGroupPreview";
 import type { ComponentItem } from "../../types/types";
+import FormPreview from "./previews/FormPreview";
+import TextInputPreview from "./previews/TextInputPreview";
+import TextareaPreview from "./previews/TextareaPreview";
+import DropdownPreview from "./previews/DropdownPreview";
+import RadioGroupPreview from "./previews/RadioGroupPreview";
 
-const previewMap: Record<string, React.FC<{ p: any }>> = {
-  title: TitlePreview,
+
+const previewMap: Record<string, React.ComponentType<any>> = {
   subheading: SubheadingPreview,
   paragraph: ParagraphPreview,
   quote: QuotePreview,
@@ -43,7 +45,10 @@ const previewMap: Record<string, React.FC<{ p: any }>> = {
   dropdown: DropdownPreview,
   "radio-group": RadioGroupPreview,
   "checkbox-group": CheckboxGroupPreview,
+  form:          FormPreview    // ← ensure form preview included
 };
+
+
 
 interface Props {
   components: ComponentItem[];
@@ -64,27 +69,29 @@ export default function BuilderCanvas({
 }: Props) {
   return (
     <div className="flex-1 flex justify-center items-start p-4 overflow-auto bg-gray-50">
-      {/* telefoon-achtig kader */}
-      <div className="relative
-             w-[360px]
-             max-h-[720px]
-             mx-auto
-             border border-gray-300
-             rounded-2xl
-             shadow-lg
-             overflow-y-auto">
+      <div
+        className="relative
+                   w-[360px]
+                   max-h-[720px]
+                   mx-auto
+                   border border-gray-300
+                   rounded-2xl
+                   shadow-lg
+                   overflow-y-auto bg-white"
+      >
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="canvas">
             {(provided) => (
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className="flex flex-col space-y-3 p-4 bg-white"
+                className="flex flex-col space-y-3 p-4"
               >
                 {components.map((comp, idx) => {
+                  const key = comp.id ?? `comp-${idx}`; // ← fallback key if id is null
                   const Preview = previewMap[comp.type];
                   return (
-                    <Draggable key={comp.id} draggableId={comp.id} index={idx}>
+                    <Draggable key={key} draggableId={String(key)} index={idx}>
                       {(prov) => (
                         <div
                           ref={prov.innerRef}
@@ -93,15 +100,12 @@ export default function BuilderCanvas({
                           onClick={() => onSelect(comp)}
                         >
                           <div className="flex justify-between items-center h-full">
-                            {/* Content area */}
                             <div
                               className="flex-1 pl-4"
                               onClick={() => onSelect(comp)}
                             >
                               {Preview && <Preview p={comp.props} />}
                             </div>
-
-                            {/* Icons vertically stacked */}
                             <div className="flex flex-col items-center space-y-2 pr-2">
                               <div
                                 {...prov.dragHandleProps}
@@ -113,7 +117,7 @@ export default function BuilderCanvas({
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    onDelete(comp.id);
+                                    onDelete(comp.id ?? key); // ← use fallback for delete
                                   }}
                                   className="p-1 hover:bg-gray-100 rounded"
                                   aria-label="Verwijder component"

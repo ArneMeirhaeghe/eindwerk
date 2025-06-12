@@ -1,24 +1,25 @@
-import type { CSSProperties, FC } from "react";
-import type { TitleProps } from "../../../types/types";
+// File: src/components/builder/previews/TitlePreview.tsx
+import React, { type CSSProperties, type FC } from "react"
+import type { TitleProps } from "../../../types/types"
 
 interface Props {
-  p: TitleProps;
+  p: TitleProps
 }
 
 const TitlePreview: FC<Props> = ({ p }) => {
   const style: CSSProperties = {
-    fontFamily: p.fontFamily,
-    fontSize: p.fontSize,
-    lineHeight: p.lineHeight,
-    color: p.color,
+    fontFamily:    p.fontFamily,
+    fontSize:      p.fontSize,
+    lineHeight:    p.lineHeight,
+    color:         p.color,
     backgroundColor: p.bg,
-    textAlign: p.align,
-    fontWeight: p.bold ? "bold" : "normal",
-    fontStyle: p.italic ? "italic" : "normal",
-    textDecoration: p.underline ? "underline" : "none",
-  };
+    textAlign:     p.align,
+    fontWeight:    p.bold ? "bold" : "normal",
+    fontStyle:     p.italic ? "italic" : "normal",
+    textDecoration:p.underline ? "underline" : "none",
+  }
 
-  return <h1 style={style}>{p.text}</h1>;
-};
+  return <h1 style={style}>{p.text}</h1>
+}
 
-export default TitlePreview;
+export default TitlePreview

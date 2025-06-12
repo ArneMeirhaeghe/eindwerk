@@ -1,12 +1,9 @@
-import type { CSSProperties, FC } from "react";
-import type { SubheadingProps } from "../../../types/types";
+// File: src/components/builder/previews/SubheadingPreview.tsx
+import React from "react"
+import type { SubheadingProps } from "../../../types/types"
 
-interface Props {
-  p: SubheadingProps;
-}
-
-const SubheadingPreview: FC<Props> = ({ p }) => {
-  const style: CSSProperties = {
+const SubheadingPreview: React.FC<{ p: SubheadingProps }> = ({ p }) => {
+  const style = {
     fontFamily: p.fontFamily,
     fontSize: p.fontSize,
     lineHeight: p.lineHeight,
@@ -16,9 +13,8 @@ const SubheadingPreview: FC<Props> = ({ p }) => {
     fontWeight: p.bold ? "bold" : "normal",
     fontStyle: p.italic ? "italic" : "normal",
     textDecoration: p.underline ? "underline" : "none",
-  };
+  }
+  return <h2 style={style}>{p.text}</h2>
+}
 
-  return <h2 style={style}>{p.text}</h2>;
-};
-
-export default SubheadingPreview;
+export default SubheadingPreview

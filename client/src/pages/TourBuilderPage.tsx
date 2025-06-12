@@ -1,12 +1,13 @@
 // File: src/pages/TourBuilderPage.tsx
-import React from "react";
-import LivePreview from "../components/builder/LivePreview";
-import ComponentPalette from "../components/builder/ComponentPalette";
-import BuilderCanvas from "../components/builder/BuilderCanvas";
-import BottomNav from "../components/builder/BottomNav";
-import SettingsPanel from "../components/builder/SettingsPanel";
-import EditSectionModal from "../components/builder/EditSectionModal";
-import { useTourBuilder } from "../hooks/useTourBuilder";
+import React from "react"
+// **Use the _app-level_ LivePreview**, not the builder one:
+import ComponentPalette from "../components/builder/ComponentPalette"
+import BuilderCanvas    from "../components/builder/BuilderCanvas"
+import BottomNav        from "../components/builder/BottomNav"
+import SettingsPanel    from "../components/builder/SettingsPanel"
+import EditSectionModal from "../components/builder/EditSectionModal"
+import { useTourBuilder } from "../hooks/useTourBuilder"
+import LivePreview         from "../components/builder/LivePreview"
 
 export default function TourBuilderPage() {
   const {
@@ -20,11 +21,11 @@ export default function TourBuilderPage() {
     modalOpen,
     modalValue,
     handlers,
-  } = useTourBuilder();
+  } = useTourBuilder()
 
-  if (loading) return <div className="p-4 animate-pulse">Laden…</div>;
+  if (loading) return <div className="p-4 animate-pulse">Laden…</div>
 
-  if (previewMode) {
+if (previewMode) {
     return (
       <div className="relative h-full bg-gray-100">
         <div className="p-4">
@@ -34,17 +35,22 @@ export default function TourBuilderPage() {
           >
             Terug naar bewerken
           </button>
-          <LivePreview fases={fasesList} sectionsByFase={sectionsByFase} />
+          {/* Pass only the components array into the builder’s LivePreview */}
+          <LivePreview
+            components={
+              sectionsByFase[activeFase]?.[activeSectionIndex]?.components ?? []
+            }
+          />
         </div>
       </div>
-    );
+    )
   }
 
-  const current = sectionsByFase[activeFase][activeSectionIndex];
+  const current = sectionsByFase[activeFase][activeSectionIndex]
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header: Preview knop links, sectie/titel midden */}
+      {/* Header: Preview knop, sectietitel */}
       <div className="grid grid-cols-3 items-center px-4 py-2 border-b">
         <div className="flex justify-start">
           <button
@@ -61,21 +67,16 @@ export default function TourBuilderPage() {
           >
             {current.title}
           </h1>
-         
         </div>
         <div />
       </div>
 
-      {/* Scrollable area: Palette, Canvas & Settings scroll together */}
-            {/* Layout: Palette, Canvas (scrollable), Settings (fixed) */}
+      {/* Main: Palette | Canvas | Settings */}
       <div className="flex flex-1 justify-between">
-        {/* Component Palette */}
-        <div className=" border-r overflow-y-auto">
+        <div className="border-r overflow-y-auto">
           <ComponentPalette onAdd={handlers.onAddComponent} />
         </div>
-
-        {/* Builder Canvas */}
-        <div className=" h-full overflow-y-auto">
+        <div className="h-full overflow-y-auto">
           <BuilderCanvas
             components={current.components}
             sectionTitle={current.title}
@@ -83,12 +84,12 @@ export default function TourBuilderPage() {
             onSelect={handlers.onSelectComponent}
             onDelete={handlers.onDeleteComponent}
             onDragEnd={handlers.onDragEnd}
-            onSectionTitleClick={() => handlers.openSectionModal(activeSectionIndex)}
+            onSectionTitleClick={() =>
+              handlers.openSectionModal(activeSectionIndex)
+            }
           />
         </div>
-
-        {/* Settings Panel */}
-        <div className=" border-l">
+        <div className="border-l">
           <SettingsPanel
             comp={selectedComp}
             onUpdate={handlers.handleSettingsChange}
@@ -96,7 +97,7 @@ export default function TourBuilderPage() {
         </div>
       </div>
 
-      {/* Bottom Navigation */}
+      {/* Bottom navigation */}
       <div className="h-16 border-t">
         <BottomNav
           fases={fasesList}
@@ -111,7 +112,7 @@ export default function TourBuilderPage() {
         />
       </div>
 
-      {/* Modals */}
+      {/* Section-edit modal */}
       <EditSectionModal
         isOpen={modalOpen}
         initialValue={modalValue}
@@ -119,5 +120,5 @@ export default function TourBuilderPage() {
         onClose={handlers.closeSectionModal}
       />
     </div>
-  );
+  )
 }

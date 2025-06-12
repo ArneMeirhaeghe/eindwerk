@@ -1,17 +1,15 @@
-// src/components/previews/DividerPreview.tsx
-import  { type FC } from "react";
-import type { DividerProps } from "../../../types/types";
+// File: src/components/builder/previews/DividerPreview.tsx
+import React from "react"
+import type { DividerProps } from "../../../types/types"
 
-interface Props { p: DividerProps; }
-
-const DividerPreview: FC<Props> = ({ p }) => (
+const DividerPreview: React.FC<{ p: DividerProps }> = ({ p }) => (
   <hr
-    className="mb-2"
+    className="mb-4"
     style={{
       borderColor: p.color,
       borderWidth: p.thickness,
     }}
   />
-);
+)
 
-export default DividerPreview;
+export default DividerPreview

@@ -1,12 +1,9 @@
-import type { CSSProperties, FC } from "react";
-import type { QuoteProps } from "../../../types/types";
+// File: src/components/builder/previews/QuotePreview.tsx
+import React from "react"
+import type { QuoteProps } from "../../../types/types"
 
-interface Props {
-  p: QuoteProps;
-}
-
-const QuotePreview: FC<Props> = ({ p }) => {
-  const style: CSSProperties = {
+const QuotePreview: React.FC<{ p: QuoteProps }> = ({ p }) => {
+  const style = {
     fontFamily: p.fontFamily,
     fontSize: p.fontSize,
     lineHeight: p.lineHeight,
@@ -18,18 +15,13 @@ const QuotePreview: FC<Props> = ({ p }) => {
     textDecoration: p.underline ? "underline" : "none",
     borderLeft: "4px solid currentColor",
     paddingLeft: "1rem",
-  };
-
+  }
   return (
     <blockquote style={style}>
       {p.text}
-      {p.author && (
-        <footer className="mt-2 text-sm italic" style={{ color: p.color }}>
-          — {p.author}
-        </footer>
-      )}
+      {p.author && <footer className="mt-2 text-sm italic">— {p.author}</footer>}
     </blockquote>
-  );
-};
+  )
+}
 
-export default QuotePreview;
+export default QuotePreview

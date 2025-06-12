@@ -1,17 +1,16 @@
-import type { FC } from "react";
-import type { ComponentItem, TitleProps } from "../../../types/types";
+// File: src/components/builder/settings/TitleSettings.tsx
+import type { FC } from "react"
+import type { ComponentItem, TitleProps } from "../../../types/types"
 
 interface Props {
-  comp: ComponentItem;
-  onUpdate: (c: ComponentItem) => void;
+  comp: ComponentItem
+  onUpdate: (c: ComponentItem) => void
 }
 
 const TitleSettings: FC<Props> = ({ comp, onUpdate }) => {
-  // Props voor deze component
-  const p = comp.props as TitleProps;
-  // Helper om props bij te werken
+  const p = comp.props as TitleProps
   const upd = (key: keyof TitleProps, value: any) =>
-    onUpdate({ ...comp, props: { ...p, [key]: value } });
+    onUpdate({ ...comp, props: { ...p, [key]: value } })
 
   return (
     <div className="space-y-4">
@@ -129,7 +128,6 @@ const TitleSettings: FC<Props> = ({ comp, onUpdate }) => {
         </label>
       </div>
     </div>
-  );
-};
-
-export default TitleSettings;
+)
+}
+export default TitleSettings

@@ -1,15 +1,13 @@
-// src/components/previews/ChecklistPreview.tsx
-import  { type FC } from "react";
-import type { ChecklistProps } from "../../../types/types";
+// File: src/components/builder/previews/ChecklistPreview.tsx
+import React from "react"
+import type { ChecklistProps } from "../../../types/types"
 
-interface Props { p: ChecklistProps; }
-
-const ChecklistPreview: FC<Props> = ({ p }) => (
-  <ul className="mb-2 list-disc pl-5" style={{ gap: p.spacing }}>
+const ChecklistPreview: React.FC<{ p: ChecklistProps }> = ({ p }) => (
+  <ul className="mb-4 list-disc pl-5">
     {p.items.map((item, i) => (
       <li key={i}>{item}</li>
     ))}
   </ul>
-);
+)
 
-export default ChecklistPreview;
+export default ChecklistPreview

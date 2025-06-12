@@ -6,13 +6,12 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "../../types/types";
 
-interface Props {
-  onAdd: (type: ComponentType) => void;
-}
+// interface Props {
+//   onAdd: (type: ComponentType) => void;
+// }
 
 const labelMap: Record<ComponentType, string> = {
   title: "Koptekst",
-  text: "Tekst",
   subheading: "Subkop",
   paragraph: "Paragraaf",
   quote: "Citaat",
@@ -30,11 +29,12 @@ const labelMap: Record<ComponentType, string> = {
   dropdown: "Dropdown",
   "radio-group": "Radiogroep",
   "checkbox-group": "Checkbox-groep",
+    form: "Formulier"                                       // ← added
+
 };
 
 const iconMap: Record<ComponentType, React.FC<any>> = {
   title: Type,
-  text: AlignLeft,
   subheading: Subtitles,
   paragraph: AlignLeft,
   quote: FileText,
@@ -52,6 +52,8 @@ const iconMap: Record<ComponentType, React.FC<any>> = {
   dropdown: ChevronDown,
   "radio-group": Circle,
   "checkbox-group": CheckCircle,
+    form: FileText                                          // ← added
+
 };
 
 const groups: { title: string; types: ComponentType[] }[] = [
@@ -62,31 +64,33 @@ const groups: { title: string; types: ComponentType[] }[] = [
     types: ["button", "checklist", "checkbox-list", "dropdown", "radio-group", "checkbox-group"],
   },
   { title: "Structuur", types: ["divider", "grid", "uploadzone", "text-input", "textarea"] },
+  { title: "Formulieren", types: ["form"] }               // ← added group
+
 ];
 
-export default function ComponentPalette({ onAdd }: Props) {
+export default function ComponentPalette({ onAdd }: { onAdd(type: ComponentType): void }) {
   return (
-    <aside className="w-64 p-4 bg-white shadow-md rounded-lg overflow-auto">
-      {groups.map((group) => (
-        <section key={group.title} className="mb-6">
-          <h3 className="text-sm font-semibold mb-2 text-gray-700">{group.title}</h3>
-          <div className="flex flex-col space-y-2">
-            {group.types.map((type) => {
-              const Icon = iconMap[type];
+    <aside className="w-64 p-4 bg-white rounded shadow">
+      {groups.map(g => (
+        <section key={g.title} className="mb-4">
+          <h3 className="text-sm font-semibold mb-2">{g.title}</h3>
+          <div className="space-y-2">
+            {g.types.map(type => {
+              const Icon = iconMap[type]
               return (
                 <button
                   key={type}
                   onClick={() => onAdd(type)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-lg shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  className="flex items-center px-3 py-2 bg-gray-50 rounded hover:bg-gray-100"
                 >
-                  <Icon size={18} className="text-gray-600" />
-                  <span className="text-sm text-gray-800">{labelMap[type]}</span>
+                  <Icon size={16} className="mr-2" />
+                  {labelMap[type]}
                 </button>
-              );
+              )
             })}
           </div>
         </section>
       ))}
     </aside>
-  );
+  )
 }

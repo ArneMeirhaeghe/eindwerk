@@ -19,6 +19,7 @@ import TextareaSettings from "./settings/TextareaSettings";
 import DropdownSettings from "./settings/DropdownSettings";
 import RadioGroupSettings from "./settings/RadioGroupSettings";
 import CheckboxGroupSettings from "./settings/CheckboxGroupSettings";
+import FormSettings from "./settings/FormSettings";
 
 interface Props {
   comp: ComponentItem | null;
@@ -74,6 +75,8 @@ const SettingsPanel: FC<Props> = ({ comp, onUpdate }) => {
       return <RadioGroupSettings comp={comp} onUpdate={onUpdate} />;
     case "checkbox-group":
       return <CheckboxGroupSettings comp={comp} onUpdate={onUpdate} />;
+    case "form":
+      return <FormSettings comp={comp} onUpdate={onUpdate} />  // ← added
     default:
       return <div className="text-red-500">Geen instellingen voor {comp.type}</div>;
   }

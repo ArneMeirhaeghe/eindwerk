@@ -1,16 +1,18 @@
 // File: src/components/builder/previews/TextareaPreview.tsx
-import type { FC } from "react";
-import type { TextareaProps } from "../../../types/types";
+import React from "react"
+import type { TextareaProps } from "../../../types/types"
 
-export const TextareaPreview: FC<{ p: TextareaProps }> = ({ p }) => (
-  <div className="flex flex-col">
-    <label className="mb-1 font-medium">{p.label}{p.required && "*"}</label>
+const TextareaPreview: React.FC<{ p: TextareaProps }> = ({ p }) => (
+  <div className="mb-4">
+    <label className="block mb-1 font-medium">{p.label}{p.required && "*"}</label>
     <textarea
+      disabled
       rows={p.rows || 3}
       placeholder={p.placeholder}
-      className="border rounded px-2 py-1 w-full"
-      disabled
-      value={p.defaultValue as string || ""}
+      value={p.defaultValue || ""}
+      className="w-full border rounded px-2 py-1"
     />
   </div>
-);
+)
+
+export default TextareaPreview
