@@ -76,7 +76,7 @@ const groups: { title: string; types: ComponentType[] }[] = [
 
 export default function ComponentPalette({ onAdd }: { onAdd(type: ComponentType): void }) {
   return (
-    <aside className="w-64 p-4 bg-white rounded shadow">
+    <aside className="w-64 p-4 bg-white rounded shadow border border-gray-200 mb-[50px]" > 
       {groups.map(g => (
         <section key={g.title} className="mb-4">
           <h3 className="text-sm font-semibold mb-2">{g.title}</h3>
