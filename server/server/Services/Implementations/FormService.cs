@@ -16,8 +16,8 @@ namespace server.Services.Implementations
         public FormService(IMongoClient client, IOptions<MongoSettings> opts)
         {
             var settings = opts.Value;
-            var db = client.GetDatabase(settings.Database);
-            _collection = db.GetCollection<Form>(settings.FormCollectionName);
+            var database = client.GetDatabase(settings.Database);
+            _collection = database.GetCollection<Form>(settings.FormCollectionName);
         }
 
         public async Task<List<Form>> GetAllAsync() =>
@@ -25,6 +25,9 @@ namespace server.Services.Implementations
 
         public async Task<Form?> GetByIdAsync(string id) =>
             await _collection.Find(f => f.Id == id).FirstOrDefaultAsync();
+
+        public async Task<List<Form>> GetByUserIdAsync(string userId) =>
+            await _collection.Find(f => f.UserId == userId).ToListAsync();
 
         public async Task<Form> CreateAsync(Form form)
         {

@@ -9,12 +9,15 @@ namespace server.Models.Entities
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; } = null!;                     // Mongo ObjectId
+        public string Id { get; set; } = null!;                    // Mongo ObjectId
 
         [BsonElement("name")]
-        public string Name { get; set; } = null!;                   // Formulier‐naam
+        public string Name { get; set; } = null!;                  // Form-naam
+
+        [BsonElement("userId")]
+        public string UserId { get; set; } = null!;                // Eigenaar (user)
 
         [BsonElement("fields")]
-        public List<Field> Fields { get; set; } = new();            // Alle velden
+        public List<Field> Fields { get; set; } = new();           // Alle velden
     }
 }

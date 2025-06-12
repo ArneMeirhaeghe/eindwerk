@@ -1,25 +1,25 @@
 // File: src/pages/FormBuilderPage.tsx
-import React from "react";
-import { Trash2 } from "lucide-react";
-import LivePreview from "../components/formbuilder/LivePreview";
-import ComponentPalette from "../components/formbuilder/ComponentPalette";
-import BuilderCanvas from "../components/formbuilder/BuilderCanvas";
-import SettingsPanel from "../components/formbuilder/SettingsPanel";
-import { useFormBuilder } from "../hooks/useFormBuilder";
+import React from "react"
+import { Trash2 } from "lucide-react"
+import LivePreview from "../components/formbuilder/LivePreview"
+import ComponentPalette from "../components/formbuilder/ComponentPalette"
+import BuilderCanvas from "../components/formbuilder/BuilderCanvas"
+import SettingsPanel from "../components/formbuilder/SettingsPanel"
+import { useFormBuilder } from "../hooks/useFormBuilder"
 
 export default function FormBuilderPage() {
   const {
     loading,
     formsList,
     formId,
-    previewMode,
     formName,
     fields,
     selectedField,
-    handlers,
-  } = useFormBuilder();
+    previewMode,
+    handlers
+  } = useFormBuilder()
 
-  if (loading) return <div className="p-4 animate-pulse">Laden…</div>;
+  if (loading) return <div className="p-4 animate-pulse">Laden…</div>
 
   if (previewMode) {
     return (
@@ -32,37 +32,43 @@ export default function FormBuilderPage() {
         </button>
         <LivePreview name={formName} fields={fields} />
       </div>
-    );
+    )
   }
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b bg-white">
-        <button
-          onClick={() => handlers.setPreviewMode(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded shadow"
-        >
-          Preview
-        </button>
-
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handlers.setPreviewMode(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded shadow"
+          >
+            Preview
+          </button>
+          <button
+            onClick={handlers.saveForm}
+            disabled={loading}
+            className="px-4 py-2 bg-green-600 text-white rounded shadow disabled:opacity-50"
+          >
+            {loading ? "Opslaan…" : "Opslaan"}
+          </button>
+        </div>
         <div className="flex items-center space-x-4">
           <select
-            value={formId || "__new__"}
+            value={formId ?? "__new__"}
             onChange={e => {
-              if (e.target.value === "__new__") handlers.createNewForm();
-              else handlers.loadForm(e.target.value);
+              e.target.value === "__new__"
+                ? handlers.createNewForm()
+                : handlers.loadForm(e.target.value)
             }}
             className="px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring"
           >
             <option value="__new__">+ Nieuw formulier</option>
             {formsList.map(f => (
-              <option key={f.id} value={f.id}>
-                {f.name}
-              </option>
+              <option key={f.id} value={f.id}>{f.name}</option>
             ))}
           </select>
-
           <input
             type="text"
             value={formName}
@@ -70,12 +76,11 @@ export default function FormBuilderPage() {
             placeholder="Formulier naam"
             className="px-3 py-2 border rounded shadow-sm w-60 focus:outline-none focus:ring"
           />
-
           {formId && (
             <button
               onClick={() => {
                 if (confirm("Weet je zeker dat je dit formulier wilt verwijderen?")) {
-                  handlers.removeForm();
+                  handlers.removeForm()
                 }
               }}
               className="p-2 hover:bg-red-50 rounded"
@@ -85,13 +90,12 @@ export default function FormBuilderPage() {
           )}
         </div>
       </div>
-
       {/* Body */}
-      <div className="flex flex-1 overflow-hidden ">
-        <aside className="w-64 border-r overflow-y-auto bg-white">
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="w-64 border-r bg-white overflow-auto">
           <ComponentPalette onAdd={handlers.onAddField} />
         </aside>
-        <main className="flex-1 overflow-auto bg-gray-50">
+        <main className="flex-1 bg-gray-50 overflow-auto">
           <BuilderCanvas
             components={fields}
             onSelect={handlers.onSelectField}
@@ -99,10 +103,10 @@ export default function FormBuilderPage() {
             onDragEnd={handlers.onDragEndField}
           />
         </main>
-        <aside className="w-72 border-l overflow-y-auto bg-white">
+        <aside className="w-72 border-l bg-white overflow-auto">
           <SettingsPanel comp={selectedField} onUpdate={handlers.handleSettingsChange} />
         </aside>
       </div>
     </div>
-  );
+  )
 }

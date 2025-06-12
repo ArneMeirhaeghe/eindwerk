@@ -1,25 +1,29 @@
 ﻿// File: server/Mappings/FormMapper.cs
 using System.Linq;
 using server.Models.Entities;
-using server.Models.DTOs;
 using server.Models.DTOs.Form;
 
 namespace server.Mappings
 {
     public static class FormMapper
     {
-        public static FormDto ToDto(this Form entity) => new()
+        public static FormDto ToDto(this Form e) => new()
         {
-            Id = entity.Id,
-            Name = entity.Name,
-            Fields = entity.Fields.OrderBy(f => f.Order).Select(f => f.ToDto()).ToList()
+            Id = e.Id,
+            Name = e.Name,
+            UserId = e.UserId,                                      // userId includen
+            Fields = e.Fields
+                      .OrderBy(f => f.Order)
+                      .Select(f => f.ToDto())
+                      .ToList()
         };
 
-        public static Form ToEntity(this FormDto dto) => new()
+        public static Form ToEntity(this FormDto d) => new()
         {
-            Id = dto.Id,
-            Name = dto.Name,
-            Fields = dto.Fields.Select(f => f.ToEntity()).ToList()
+            Id = d.Id,
+            Name = d.Name,
+            UserId = d.UserId,                                      // userId includen
+            Fields = d.Fields.Select(f => f.ToEntity()).ToList()
         };
 
         private static FieldDto ToDto(this Field f) => new()
