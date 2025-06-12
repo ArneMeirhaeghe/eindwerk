@@ -8,7 +8,7 @@ export type ComponentType =
   | "image" | "video" | "file" | "button" | "checklist" | "checkbox-list"
   | "divider" | "grid" | "uploadzone"
   | "text-input" | "textarea" | "dropdown" | "radio-group" | "checkbox-group"
-  | "form"
+  | "form" | "inventory"  
 
 // Props‐interfaces per component
 export interface TitleProps {
@@ -131,7 +131,9 @@ export interface ButtonProps {
   bgColor?: string
   textColor?: string
 }
-
+export interface InventoryProps {
+  templateId: string               // verwijzing naar gekozen template
+}
 // Eén instance van een component in een sectie
 export interface ComponentItem {
   id: string

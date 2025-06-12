@@ -2,7 +2,6 @@
 import React from "react"
 import type { ComponentItem } from "../../types/types"
 import TitlePreview from "./previews/TitlePreview"
-import SubheadingPreview from "./previews/SubheadingPreview"
 import ParagraphPreview from "./previews/ParagraphPreview"
 import QuotePreview from "./previews/QuotePreview"
 import ButtonPreview from "./previews/ButtonPreview"
@@ -17,9 +16,11 @@ import UploadZonePreview from "./previews/UploadZonePreview"
 import TextInputPreview from "./previews/TextInputPreview"
 import TextareaPreview from "./previews/TextareaPreview"
 import DropdownPreview from "./previews/DropdownPreview"
+import RadioGroupPreview from "./previews/RadioGroupPreview"
 import { CheckboxGroupPreview } from "./previews/CheckboxGroupPreview"
 import FormPreview from "./previews/FormPreview"
-import RadioGroupPreview from "./previews/RadioGroupPreview"
+import InventoryPreview from "./previews/InventoryPreview"  // ← toegevoegd
+import SubheadingPreview from "./previews/SubheadingPreview"
 
 interface Props {
   components?: ComponentItem[]   // optional array; defaults to []
@@ -45,6 +46,7 @@ const previewMap: Record<string, React.ComponentType<any>> = {
   "radio-group":    RadioGroupPreview,
   "checkbox-group": CheckboxGroupPreview,
   form:             FormPreview,
+  inventory:        InventoryPreview     // ← toegevoegd
 }
 
 export default function LivePreview({ components = [] }: Props) {

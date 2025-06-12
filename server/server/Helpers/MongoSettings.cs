@@ -8,8 +8,9 @@ namespace server.Helpers
         public string Database { get; set; } = null!;
         public string MediaCollectionName { get; set; } = "media";
         public string FormCollectionName { get; set; } = null!;
-        public string TourCollectionName { get; set; } = "tours";  // ← toegevoegd: collectie voor tours :contentReference[oaicite:7]{index=7}
-                                                                   // New forms collection
+        public string TourCollectionName { get; set; } = "tours";
+        public string InventoryTemplatesCollectionName { get; set; } = "inventoryTemplates"; 
+
 
     }
 }

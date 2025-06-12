@@ -1,71 +1,73 @@
 // File: src/components/builder/BuilderCanvas.tsx
-import React from "react";
-import type { DropResult } from "@hello-pangea/dnd";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Trash2 } from "lucide-react";
+import React from "react"
+import type { DropResult } from "@hello-pangea/dnd"
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
+import { GripVertical, Trash2 } from "lucide-react"
 
-import TitlePreview from "./previews/TitlePreview";
-import SubheadingPreview from "./previews/SubheadingPreview";
-import ParagraphPreview from "./previews/ParagraphPreview";
-import QuotePreview from "./previews/QuotePreview";
-import ButtonPreview from "./previews/ButtonPreview";
-import ChecklistPreview from "./previews/ChecklistPreview";
-import CheckboxListPreview from "./previews/CheckboxListPreview";
-import DividerPreview from "./previews/DividerPreview";
-import ImagePreview from "./previews/ImagePreview";
-import VideoPreview from "./previews/VideoPreview";
-import FilePreview from "./previews/FilePreview";
-import GridPreview from "./previews/GridPreview";
-import UploadZonePreview from "./previews/UploadZonePreview";
+import TitlePreview from "./previews/TitlePreview"
+import SubheadingPreview from "./previews/SubheadingPreview"
+import ParagraphPreview from "./previews/ParagraphPreview"
+import QuotePreview from "./previews/QuotePreview"
+import ButtonPreview from "./previews/ButtonPreview"
+import ChecklistPreview from "./previews/ChecklistPreview"
+import CheckboxListPreview from "./previews/CheckboxListPreview"
+import DividerPreview from "./previews/DividerPreview"
+import ImagePreview from "./previews/ImagePreview"
+import VideoPreview from "./previews/VideoPreview"
+import FilePreview from "./previews/FilePreview"
+import GridPreview from "./previews/GridPreview"
+import UploadZonePreview from "./previews/UploadZonePreview"
+import TextInputPreview from "./previews/TextInputPreview"
+import TextareaPreview from "./previews/TextareaPreview"
+import DropdownPreview from "./previews/DropdownPreview"
+import RadioGroupPreview from "./previews/RadioGroupPreview"
+import { CheckboxGroupPreview } from "./previews/CheckboxGroupPreview"
+import FormPreview from "./previews/FormPreview"
+import InventoryPreview from "./previews/InventoryPreview"  // ← toegevoegd
 
-import { CheckboxGroupPreview } from "./previews/CheckboxGroupPreview";
-import type { ComponentItem } from "../../types/types";
-import FormPreview from "./previews/FormPreview";
-import TextInputPreview from "./previews/TextInputPreview";
-import TextareaPreview from "./previews/TextareaPreview";
-import DropdownPreview from "./previews/DropdownPreview";
-import RadioGroupPreview from "./previews/RadioGroupPreview";
-
+import type { ComponentItem } from "../../types/types"
 
 const previewMap: Record<string, React.ComponentType<any>> = {
-  subheading: SubheadingPreview,
-  paragraph: ParagraphPreview,
-  quote: QuotePreview,
-  button: ButtonPreview,
-  checklist: ChecklistPreview,
-  "checkbox-list": CheckboxListPreview,
-  divider: DividerPreview,
-  image: ImagePreview,
-  video: VideoPreview,
-  file: FilePreview,
-  grid: GridPreview,
-  uploadzone: UploadZonePreview,
-  "text-input": TextInputPreview,
-  textarea: TextareaPreview,
-  dropdown: DropdownPreview,
-  "radio-group": RadioGroupPreview,
+  title:            TitlePreview,
+  subheading:       SubheadingPreview,
+  paragraph:        ParagraphPreview,
+  quote:            QuotePreview,
+  button:           ButtonPreview,
+  checklist:        ChecklistPreview,
+  "checkbox-list":  CheckboxListPreview,
+  divider:          DividerPreview,
+  image:            ImagePreview,
+  video:            VideoPreview,
+  file:             FilePreview,
+  grid:             GridPreview,
+  uploadzone:       UploadZonePreview,
+  "text-input":     TextInputPreview,
+  textarea:         TextareaPreview,
+  dropdown:         DropdownPreview,
+  "radio-group":    RadioGroupPreview,
   "checkbox-group": CheckboxGroupPreview,
-  form:          FormPreview    // ← ensure form preview included
-};
-
-
+  form:             FormPreview,
+  inventory:        InventoryPreview     // ← toegevoegd
+}
 
 interface Props {
-  components: ComponentItem[];
-  sectionTitle: string;
-  preview: boolean;
-  onSelect: (c: ComponentItem) => void;
-  onDelete: (id: string) => void;
-  onDragEnd: (res: DropResult) => void;
-  onSectionTitleClick: () => void;
+  components: ComponentItem[]
+  sectionTitle: string
+  preview: boolean
+  onSelect: (c: ComponentItem) => void
+  onDelete: (id: string) => void
+  onDragEnd: (res: DropResult) => void
+  onSectionTitleClick: () => void
 }
 
 export default function BuilderCanvas({
   components,
+  sectionTitle,
   preview,
   onSelect,
   onDelete,
   onDragEnd,
+  onSectionTitleClick
 }: Props) {
   return (
     <div className="flex-1 flex justify-center items-start p-4 overflow-auto bg-gray-50">
@@ -81,18 +83,22 @@ export default function BuilderCanvas({
       >
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="canvas">
-            {(provided) => (
+            {provided => (
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
                 className="flex flex-col space-y-3 p-4"
               >
                 {components.map((comp, idx) => {
-                  const key = comp.id ?? `comp-${idx}`; // ← fallback key if id is null
-                  const Preview = previewMap[comp.type];
+                  const key = comp.id ?? `comp-${idx}`
+                  const Preview = previewMap[comp.type]
                   return (
-                    <Draggable key={key} draggableId={String(key)} index={idx}>
-                      {(prov) => (
+                    <Draggable
+                      key={key}
+                      draggableId={String(key)}
+                      index={idx}
+                    >
+                      {prov => (
                         <div
                           ref={prov.innerRef}
                           {...prov.draggableProps}
@@ -115,9 +121,9 @@ export default function BuilderCanvas({
                               </div>
                               {!preview && (
                                 <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDelete(comp.id ?? key); // ← use fallback for delete
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    onDelete(comp.id ?? key)
                                   }}
                                   className="p-1 hover:bg-gray-100 rounded"
                                   aria-label="Verwijder component"
@@ -130,7 +136,7 @@ export default function BuilderCanvas({
                         </div>
                       )}
                     </Draggable>
-                  );
+                  )
                 })}
                 {provided.placeholder}
               </div>
@@ -139,5 +145,5 @@ export default function BuilderCanvas({
         </DragDropContext>
       </div>
     </div>
-  );
+  )
 }

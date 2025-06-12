@@ -13,9 +13,11 @@ import TourBuilderPage from "../pages/TourBuilderPage"
 import UploadZone from "../pages/UploadZone"
 import PublicSessionPage from "../pages/PublicSessionPage" // Route voor publieke live-sessie
 import PublicEntryPage from "../pages/PublicEntryPage"
-import InventoryPage from "../pages/InventoryPage"
+import InventoryPage from "../pages/InventoryManagementPage"
 import SessionResponsesPage from "../pages/SessionResponsesPage"
 import FormBuilderPage from "../pages/FormBuilderPage"
+import InventoryManagementPage from "../pages/InventoryManagementPage"
+import InventoryFormPage from "../pages/InventoryFormPage"
 
 function AppRoutes() {
   return (
@@ -45,7 +47,9 @@ function AppRoutes() {
 
       {/* Upload & Inventory */}
       <Route path="/upload-zone" element={<PrivateRoute><UploadZone /></PrivateRoute>} />
-      <Route path="/inventory" element={<PrivateRoute><InventoryPage /></PrivateRoute>} />
+      <Route path="/inventory" element={<PrivateRoute><InventoryManagementPage /></PrivateRoute>} />
+      <Route path="/inventory/new" element={<PrivateRoute><InventoryFormPage/></PrivateRoute>} />
+      <Route path="/inventory/:id/edit" element={<InventoryFormPage />} />
       <Route path="/formbuilder" element={<PrivateRoute><FormBuilderPage /></PrivateRoute>} />
 
       <Route

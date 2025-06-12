@@ -1,14 +1,11 @@
 // File: src/components/builder/ComponentPalette.tsx
-import React from "react";
+import React from "react"
 import {
-  Type, AlignLeft, Subtitles, FileText, Video, Image, File, RectangleHorizontal, ListChecks,
-  CheckSquare, Minus, LayoutGrid, CloudUpload, Edit, ChevronDown, Circle, CheckCircle
-} from "lucide-react";
-import type { ComponentType } from "../../types/types";
-
-// interface Props {
-//   onAdd: (type: ComponentType) => void;
-// }
+  Type, AlignLeft, Subtitles, FileText, Video, Image, File,
+  RectangleHorizontal, ListChecks, CheckSquare, Minus, LayoutGrid,
+  CloudUpload, Edit, ChevronDown, Circle, CheckCircle
+} from "lucide-react"
+import type { ComponentType } from "../../types/types"
 
 const labelMap: Record<ComponentType, string> = {
   title: "Koptekst",
@@ -29,9 +26,9 @@ const labelMap: Record<ComponentType, string> = {
   dropdown: "Dropdown",
   "radio-group": "Radiogroep",
   "checkbox-group": "Checkbox-groep",
-    form: "Formulier"                                       // ← added
-
-};
+  form: "Formulier",
+  inventory: "Inventaris"      // ← toegevoegd
+}
 
 const iconMap: Record<ComponentType, React.FC<any>> = {
   title: Type,
@@ -52,21 +49,30 @@ const iconMap: Record<ComponentType, React.FC<any>> = {
   dropdown: ChevronDown,
   "radio-group": Circle,
   "checkbox-group": CheckCircle,
-    form: FileText                                          // ← added
-
-};
+  form: FileText,
+  inventory: LayoutGrid         // ← kies passend icoon
+}
 
 const groups: { title: string; types: ComponentType[] }[] = [
   { title: "Tekst", types: ["title", "subheading", "paragraph", "quote"] },
   { title: "Media", types: ["image", "video", "file"] },
   {
     title: "Interactie",
-    types: ["button", "checklist", "checkbox-list", "dropdown", "radio-group", "checkbox-group"],
+    types: [
+      "button", "checklist", "checkbox-list",
+      "dropdown", "radio-group", "checkbox-group"
+    ],
   },
-  { title: "Structuur", types: ["divider", "grid", "uploadzone", "text-input", "textarea"] },
-  { title: "Formulieren", types: ["form"] }               // ← added group
-
-];
+  {
+    title: "Structuur",
+    types: [
+      "divider", "grid", "uploadzone",
+      "text-input", "textarea"
+    ],
+  },
+  { title: "Formulieren", types: ["form"] },
+  { title: "Inventaris", types: ["inventory"] }  // ← nieuwe groep
+]
 
 export default function ComponentPalette({ onAdd }: { onAdd(type: ComponentType): void }) {
   return (
