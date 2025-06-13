@@ -1,6 +1,5 @@
 // File: src/pages/PublicSessionPage.tsx
-
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import LoadingIndicator from "../components/LoadingIndicator"
@@ -17,16 +16,14 @@ export default function PublicSessionPage() {
     setCurrentIndex,
     responses,
     loading,
-    saveField,
     saveSection,
     uploadFile,
+    saveField,
   } = useLiveSession(id!)
+  const [isSummary, setIsSummary] = useState(false)
 
-  // redirect als sessie niet bestaat
   useEffect(() => {
-    if (!loading && !session) {
-      navigate("/public")
-    }
+    if (!loading && !session) navigate("/public")
   }, [loading, session, navigate])
 
   if (loading || !session) {
@@ -41,12 +38,22 @@ export default function PublicSessionPage() {
   const saved = responses[current.section.id] || {}
 
   const prev = async () => {
-    await saveSection(current.section.id, saved)
-    setCurrentIndex(i => Math.max(i - 1, 0))
+    if (isSummary) {
+      setIsSummary(false)
+      setCurrentIndex(flatSections.length - 1)
+    } else {
+      await saveSection(current.section.id, responses[current.section.id] || {})
+      setCurrentIndex(i => Math.max(i - 1, 0))
+    }
   }
+
   const next = async () => {
-    await saveSection(current.section.id, saved)
-    setCurrentIndex(i => Math.min(i + 1, flatSections.length - 1))
+    await saveSection(current.section.id, responses[current.section.id] || {})
+    if (currentIndex === flatSections.length - 1) {
+      setIsSummary(true)
+    } else {
+      setCurrentIndex(i => Math.min(i + 1, flatSections.length - 1))
+    }
   }
 
   return (
@@ -58,52 +65,65 @@ export default function PublicSessionPage() {
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-teal-400 rounded-t-2xl p-4 flex flex-col items-center">
           <h2 className="text-xs text-white uppercase tracking-wide">
-            {current.phase}
+            {isSummary ? "Overzicht" : current.phase}
           </h2>
-          <h1 className="text-lg font-semibold text-white mt-1 text-center">
-            {current.section.naam}
-          </h1>
+          {!isSummary && (
+            <h1 className="text-lg font-semibold text-white mt-1 text-center">
+              {current.section.naam}
+            </h1>
+          )}
         </div>
 
-        {/* Inputs + Preview */}
-        <LiveSection
-          sessionId={id!}
-          sectionData={current}
-          saved={saved}
-          onFieldSave={(compId, v) =>
-            saveField(current.section.id, compId, v)
-          }
-          onUploadFile={async (file, compId) => {
-            // direct preview-set
-            const previewUrl = URL.createObjectURL(file)
-            saveField(current.section.id, compId, { url: previewUrl })
-            // upload naar server
-            await uploadFile(current.section.id, compId, file)
-            // na upload, hook updated responses automatisch
-          }}
-        />
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto">
+          {!isSummary ? (
+            <LiveSection
+              sessionId={id!}
+              sectionData={current}
+              saved={saved}
+              // async wrapper zorgt voor Promise<void> return
+              onFieldSave={async (compId, v) => {
+                saveField(current.section.id, compId, v)
+              }}
+              onUploadFile={async (file, compId) => {
+                await uploadFile(current.section.id, compId, file)
+              }}
+            />
+          ) : (
+            <div className="p-6 space-y-4">
+              {flatSections.map(({ phase, section }) => (
+                <div key={section.id} className="space-y-1">
+                  <h3 className="text-sm font-medium text-gray-600 uppercase">
+                    {phase}
+                  </h3>
+                  <h4 className="font-semibold">{section.naam}</h4>
+                  <pre className="text-xs bg-gray-100 p-2 rounded">
+                    {JSON.stringify(responses[section.id] || {}, null, 2)}
+                  </pre>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Navigation */}
         <div className="flex justify-between items-center p-3 bg-gray-100 rounded-b-2xl">
           <button
             onClick={prev}
-            disabled={currentIndex === 0}
-            className={`p-2 rounded-full transition ${
-              currentIndex === 0
-                ? "cursor-not-allowed opacity-50"
-                : "bg-white hover:bg-gray-200"
-            }`}
+            className="p-2 rounded-full bg-white hover:bg-gray-200 transition"
           >
             <ChevronLeft size={20} className="text-gray-600" />
           </button>
-          <span className="text-sm font-medium text-gray-700">
-            {currentIndex + 1} / {flatSections.length}
-          </span>
+          {!isSummary && (
+            <span className="text-xs text-gray-500">
+              {currentIndex + 1} / {flatSections.length}
+            </span>
+          )}
           <button
             onClick={next}
-            disabled={currentIndex === flatSections.length - 1}
+            disabled={isSummary}
             className={`p-2 rounded-full transition ${
-              currentIndex === flatSections.length - 1
+              isSummary
                 ? "cursor-not-allowed opacity-50"
                 : "bg-white hover:bg-gray-200"
             }`}
