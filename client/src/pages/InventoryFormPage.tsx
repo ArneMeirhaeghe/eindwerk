@@ -1,4 +1,3 @@
-// File: src/pages/InventoryFormPage.tsx
 import React, { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import InventoryTemplateForm from "../components/inventory/InventoryTemplateForm"
@@ -7,8 +6,11 @@ import {
   createInventoryTemplate,
   updateInventoryTemplate
 } from "../api/inventory"
-import type { CreateInventoryTemplateDto, InventoryTemplateDto, UpdateInventoryTemplateDto } from "../api/inventory/types"
-
+import type {
+  CreateInventoryTemplateDto,
+  InventoryTemplateDto,
+  UpdateInventoryTemplateDto
+} from "../api/inventory/types"
 
 export default function InventoryFormPage() {
   const { id } = useParams<{ id: string }>()
@@ -24,10 +26,8 @@ export default function InventoryFormPage() {
     }
   }, [id])
 
-  if (loading) return <p className="p-4">Laden…</p>
-
   const handleSubmit = async (
-    data: CreateInventoryTemplateDto| UpdateInventoryTemplateDto
+    data: CreateInventoryTemplateDto | UpdateInventoryTemplateDto
   ) => {
     if (initial) {
       await updateInventoryTemplate(initial.id, data as UpdateInventoryTemplateDto)
@@ -38,11 +38,22 @@ export default function InventoryFormPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">
-        {initial ? "Template bewerken" : "Nieuw template"}
+    <div className="container mx-auto px-4 py-6 pb-24">
+      {/* Pagina-titel */}
+      <h1 className="text-3xl font-extrabold text-gray-800 mb-6 text-center">
+        {initial ? "Bewerk Inventaris Template" : "Nieuw Inventaris Template"}
       </h1>
-      <InventoryTemplateForm initial={initial ?? undefined} onSubmit={handleSubmit} />
+
+      {loading ? (
+        <p className="text-center text-gray-500">Laden…</p>
+      ) : (
+        <div className="bg-white rounded-2xl shadow-lg ring-1 ring-gray-100 p-8 hover:shadow-2xl transition">
+          <InventoryTemplateForm
+            initial={initial ?? undefined}
+            onSubmit={handleSubmit}
+          />
+        </div>
+      )}
     </div>
   )
 }

@@ -28,6 +28,7 @@ export default function Sidebar() {
   if (!token) return null
 
   const isBuilderPage = location.pathname.includes("/builder")
+  const isFormbuiderPage = location.pathname.includes("/formbuilder")
   const isAdmin = role === "Admin"
 
   const payload = JSON.parse(atob(token.split(".")[1]))
@@ -106,7 +107,7 @@ export default function Sidebar() {
           className={({ isActive }) => linkClass(isActive)}
         >
           <FaBoxOpen className="text-lg" />
-          <span className="hidden group-hover/sidebar:inline">Checklijst</span>
+          <span className="hidden group-hover/sidebar:inline">Inventaris</span>
         </NavLink>
 
         <NavLink
@@ -238,7 +239,7 @@ export default function Sidebar() {
                 className={({ isActive }) => linkClass(isActive)}
                 onClick={() => setOpen(false)}
               >
-                <FaBoxOpen /> Checklijst
+                <FaBoxOpen /> Inventaris
               </NavLink>
 
               <NavLink
@@ -288,7 +289,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {!isBuilderPage && Desktop}
+      {!isBuilderPage && Desktop || Desktop && !isFormbuiderPage}
       {Mobile}
     </>
   )

@@ -1,4 +1,3 @@
-// File: src/pages/ToursPage.tsx
 import React, { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import {
@@ -20,11 +19,10 @@ import {
 export default function ToursPage() {
   const [tours, setTours] = useState<TourListDto[]>([])
   const [loading, setLoading] = useState(false)
-  const [modalOpen, setModalOpen] = useState(false)            // staat modal open?
-  const [newNaam, setNewNaam] = useState("")                   // invoer voor nieuwe tour
+  const [modalOpen, setModalOpen] = useState(false)
+  const [newNaam, setNewNaam] = useState("")
   const fases = ["voor", "aankomst", "terwijl", "vertrek", "na"] as const
 
-  // haalde tours op uit API
   const fetchTours = async () => {
     setLoading(true)
     try {
@@ -39,7 +37,6 @@ export default function ToursPage() {
     fetchTours()
   }, [])
 
-  // aanmaken van nieuwe tour + secties
   const handleCreate = async () => {
     if (!newNaam.trim()) return
     setLoading(true)
@@ -90,7 +87,7 @@ export default function ToursPage() {
           onClick={() => setModalOpen(true)}
           className="inline-flex items-center gap-2 bg-blue-600 text-white font-medium px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition"
         >
-          <FaPlus /> Maak tour
+          <FaPlus /> Nieuwe tour
         </button>
       </div>
 
@@ -98,14 +95,17 @@ export default function ToursPage() {
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            {/* modal header */}
+            {/* Header */}
             <div className="flex justify-between items-center px-6 py-4 border-b">
               <h3 className="text-xl font-semibold text-gray-800">Nieuwe tour</h3>
-              <button onClick={() => setModalOpen(false)} className="text-gray-600 hover:text-gray-800">
+              <button
+                onClick={() => setModalOpen(false)}
+                className="text-gray-600 hover:text-gray-800"
+              >
                 &times;
               </button>
             </div>
-            {/* modal body */}
+            {/* Body */}
             <div className="p-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Naam locatie
@@ -114,12 +114,12 @@ export default function ToursPage() {
                 type="text"
                 value={newNaam}
                 onChange={(e) => setNewNaam(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition"
-                placeholder="Vul naam in..."
                 disabled={loading}
+                placeholder="Vul naam in."
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition"
               />
             </div>
-            {/* modal footer */}
+            {/* Footer */}
             <div className="flex justify-end gap-4 px-6 py-4 border-t">
               <button
                 onClick={() => setModalOpen(false)}
@@ -144,12 +144,12 @@ export default function ToursPage() {
         <div className="text-center text-gray-500">Laden…</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {tours.map(tour => (
+          {tours.map((tour) => (
             <div
               key={tour.id}
               className="relative flex flex-col bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transform hover:-translate-y-1 transition"
             >
-              {/* kleine icon-knoppen rechtsboven */}
+              {/* Actieknoppen */}
               <div className="absolute top-4 right-4 flex space-x-2">
                 <button
                   onClick={() => handleRename(tour.id, tour.naamLocatie)}
@@ -167,7 +167,7 @@ export default function ToursPage() {
                 </button>
               </div>
 
-              {/* hoofdinhoud */}
+              {/* Inhoud */}
               <div className="flex flex-col items-center mb-6">
                 <FaMapMarkedAlt className="text-5xl text-blue-500 mb-4" />
                 <h3 className="text-2xl font-semibold text-gray-800 truncate">
@@ -178,7 +178,7 @@ export default function ToursPage() {
                 </p>
               </div>
 
-              {/* prominente bewerken-knop */}
+              {/* Bewerken-knop */}
               <Link
                 to={`/tours/${tour.id}/builder`}
                 className="mt-auto block bg-green-600 text-white font-medium text-center py-3 rounded-lg hover:bg-green-700 transition"
@@ -190,5 +190,5 @@ export default function ToursPage() {
         </div>
       )}
     </div>
-  )
+)
 }

@@ -1,4 +1,3 @@
-// File: src/pages/TourBuilderPage.tsx
 import React, { useState } from "react"
 import ComponentPalette from "../components/builder/ComponentPalette"
 import BuilderCanvas from "../components/builder/BuilderCanvas"
@@ -26,7 +25,10 @@ export default function TourBuilderPage() {
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [showPaletteMobile, setShowPaletteMobile] = useState(false)
 
-  if (loading) return <div className="p-4 animate-pulse text-center">Laden…</div>
+  if (loading)
+    return (
+      <div className="p-4 animate-pulse text-center">Laden…</div>
+    )
 
   if (previewMode) {
     return (
@@ -37,7 +39,7 @@ export default function TourBuilderPage() {
         >
           Terug naar bewerken
         </button>
-        <div className="w-full max-w-3xl mt-8 p-4 bg-white rounded-lg shadow-lg">
+        <div className="w-full max-w-3xl mt-8 p-4 bg-white rounded-xl shadow-lg">
           <LivePreview
             components={
               sectionsByFase[activeFase]?.[activeSectionIndex]?.components ?? []
@@ -52,7 +54,7 @@ export default function TourBuilderPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header met gradient */}
+      {/* Header */}
       <header className="bg-gradient-to-r from-blue-600 to-blue-400 p-4 text-center">
         <h1
           className="text-xl font-bold text-white cursor-pointer inline-block"
@@ -69,10 +71,12 @@ export default function TourBuilderPage() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Desktop: palette & settings */}
+        {/* Desktop: palette */}
         <aside className="hidden lg:flex lg:flex-col w-64 border-r bg-white overflow-y-auto">
           <ComponentPalette onAdd={handlers.onAddComponent} />
         </aside>
+
+        {/* Canvas */}
         <main className="flex-1 p-4 overflow-auto flex justify-center">
           <BuilderCanvas
             components={current.components}
@@ -87,8 +91,11 @@ export default function TourBuilderPage() {
             onSectionTitleClick={() =>
               handlers.openSectionModal(activeSectionIndex)
             }
+            selectedId={selectedComp?.id}
           />
         </main>
+
+        {/* Desktop: settings */}
         <aside className="hidden lg:flex lg:flex-col w-72 border-l bg-white overflow-y-auto">
           <SettingsPanel
             comp={selectedComp}
@@ -97,7 +104,7 @@ export default function TourBuilderPage() {
         </aside>
       </div>
 
-      {/* Mobiele knop voor ComponentPalette */}
+      {/* Mobiele componentenkiezer */}
       <button
         onClick={() => setShowPaletteMobile(true)}
         className="fixed bottom-24 right-4 lg:hidden p-4 bg-blue-600 text-white rounded-full shadow-lg"
@@ -105,14 +112,15 @@ export default function TourBuilderPage() {
       >
         <Plus size={24} />
       </button>
-
-      {/* Mobiel: ComponentPalette bottom-sheet */}
       {showPaletteMobile && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end z-50">
           <div className="w-full max-h-[80vh] bg-white rounded-t-2xl p-6 overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Componenten</h2>
-              <button onClick={() => setShowPaletteMobile(false)} className="text-gray-500 hover:text-gray-700">
+              <button
+                onClick={() => setShowPaletteMobile(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
                 Sluiten
               </button>
             </div>
@@ -126,7 +134,7 @@ export default function TourBuilderPage() {
         </div>
       )}
 
-      {/* Mobiel: Settings fullscreen */}
+      {/* Mobiele settings */}
       {showSettingsModal && selectedComp && (
         <div className="fixed inset-0 bg-white z-50 overflow-auto">
           <div className="flex justify-between items-center p-4 border-b">
@@ -159,7 +167,7 @@ export default function TourBuilderPage() {
         />
       </footer>
 
-      {/* Sectie-bewerkingsmodal */}
+      {/* Sectie modal */}
       <EditSectionModal
         isOpen={modalOpen}
         initialValue={modalValue}

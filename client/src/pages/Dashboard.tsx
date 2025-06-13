@@ -1,4 +1,3 @@
-// File: src/pages/Dashboard.tsx
 import React, { useEffect, useState, useMemo } from "react"
 import Sidebar from "../components/Sidebar"
 import ActiveSessionsList from "../components/verhuur/ActiveSessionsList"
@@ -77,12 +76,12 @@ export default function Dashboard() {
             tours={tours}
             activeSessions={activeSessions}
             onSuccess={(s) => {
-              setSessions((prev) => [...prev, s])
+              setSessions((prev) => [s, ...prev])
               setModalOpen(false)
             }}
           />
         </div>
       </main>
     </div>
-  )
+)
 }
