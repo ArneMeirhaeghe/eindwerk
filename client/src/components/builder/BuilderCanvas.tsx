@@ -9,22 +9,17 @@ import ParagraphPreview from "./previews/ParagraphPreview";
 import QuotePreview from "./previews/QuotePreview";
 import ButtonPreview from "./previews/ButtonPreview";
 import ChecklistPreview from "./previews/ChecklistPreview";
-import CheckboxListPreview from "./previews/CheckboxListPreview";
 import DividerPreview from "./previews/DividerPreview";
 import ImagePreview from "./previews/ImagePreview";
 import VideoPreview from "./previews/VideoPreview";
 import FilePreview from "./previews/FilePreview";
 import GridPreview from "./previews/GridPreview";
 import UploadZonePreview from "./previews/UploadZonePreview";
-import TextInputPreview from "./previews/TextInputPreview";
-import TextareaPreview from "./previews/TextareaPreview";
 import DropdownPreview from "./previews/DropdownPreview";
-import RadioGroupPreview from "./previews/RadioGroupPreview";
-import { CheckboxGroupPreview } from "./previews/CheckboxGroupPreview";
 import FormPreview from "./previews/FormPreview";
 import InventoryPreview from "./previews/InventoryPreview";
-
 import type { ComponentItem } from "../../types/types";
+
 
 const previewMap: Record<string, React.ComponentType<any>> = {
   title: TitlePreview,
@@ -33,18 +28,13 @@ const previewMap: Record<string, React.ComponentType<any>> = {
   quote: QuotePreview,
   button: ButtonPreview,
   checklist: ChecklistPreview,
-  "checkbox-list": CheckboxListPreview,
   divider: DividerPreview,
   image: ImagePreview,
   video: VideoPreview,
   file: FilePreview,
   grid: GridPreview,
   uploadzone: UploadZonePreview,
-  "text-input": TextInputPreview,
-  textarea: TextareaPreview,
   dropdown: DropdownPreview,
-  "radio-group": RadioGroupPreview,
-  "checkbox-group": CheckboxGroupPreview,
   form: FormPreview,
   inventory: InventoryPreview,
 };
@@ -88,9 +78,9 @@ export default function BuilderCanvas({
                 )}
 
                 {components.map((comp, idx) => {
-                  const key = comp.id ?? `comp-${idx}`;
-                  const Preview = previewMap[comp.type];
-                  const isSelected = selectedId === comp.id;
+                  const key = comp.id ?? `comp-${idx}`
+                  const Preview = previewMap[comp.type]
+                  const isSelected = selectedId === comp.id
 
                   return (
                     <Draggable key={key} draggableId={String(key)} index={idx}>
@@ -120,8 +110,8 @@ export default function BuilderCanvas({
                               {!preview && (
                                 <button
                                   onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDelete(comp.id ?? key);
+                                    e.stopPropagation()
+                                    onDelete(comp.id ?? key)
                                   }}
                                   className="p-1 hover:bg-gray-100 rounded"
                                   aria-label="Verwijder component"
@@ -134,12 +124,11 @@ export default function BuilderCanvas({
                         </div>
                       )}
                     </Draggable>
-                  );
+                  )
                 })}
 
                 {provided.placeholder}
 
-                {/* Extra margin zodat sticky elementen niet overlappen */}
                 <div className="h-32" />
               </div>
             )}
@@ -147,5 +136,5 @@ export default function BuilderCanvas({
         </DragDropContext>
       </div>
     </div>
-  );
+  )
 }

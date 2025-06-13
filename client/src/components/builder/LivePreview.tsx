@@ -1,6 +1,5 @@
 // File: src/components/builder/LivePreview.tsx
 import React from "react"
-import type { ComponentItem } from "../../types/types"
 
 import TitlePreview from "./previews/TitlePreview"
 import SubheadingPreview from "./previews/SubheadingPreview"
@@ -8,46 +7,37 @@ import ParagraphPreview from "./previews/ParagraphPreview"
 import QuotePreview from "./previews/QuotePreview"
 import ButtonPreview from "./previews/ButtonPreview"
 import ChecklistPreview from "./previews/ChecklistPreview"
-import CheckboxListPreview from "./previews/CheckboxListPreview"
 import DividerPreview from "./previews/DividerPreview"
 import ImagePreview from "./previews/ImagePreview"
 import VideoPreview from "./previews/VideoPreview"
 import FilePreview from "./previews/FilePreview"
 import GridPreview from "./previews/GridPreview"
 import UploadZonePreview from "./previews/UploadZonePreview"
-import TextInputPreview from "./previews/TextInputPreview"
-import TextareaPreview from "./previews/TextareaPreview"
 import DropdownPreview from "./previews/DropdownPreview"
-import RadioGroupPreview from "./previews/RadioGroupPreview"
-import { CheckboxGroupPreview } from "./previews/CheckboxGroupPreview"
 import FormPreview from "./previews/FormPreview"
 import InventoryPreview from "./previews/InventoryPreview"
+import type { ComponentItem } from "../../types/types"
 
 interface Props {
   components?: ComponentItem[]
 }
 
 const previewMap: Record<string, React.ComponentType<any>> = {
-  title:            TitlePreview,
-  subheading:       SubheadingPreview,
-  paragraph:        ParagraphPreview,
-  quote:            QuotePreview,
-  button:           ButtonPreview,
-  checklist:        ChecklistPreview,
-  "checkbox-list":  CheckboxListPreview,
-  divider:          DividerPreview,
-  image:            ImagePreview,
-  video:            VideoPreview,
-  file:             FilePreview,
-  grid:             GridPreview,
-  uploadzone:       UploadZonePreview,
-  "text-input":     TextInputPreview,
-  textarea:         TextareaPreview,
-  dropdown:         DropdownPreview,
-  "radio-group":    RadioGroupPreview,
-  "checkbox-group": CheckboxGroupPreview,
-  form:             FormPreview,
-  inventory:        InventoryPreview
+  title:          TitlePreview,
+  subheading:     SubheadingPreview,
+  paragraph:      ParagraphPreview,
+  quote:          QuotePreview,
+  button:         ButtonPreview,
+  checklist:      ChecklistPreview,
+  divider:        DividerPreview,
+  image:          ImagePreview,
+  video:          VideoPreview,
+  file:           FilePreview,
+  grid:           GridPreview,
+  uploadzone:     UploadZonePreview,
+  dropdown:       DropdownPreview,
+  form:           FormPreview,
+  inventory:      InventoryPreview,
 }
 
 export default function LivePreview({ components = [] }: Props) {

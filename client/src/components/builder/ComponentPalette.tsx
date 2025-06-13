@@ -2,8 +2,8 @@
 import React, { useState } from "react"
 import {
   Type, AlignLeft, Subtitles, FileText, Video, Image, File,
-  RectangleHorizontal, ListChecks, CheckSquare, Minus, LayoutGrid,
-  CloudUpload, Edit, ChevronDown, Circle, CheckCircle, Plus, MinusCircle
+  RectangleHorizontal, ListChecks, Minus, LayoutGrid,
+  CloudUpload, ChevronDown, Plus, MinusCircle
 } from "lucide-react"
 import type { ComponentType } from "../../types/types"
 
@@ -18,14 +18,9 @@ const labelMap: Record<ComponentType, string> = {
   button: "Knop",
   checklist: "Checklist",
   divider: "Scheiding",
-  "checkbox-list": "Checkbox-lijst",
   grid: "Grid",
   uploadzone: "Upload-zone",
-  "text-input": "Tekst-invoer",
-  textarea: "Tekstvlak",
   dropdown: "Dropdown",
-  "radio-group": "Radiogroep",
-  "checkbox-group": "Checkbox-groep",
   form: "Formulier",
   inventory: "Inventaris"
 }
@@ -40,15 +35,10 @@ const iconMap: Record<ComponentType, React.FC<any>> = {
   file: File,
   button: RectangleHorizontal,
   checklist: ListChecks,
-  "checkbox-list": CheckSquare,
   divider: Minus,
   grid: LayoutGrid,
   uploadzone: CloudUpload,
-  "text-input": Edit,
-  textarea: Edit,
   dropdown: ChevronDown,
-  "radio-group": Circle,
-  "checkbox-group": CheckCircle,
   form: FileText,
   inventory: LayoutGrid
 }
@@ -58,11 +48,7 @@ const groups: { title: string; types: ComponentType[] }[] = [
   { title: "Media", types: ["image", "video", "file", "grid"] },
   {
     title: "Interactie",
-    types: [
-      "button", "checklist", "checkbox-list",
-      "dropdown", "radio-group", "checkbox-group",
-      "text-input", "textarea", "uploadzone"
-    ]
+    types: ["button", "checklist", "dropdown", "uploadzone"]
   },
   { title: "Structuur", types: ["divider"] },
   { title: "Formulieren", types: ["form"] },
@@ -87,7 +73,7 @@ export default function ComponentPalette({ onAdd }: { onAdd(type: ComponentType)
       <div>
         <input
           type="text"
-          placeholder="Zoek component..."
+          placeholder="Zoek component."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full px-3 py-2 border rounded text-sm"

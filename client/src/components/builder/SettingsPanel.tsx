@@ -1,6 +1,5 @@
 // File: src/components/builder/SettingsPanel.tsx
 import type { FC } from "react";
-import type { ComponentItem } from "../../types/types";
 
 import TitleSettings from "./settings/TitleSettings";
 import SubheadingSettings from "./settings/SubheadingSettings";
@@ -8,20 +7,16 @@ import ParagraphSettings from "./settings/ParagraphSettings";
 import QuoteSettings from "./settings/QuoteSettings";
 import ButtonSettings from "./settings/ButtonSettings";
 import ChecklistSettings from "./settings/ChecklistSettings";
-import CheckboxListSettings from "./settings/CheckboxListSettings";
 import DividerSettings from "./settings/DividerSettings";
 import ImageSettings from "./settings/ImageSettings";
 import VideoSettings from "./settings/VideoSettings";
 import FileSettings from "./settings/FileSettings";
 import GridSettings from "./settings/GridSettings";
 import UploadZoneSettings from "./settings/UploadZoneSettings";
-import TextInputSettings from "./settings/TextInputSettings";
-import TextareaSettings from "./settings/TextareaSettings";
 import DropdownSettings from "./settings/DropdownSettings";
-import RadioGroupSettings from "./settings/RadioGroupSettings";
-import CheckboxGroupSettings from "./settings/CheckboxGroupSettings";
 import FormSettings from "./settings/FormSettings";
 import InventorySettings from "./settings/InventorySettings";
+import type { ComponentItem } from "../../types/types";
 
 interface Props {
   comp: ComponentItem | null;
@@ -51,10 +46,6 @@ const SettingsPanel: FC<Props> = ({ comp, onUpdate }) => {
                 return <ButtonSettings comp={comp} onUpdate={onUpdate} />;
               case "checklist":
                 return <ChecklistSettings comp={comp} onUpdate={onUpdate} />;
-              case "checkbox-list":
-                return (
-                  <CheckboxListSettings comp={comp} onUpdate={onUpdate} />
-                );
               case "divider":
                 return <DividerSettings comp={comp} onUpdate={onUpdate} />;
               case "image":
@@ -67,24 +58,12 @@ const SettingsPanel: FC<Props> = ({ comp, onUpdate }) => {
                 return <GridSettings comp={comp} onUpdate={onUpdate} />;
               case "uploadzone":
                 return <UploadZoneSettings comp={comp} onUpdate={onUpdate} />;
-              case "text-input":
-                return <TextInputSettings comp={comp} onUpdate={onUpdate} />;
-              case "textarea":
-                return <TextareaSettings comp={comp} onUpdate={onUpdate} />;
               case "dropdown":
                 return <DropdownSettings comp={comp} onUpdate={onUpdate} />;
-              case "radio-group":
-                return <RadioGroupSettings comp={comp} onUpdate={onUpdate} />;
-              case "checkbox-group":
-                return (
-                  <CheckboxGroupSettings comp={comp} onUpdate={onUpdate} />
-                );
               case "form":
                 return <FormSettings comp={comp} onUpdate={onUpdate} />;
               case "inventory":
-                return (
-                  <InventorySettings comp={comp} onUpdate={onUpdate} />
-                );
+                return <InventorySettings comp={comp} onUpdate={onUpdate} />;
               default:
                 return (
                   <div className="text-red-500 text-sm">

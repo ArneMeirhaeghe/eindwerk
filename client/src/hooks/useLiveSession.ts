@@ -1,4 +1,3 @@
-// File: src/hooks/useLiveSession.ts
 import { useState, useEffect, useCallback } from "react"
 import type { SectionSnapshot } from "../api/verhuur/types"
 import { bulkSubmit, getPublicSession, uploadResponseFile } from "../api/liveSession"
@@ -60,16 +59,18 @@ export default function useLiveSession(link: string) {
     [link]
   )
 
-  // 4) Upload bestand en update state
+  // 4) Upload bestand en update state (guard tegen non-array)
   const uploadFile = useCallback(
     async (sectionId: string, componentId: string, file: File) => {
       const mediaItem = await uploadResponseFile(link, sectionId, componentId, file)
       setResponses(prev => {
-        const arr = (prev[sectionId]?.[componentId] as any[]) || []
+        const sectionResp = prev[sectionId] || {}
+        const prevValue = sectionResp[componentId]
+        const arr = Array.isArray(prevValue) ? prevValue : []
         return {
           ...prev,
           [sectionId]: {
-            ...(prev[sectionId] || {}),
+            ...sectionResp,
             [componentId]: [...arr, mediaItem],
           },
         }

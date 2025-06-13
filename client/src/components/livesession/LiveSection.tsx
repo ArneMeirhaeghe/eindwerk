@@ -1,5 +1,5 @@
 // File: src/components/livesession/LiveSection.tsx
-import React, {  useState, type FC } from "react"
+import React, { useState, type FC } from "react"
 import TitlePreview from "../builder/previews/TitlePreview"
 import SubheadingPreview from "../builder/previews/SubheadingPreview"
 import ParagraphPreview from "../builder/previews/ParagraphPreview"
@@ -8,13 +8,15 @@ import ImagePreview from "../builder/previews/ImagePreview"
 import VideoPreview from "../builder/previews/VideoPreview"
 import FilePreview from "../builder/previews/FilePreview"
 import GridPreview from "../builder/previews/GridPreview"
-import UploadZonePreview from "../builder/previews/UploadZonePreview"
+
 import FormSession from "./inputs/FormSession"
 import TextInput from "./inputs/TextInput"
 import Textarea from "./inputs/Textarea"
 import Dropdown from "./inputs/Dropdown"
+import RadioGroup from "./inputs/RadioGroup"
 import CheckboxGroup from "./inputs/CheckboxGroup"
 import FileUpload from "./inputs/FileUpload"
+import InventorySession from "./inputs/InventorySession"
 
 import type {
   TitleProps,
@@ -25,12 +27,9 @@ import type {
   VideoProps,
   FileProps,
   GridProps,
-  UploadZoneProps,
 } from "../../types/types"
 import type { FlatSection } from "../../hooks/useLiveSession"
 import type { ComponentSnapshot } from "../../api/liveSession/types"
-import RadioGroup from "./inputs/RadioGroup"
-import InventorySession from "./inputs/InventorySession"
 
 interface Props {
   sessionId: string
@@ -62,72 +61,24 @@ const LiveSection: FC<Props> = ({
       <div className="space-y-6">
         {section.components.map((comp: ComponentSnapshot) => {
           const val = local[comp.id]
-
           switch (comp.type) {
-            // Read-only previews
+            // Read‐only previews
             case "title":
-              return (
-                <TitlePreview
-                  key={comp.id}
-                  p={comp.props as TitleProps}
-                />
-              )
+              return <TitlePreview key={comp.id} p={comp.props as TitleProps} />
             case "subheading":
-              return (
-                <SubheadingPreview
-                  key={comp.id}
-                  p={comp.props as SubheadingProps}
-                />
-              )
+              return <SubheadingPreview key={comp.id} p={comp.props as SubheadingProps} />
             case "paragraph":
-              return (
-                <ParagraphPreview
-                  key={comp.id}
-                  p={comp.props as ParagraphProps}
-                />
-              )
+              return <ParagraphPreview key={comp.id} p={comp.props as ParagraphProps} />
             case "quote":
-              return (
-                <QuotePreview
-                  key={comp.id}
-                  p={comp.props as QuoteProps}
-                />
-              )
+              return <QuotePreview key={comp.id} p={comp.props as QuoteProps} />
             case "image":
-              return (
-                <ImagePreview
-                  key={comp.id}
-                  p={comp.props as ImageProps}
-                />
-              )
+              return <ImagePreview key={comp.id} p={comp.props as ImageProps} />
             case "video":
-              return (
-                <VideoPreview
-                  key={comp.id}
-                  p={comp.props as VideoProps}
-                />
-              )
+              return <VideoPreview key={comp.id} p={comp.props as VideoProps} />
             case "file":
-              return (
-                <FilePreview
-                  key={comp.id}
-                  p={comp.props as FileProps}
-                />
-              )
+              return <FilePreview key={comp.id} p={comp.props as FileProps} />
             case "grid":
-              return (
-                <GridPreview
-                  key={comp.id}
-                  p={comp.props as GridProps}
-                />
-              )
-            case "uploadzone":
-              return (
-                <UploadZonePreview
-                  key={comp.id}
-                  p={comp.props as UploadZoneProps}
-                />
-              )
+              return <GridPreview key={comp.id} p={comp.props as GridProps} />
 
             // Interactive inputs
             case "text-input":
@@ -137,7 +88,7 @@ const LiveSection: FC<Props> = ({
                   label={comp.props.label}
                   placeholder={comp.props.placeholder}
                   value={val ?? ""}
-                  onChange={(v: string) => handleSave(comp.id, v)}
+                  onChange={(v) => handleSave(comp.id, v)}
                 />
               )
             case "textarea":
@@ -148,7 +99,7 @@ const LiveSection: FC<Props> = ({
                   placeholder={comp.props.placeholder}
                   rows={comp.props.rows}
                   value={val ?? ""}
-                  onChange={(v: string) => handleSave(comp.id, v)}
+                  onChange={(v) => handleSave(comp.id, v)}
                 />
               )
             case "dropdown":
@@ -156,9 +107,9 @@ const LiveSection: FC<Props> = ({
                 <Dropdown
                   key={comp.id}
                   label={comp.props.label}
-                  options={comp.props.options as string[]}
+                  options={comp.props.options as string[] ?? []}  // guard undefined
                   value={val ?? ""}
-                  onChange={(v: string) => handleSave(comp.id, v)}
+                  onChange={(v) => handleSave(comp.id, v)}
                 />
               )
             case "radio-group":
@@ -166,9 +117,9 @@ const LiveSection: FC<Props> = ({
                 <RadioGroup
                   key={comp.id}
                   label={comp.props.label}
-                  options={comp.props.options as string[]}
+                  options={comp.props.options as string[] ?? []}
                   value={val ?? ""}
-                  onChange={(v: string) => handleSave(comp.id, v)}
+                  onChange={(v) => handleSave(comp.id, v)}
                 />
               )
             case "checkbox-group":
@@ -176,9 +127,9 @@ const LiveSection: FC<Props> = ({
                 <CheckboxGroup
                   key={comp.id}
                   label={comp.props.label}
-                  options={comp.props.options as string[]}
-                  values={Array.isArray(val) ? (val as string[]) : []}
-                  onChange={(v: string[]) => handleSave(comp.id, v)}
+                  options={comp.props.options as string[] ?? []}
+                  values={Array.isArray(val) ? val : []}
+                  onChange={(v) => handleSave(comp.id, v)}
                 />
               )
             case "uploadzone":
@@ -187,20 +138,18 @@ const LiveSection: FC<Props> = ({
                   key={comp.id}
                   componentId={comp.id}
                   savedValue={val}
-                  onUpload={async (files: File[]) => {
+                  onUpload={async (files) => {
                     await onUploadFile(files[0], comp.id)
                     handleSave(comp.id, { url: URL.createObjectURL(files[0]) })
                   }}
                 />
               )
-
-            // Nested form component
             case "form":
               return (
                 <FormSession
                   key={comp.id}
                   formId={comp.props.formId as string}
-                  value={val as Record<string, any>}
+                  value={val}
                   onChange={(v) => handleSave(comp.id, v)}
                   sessionId={sessionId}
                   sectionId={section.id}
@@ -208,18 +157,16 @@ const LiveSection: FC<Props> = ({
                   onUploadFile={onUploadFile}
                 />
               )
-
-            // Inventory component
             case "inventory":
               return (
                 <InventorySession
                   key={comp.id}
                   templateId={comp.props.templateId as string}
-                  selectedLokalen={comp.props.selectedLokalen as string[]}
-                  selectedSubs={comp.props.selectedSubs as Record<string, string[]>}
-                  interactive={comp.props.interactive as boolean}
-                  value={val as Record<string, any>}
-                  onChange={(v: Record<string, any>) => handleSave(comp.id, v)}
+                  selectedLokalen={comp.props.selectedLokalen}
+                  selectedSubs={comp.props.selectedSubs}
+                  interactive={comp.props.interactive}
+                  value={val}
+                  onChange={(v) => handleSave(comp.id, v)}
                 />
               )
             default:
