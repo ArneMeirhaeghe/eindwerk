@@ -3,7 +3,7 @@ import React, { useState } from "react"
 import {
   Type, AlignLeft, Subtitles, FileText, Video, Image, File,
   RectangleHorizontal, ListChecks, CheckSquare, Minus, LayoutGrid,
-  CloudUpload, Edit, ChevronDown, Circle, CheckCircle, Plus, MinusCircle, Menu
+  CloudUpload, Edit, ChevronDown, Circle, CheckCircle, Plus, MinusCircle
 } from "lucide-react"
 import type { ComponentType } from "../../types/types"
 
@@ -74,7 +74,6 @@ export default function ComponentPalette({ onAdd }: { onAdd(type: ComponentType)
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(
     Object.fromEntries(groups.map(g => [g.title, true]))
   )
-  const [open, setOpen] = useState(false)
 
   const toggleGroup = (title: string) =>
     setCollapsed(prev => ({ ...prev, [title]: !prev[title] }))
@@ -82,8 +81,8 @@ export default function ComponentPalette({ onAdd }: { onAdd(type: ComponentType)
   const matchesSearch = (label: string) =>
     label.toLowerCase().includes(search.toLowerCase())
 
-  const renderGroupList = () => (
-    <div className="space-y-4">
+  return (
+    <div className="space-y-4 p-2">
       {/* Zoekveld */}
       <div>
         <input
@@ -119,10 +118,7 @@ export default function ComponentPalette({ onAdd }: { onAdd(type: ComponentType)
                   return (
                     <button
                       key={type}
-                      onClick={() => {
-                        onAdd(type)
-                        setOpen(false)
-                      }}
+                      onClick={() => onAdd(type)}
                       className="flex items-center px-3 py-2 w-full bg-gray-50 rounded hover:bg-gray-100 text-sm"
                       aria-label={`Voeg ${labelMap[type]} toe`}
                     >
@@ -142,43 +138,5 @@ export default function ComponentPalette({ onAdd }: { onAdd(type: ComponentType)
         )
       })}
     </div>
-  )
-
-  return (
-    <>
-      {/* Desktop versie */}
-      <aside className="hidden md:block w-64 max-h-[90vh] overflow-y-auto p-4 bg-white rounded shadow border border-gray-200 mb-12">
-        {renderGroupList()}
-      </aside>
-
-      {/* Mobile hamburger menu knop */}
-      <div className="fixed left-4 bottom-20 md:hidden z-50">
-        <button
-          onClick={() => setOpen(true)}
-          className="p-3 rounded-full bg-blue-600 text-white shadow-lg"
-          aria-label="Open componenten"
-        >
-          <Menu size={20} />
-        </button>
-      </div>
-
-      {/* Mobile modal */}
-      {open && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-end">
-          <div className="w-full max-h-[90vh] bg-white rounded-t-2xl p-4 overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-base font-semibold">Componenten</h2>
-              <button
-                onClick={() => setOpen(false)}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                Sluiten
-              </button>
-            </div>
-            {renderGroupList()}
-          </div>
-        </div>
-      )}
-    </>
   )
 }

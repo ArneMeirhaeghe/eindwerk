@@ -7,7 +7,7 @@ import SettingsPanel from "../components/builder/SettingsPanel"
 import EditSectionModal from "../components/builder/EditSectionModal"
 import { useTourBuilder } from "../hooks/useTourBuilder"
 import LivePreview from "../components/builder/LivePreview"
-import { X, Menu } from "lucide-react"
+import { X, Plus } from "lucide-react"
 
 export default function TourBuilderPage() {
   const {
@@ -23,8 +23,8 @@ export default function TourBuilderPage() {
     handlers,
   } = useTourBuilder()
 
-  const [showPaletteMobile, setShowPaletteMobile] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [showPaletteMobile, setShowPaletteMobile] = useState(false)
 
   if (loading) return <div className="p-4 animate-pulse">Laden…</div>
 
@@ -54,14 +54,7 @@ export default function TourBuilderPage() {
     <div className="flex flex-col h-screen pb-32">
       {/* Header */}
       <div className="grid grid-cols-3 items-center px-4 py-2 border-b bg-white">
-        <div className="flex lg:hidden">
-          <button
-            onClick={() => setShowPaletteMobile(true)}
-            className="p-2 rounded bg-gray-200"
-          >
-            <Menu />
-          </button>
-        </div>
+        <div></div>
         <div className="flex flex-col items-center">
           <h1
             className="text-lg font-semibold cursor-pointer text-center"
@@ -114,21 +107,37 @@ export default function TourBuilderPage() {
         </div>
       </div>
 
-      {/* Mobile Palette Menu */}
+      {/* Mobiele ronde knop rechtsonder */}
+      <div className="fixed bottom-24 right-4 lg:hidden z-50">
+        <button
+          onClick={() => setShowPaletteMobile(true)}
+          className="p-4 rounded-full bg-blue-600 text-white shadow-lg"
+          aria-label="Open componenten"
+        >
+          <Plus size={24} />
+        </button>
+      </div>
+
+      {/* Mobile ComponentPalette overlay */}
       {showPaletteMobile && (
-        <div className="fixed inset-0 z-40 bg-white shadow-lg overflow-y-auto">
-          <div className="flex justify-between items-center p-4 border-b">
-            <h2 className="font-semibold">Componenten</h2>
-            <button onClick={() => setShowPaletteMobile(false)}>
-              <X />
-            </button>
+        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-end">
+          <div className="w-full max-h-[90vh] bg-white rounded-t-2xl p-4 overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-base font-semibold">Componenten</h2>
+              <button
+                onClick={() => setShowPaletteMobile(false)}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Sluiten
+              </button>
+            </div>
+            <ComponentPalette
+              onAdd={(type) => {
+                handlers.onAddComponent(type)
+                setShowPaletteMobile(false)
+              }}
+            />
           </div>
-          <ComponentPalette
-            onAdd={(type) => {
-              handlers.onAddComponent(type)
-              setShowPaletteMobile(false)
-            }}
-          />
         </div>
       )}
 
