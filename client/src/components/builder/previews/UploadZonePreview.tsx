@@ -1,14 +1,19 @@
-// File: src/components/builder/previews/UploadZonePreview.tsx
-import React from "react"
-import type { UploadZoneProps } from "../../../types/types"
+import React from "react";
+import type { UploadZoneProps } from "../../../types/types";
 
-const UploadZonePreview: React.FC<{ p: UploadZoneProps }> = ({ p }) => (
-  <div
-    className="mb-2 p-4 text-center border-dashed border-2 border-gray-400 bg-gray-50"
-  >
-    <p className="font-medium">{p.label || "Upload Foto"}</p>
-    <p className="text-xs text-gray-500 mt-1">Klik om bestand te kiezen</p>
-  </div>
-)
+const defaultProps: Required<UploadZoneProps> = {
+  label: "Upload bestand",
+};
 
-export default UploadZonePreview
+const UploadZonePreview: React.FC<{ p: Partial<UploadZoneProps> }> = ({ p }) => {
+  const props = { ...defaultProps, ...p };
+
+  return (
+    <div className="mb-2 p-4 text-center border-2 border-dashed border-gray-400 bg-gray-50 rounded">
+      <p className="font-medium">{props.label}</p>
+      <p className="text-xs text-gray-500 mt-1">Klik om een bestand te kiezen</p>
+    </div>
+  );
+};
+
+export default UploadZonePreview;

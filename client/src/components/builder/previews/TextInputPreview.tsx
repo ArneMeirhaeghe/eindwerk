@@ -1,18 +1,34 @@
-// File: src/components/builder/previews/TextInputPreview.tsx
-import React from "react"
-import type { TextInputProps } from "../../../types/types"
+import React from "react";
+import type { TextInputProps } from "../../../types/types";
 
-const TextInputPreview: React.FC<{ p: TextInputProps }> = ({ p }) => (
-  <div className="mb-4">
-    <label className="block mb-1 font-medium">{p.label}{p.required && "*"}</label>
-    <input
-      type="text"
-      disabled
-      placeholder={p.placeholder}
-      value={p.defaultValue || ""}
-      className="w-full border rounded px-2 py-1"
-    />
-  </div>
-)
+const defaultProps: Required<TextInputProps> = {
+  label: "Naam",
+  placeholder: "Vul je naam in",
+  required: false,
+  defaultValue: "",
+};
 
-export default TextInputPreview
+const TextInputPreview: React.FC<{ p: Partial<TextInputProps> }> = ({ p }) => {
+  const props = { ...defaultProps, ...p };
+
+  return (
+    <div className="mb-4">
+      {props.label && (
+        <label className="block mb-1 font-medium">
+          {props.label}
+          {props.required && <span className="text-red-500"> *</span>}
+        </label>
+      )}
+      <input
+        type="text"
+        disabled
+        placeholder={props.placeholder}
+        value={props.defaultValue}
+        className="w-full border rounded px-2 py-1 bg-gray-100"
+        aria-label={props.label}
+      />
+    </div>
+  );
+};
+
+export default TextInputPreview;

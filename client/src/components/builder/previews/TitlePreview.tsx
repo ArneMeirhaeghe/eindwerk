@@ -1,25 +1,40 @@
-// File: src/components/builder/previews/TitlePreview.tsx
-import React, { type CSSProperties, type FC } from "react"
-import type { TitleProps } from "../../../types/types"
+import React, { type CSSProperties, type FC } from "react";
+import type { TitleProps } from "../../../types/types";
 
 interface Props {
-  p: TitleProps
+  p: Partial<TitleProps>;
 }
+
+const defaultProps: Required<TitleProps> = {
+  text: "Titel voorbeeld",
+  fontFamily: "sans-serif",
+  fontSize: 28,
+  lineHeight: 1.4,
+  color: "#000000",
+  bg: "#ffffff",
+  align: "left",
+  bold: true,
+  italic: false,
+  underline: false,
+};
 
 const TitlePreview: FC<Props> = ({ p }) => {
+  const props = { ...defaultProps, ...p };
+
   const style: CSSProperties = {
-    fontFamily:    p.fontFamily,
-    fontSize:      p.fontSize,
-    lineHeight:    p.lineHeight,
-    color:         p.color,
-    backgroundColor: p.bg,
-    textAlign:     p.align,
-    fontWeight:    p.bold ? "bold" : "normal",
-    fontStyle:     p.italic ? "italic" : "normal",
-    textDecoration:p.underline ? "underline" : "none",
-  }
+    fontFamily: props.fontFamily,
+    fontSize: props.fontSize,
+    lineHeight: props.lineHeight,
+    color: props.color,
+    backgroundColor: props.bg,
+    textAlign: props.align,
+    fontWeight: props.bold ? "bold" : "normal",
+    fontStyle: props.italic ? "italic" : "normal",
+    textDecoration: props.underline ? "underline" : "none",
+    marginBottom: "0.75rem",
+  };
 
-  return <h1 style={style}>{p.text}</h1>
-}
+  return <h1 style={style}>{props.text}</h1>;
+};
 
-export default TitlePreview
+export default TitlePreview;

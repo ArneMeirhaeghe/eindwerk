@@ -29,73 +29,73 @@ export default function BottomNav({
   const sections = sectionsByFase[activeFase] || [];
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-white shadow-md p-4 flex flex-col space-y-3">
-      {/* Fasen bovenaan */}
-      <nav className="flex space-x-2 overflow-x-auto">
-        {fases.map((f) => (
-          <button
-            key={f}
-            onClick={() => onFaseChange(f)}
-            className={`px-4 py-2 whitespace-nowrap rounded-lg font-medium transition ${
-              f === activeFase
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-            aria-current={f === activeFase ? "page" : undefined}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
-        ))}
-      </nav>
-
-      {/* Secties per fase daaronder */}
-      <nav className="flex space-x-2 overflow-x-auto items-center">
-        {sections.map((sec, i) => (
-          <div
-            key={sec.id}
-            className={`flex items-center space-x-1 px-3 py-1 rounded-lg transition ${
-              i === activeSectionIndex
-                ? "bg-blue-100"
-                : "bg-gray-100 hover:bg-gray-200"
-            }`}
-          >
+    <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-sm z-50">
+      <div className="max-w-screen-md mx-auto px-2 md:px-4 py-2 md:py-3 space-y-2 md:space-y-3">
+        {/* Fasen */}
+        <nav className="flex justify-center space-x-1 md:space-x-2 overflow-x-auto scrollbar-thin">
+          {fases.map((fase) => (
             <button
-              onClick={() => onSectionChange(i)}
-              className={`truncate text-sm ${
-                i === activeSectionIndex
-                  ? "font-semibold text-blue-800"
-                  : "text-gray-800"
+              key={fase}
+              onClick={() => onFaseChange(fase)}
+              className={`px-3 md:px-4 py-1.5 md:py-2 rounded text-xs md:text-sm font-medium whitespace-nowrap transition ${
+                fase === activeFase
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              {sec.title}
+              {fase.charAt(0).toUpperCase() + fase.slice(1)}
             </button>
-            <button
-              onClick={() => onEditSection(i)}
-              aria-label="Sectie hernoemen"
-              className="p-1 rounded hover:bg-gray-200"
+          ))}
+        </nav>
+
+        {/* Secties */}
+        <nav className="flex justify-center space-x-1 md:space-x-2 overflow-x-auto scrollbar-thin items-center">
+          {sections.map((sec, i) => (
+            <div
+              key={sec.id}
+              className={`flex items-center space-x-1 px-2 md:px-3 py-1 rounded-lg transition ${
+                i === activeSectionIndex
+                  ? "bg-blue-100"
+                  : "bg-gray-100 hover:bg-gray-200"
+              }`}
             >
-              <Edit2 size={14} />
-            </button>
-            {/* Verberg delete als er slechts één sectie is */}
-            {sections.length > 1 && (
               <button
-                onClick={() => onDeleteSection(i)}
-                aria-label="Sectie verwijderen"
-                className="p-1 rounded hover:bg-red-100 text-red-600"
+                onClick={() => onSectionChange(i)}
+                className={`truncate text-xs md:text-sm ${
+                  i === activeSectionIndex
+                    ? "font-semibold text-blue-800"
+                    : "text-gray-800"
+                }`}
               >
-                <Trash2 size={14} />
+                {sec.title}
               </button>
-            )}
-          </div>
-        ))}
-        <button
-          onClick={onAddSection}
-          aria-label="Nieuwe sectie toevoegen"
-          className="flex items-center justify-center p-2 bg-green-100 hover:bg-green-200 rounded-lg text-green-700"
-        >
-          <Plus size={16} />
-        </button>
-      </nav>
+              <button
+                onClick={() => onEditSection(i)}
+                className="p-0.5 hover:bg-gray-200 rounded"
+                aria-label="Hernoem sectie"
+              >
+                <Edit2 size={12} />
+              </button>
+              {sections.length > 1 && (
+                <button
+                  onClick={() => onDeleteSection(i)}
+                  className="p-0.5 hover:bg-red-100 rounded text-red-600"
+                  aria-label="Verwijder sectie"
+                >
+                  <Trash2 size={12} />
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            onClick={onAddSection}
+            className="p-2 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 flex items-center justify-center"
+            aria-label="Nieuwe sectie toevoegen"
+          >
+            <Plus size={16} />
+          </button>
+        </nav>
+      </div>
     </footer>
   );
 }

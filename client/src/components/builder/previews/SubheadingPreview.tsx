@@ -1,20 +1,30 @@
-// File: src/components/builder/previews/SubheadingPreview.tsx
-import React from "react"
-import type { SubheadingProps } from "../../../types/types"
+import React from "react";
+import type { SubheadingProps } from "../../../types/types";
 
-const SubheadingPreview: React.FC<{ p: SubheadingProps }> = ({ p }) => {
-  const style = {
-    fontFamily: p.fontFamily,
-    fontSize: p.fontSize,
-    lineHeight: p.lineHeight,
-    color: p.color,
-    backgroundColor: p.bg,
-    textAlign: p.align,
-    fontWeight: p.bold ? "bold" : "normal",
-    fontStyle: p.italic ? "italic" : "normal",
-    textDecoration: p.underline ? "underline" : "none",
-  }
-  return <h2 style={style}>{p.text}</h2>
-}
+const defaultProps: Required<SubheadingProps> = {
+  text: "Subtitel voorbeeld",
+  fontSize: 20,
+  color: "#000000",
+  align: "left",
+  italic: false,
+  bold: false,
+  underline: false,
+};
 
-export default SubheadingPreview
+const SubheadingPreview: React.FC<{ p: Partial<SubheadingProps> }> = ({ p }) => {
+  const props = { ...defaultProps, ...p };
+
+  const style: React.CSSProperties = {
+    fontSize: props.fontSize,
+    color: props.color,
+    textAlign: props.align,
+    fontWeight: props.bold ? "bold" : "normal",
+    fontStyle: props.italic ? "italic" : "normal",
+    textDecoration: props.underline ? "underline" : "none",
+    marginBottom: "0.75rem",
+  };
+
+  return <h2 style={style}>{props.text}</h2>;
+};
+
+export default SubheadingPreview;

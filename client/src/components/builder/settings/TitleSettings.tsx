@@ -1,22 +1,35 @@
-// File: src/components/builder/settings/TitleSettings.tsx
-import type { FC } from "react"
-import type { ComponentItem, TitleProps } from "../../../types/types"
+import type { FC } from "react";
+import type { ComponentItem, TitleProps } from "../../../types/types";
 
 interface Props {
-  comp: ComponentItem
-  onUpdate: (c: ComponentItem) => void
+  comp: ComponentItem;
+  onUpdate: (c: ComponentItem) => void;
 }
 
+const defaultProps: Required<TitleProps> = {
+  text: "Titel voorbeeld",
+  fontFamily: "sans-serif",
+  fontSize: 28,
+  lineHeight: 1.4,
+  color: "#000000",
+  bg: "#ffffff",
+  align: "left",
+  bold: true,
+  italic: false,
+  underline: false,
+};
+
 const TitleSettings: FC<Props> = ({ comp, onUpdate }) => {
-  const p = comp.props as TitleProps
+  const p: TitleProps = { ...defaultProps, ...(comp.props as TitleProps) };
+
   const upd = (key: keyof TitleProps, value: any) =>
-    onUpdate({ ...comp, props: { ...p, [key]: value } })
+    onUpdate({ ...comp, props: { ...p, [key]: value } });
 
   return (
-    <div className="space-y-4">
-      {/* Titeltekst */}
+    <div className="space-y-6 p-4">
+      {/* Tekst */}
       <div>
-        <label className="block mb-1">Titeltekst</label>
+        <label className="block mb-1 font-medium">Titeltekst</label>
         <input
           type="text"
           value={p.text}
@@ -27,7 +40,7 @@ const TitleSettings: FC<Props> = ({ comp, onUpdate }) => {
 
       {/* Lettertype */}
       <div>
-        <label className="block mb-1">Lettertype</label>
+        <label className="block mb-1 font-medium">Lettertype</label>
         <select
           value={p.fontFamily}
           onChange={(e) => upd("fontFamily", e.target.value)}
@@ -42,7 +55,7 @@ const TitleSettings: FC<Props> = ({ comp, onUpdate }) => {
       {/* Grootte & regelhoogte */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block mb-1">Grootte (px)</label>
+          <label className="block mb-1 font-medium">Lettergrootte (px)</label>
           <input
             type="number"
             min={16}
@@ -52,7 +65,7 @@ const TitleSettings: FC<Props> = ({ comp, onUpdate }) => {
           />
         </div>
         <div>
-          <label className="block mb-1">Regelhoogte</label>
+          <label className="block mb-1 font-medium">Regelhoogte</label>
           <input
             type="number"
             step={0.1}
@@ -64,10 +77,10 @@ const TitleSettings: FC<Props> = ({ comp, onUpdate }) => {
         </div>
       </div>
 
-      {/* Kleur & achtergrond */}
+      {/* Kleur & achtergrondkleur */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block mb-1">Tekstkleur</label>
+          <label className="block mb-1 font-medium">Tekstkleur</label>
           <input
             type="color"
             value={p.color}
@@ -76,7 +89,7 @@ const TitleSettings: FC<Props> = ({ comp, onUpdate }) => {
           />
         </div>
         <div>
-          <label className="block mb-1">Achtergrondkleur</label>
+          <label className="block mb-1 font-medium">Achtergrondkleur</label>
           <input
             type="color"
             value={p.bg}
@@ -88,7 +101,7 @@ const TitleSettings: FC<Props> = ({ comp, onUpdate }) => {
 
       {/* Uitlijning */}
       <div>
-        <label className="block mb-1">Uitlijning</label>
+        <label className="block mb-1 font-medium">Uitlijning</label>
         <select
           value={p.align}
           onChange={(e) => upd("align", e.target.value as TitleProps["align"])}
@@ -100,34 +113,22 @@ const TitleSettings: FC<Props> = ({ comp, onUpdate }) => {
         </select>
       </div>
 
-      {/* Stijl */}
-      <div className="flex items-center space-x-4">
-        <label className="flex items-center space-x-1">
-          <input
-            type="checkbox"
-            checked={p.bold}
-            onChange={(e) => upd("bold", e.target.checked)}
-          />
-          <span>Bold</span>
-        </label>
-        <label className="flex items-center space-x-1">
-          <input
-            type="checkbox"
-            checked={p.italic}
-            onChange={(e) => upd("italic", e.target.checked)}
-          />
-          <span>Italic</span>
-        </label>
-        <label className="flex items-center space-x-1">
-          <input
-            type="checkbox"
-            checked={p.underline}
-            onChange={(e) => upd("underline", e.target.checked)}
-          />
-          <span>Underline</span>
-        </label>
+      {/* Stijlopties */}
+      <div className="flex items-center gap-6">
+        {(["bold", "italic", "underline"] as const).map((key) => (
+          <label key={key} className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={p[key]}
+              onChange={(e) => upd(key, e.target.checked)}
+              className="h-4 w-4"
+            />
+            <span className="capitalize">{key}</span>
+          </label>
+        ))}
       </div>
     </div>
-)
-}
-export default TitleSettings
+  );
+};
+
+export default TitleSettings;

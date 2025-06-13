@@ -1,5 +1,3 @@
-// File: src/components/settings/FileSettings.tsx
-
 import React, { useState, useEffect, type FC, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 import { FileText } from "lucide-react";
@@ -7,26 +5,25 @@ import type { ComponentItem, FileProps } from "../../../types/types";
 import type { MediaResponse } from "../../../api/media/types";
 import { deleteUpload, getUploads, uploadFile } from "../../../api/media";
 
-
-
 interface Props {
   comp: ComponentItem;
   onUpdate: (c: ComponentItem) => void;
 }
 
+const defaultProps: Required<FileProps> = {
+  url: "",
+  filename: "",
+  showName: true,
+};
+
 const FileSettings: FC<Props> = ({ comp, onUpdate }) => {
-  const defaults: Required<FileProps> = {
-    url: "",
-    filename: "",
-    showName: true,
-  };
-  const p = { ...defaults, ...(comp.props as FileProps) };
+  const p = { ...defaultProps, ...(comp.props as FileProps) };
 
   const [uploads, setUploads] = useState<MediaResponse[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // alleen bestanden (geen afbeeldingen/video)
+  // Alleen niet-visuele bestanden ophalen
   const fetchFiles = async () => {
     try {
       const all = await getUploads();
@@ -52,7 +49,11 @@ const FileSettings: FC<Props> = ({ comp, onUpdate }) => {
     if (chosen) {
       onUpdate({
         ...comp,
-        props: { ...p, url: URL.createObjectURL(chosen), filename: chosen.name },
+        props: {
+          ...p,
+          url: URL.createObjectURL(chosen),
+          filename: chosen.name,
+        },
       });
     }
   };
@@ -93,11 +94,15 @@ const FileSettings: FC<Props> = ({ comp, onUpdate }) => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Upload Zone */}
+    <div className="space-y-6 p-4">
+      {/* Upload nieuw bestand */}
       <div className="p-4 border-2 border-dashed border-gray-300 rounded bg-white">
         <h3 className="text-sm font-semibold mb-2">Upload nieuw bestand</h3>
-        <input type="file" onChange={handleFileChange} className="w-full" />
+        <input
+          type="file"
+          onChange={handleFileChange}
+          className="w-full text-sm"
+        />
         {file && (
           <button
             onClick={handleUpload}
@@ -109,10 +114,10 @@ const FileSettings: FC<Props> = ({ comp, onUpdate }) => {
         )}
       </div>
 
-      {/* Browse Zone */}
+      {/* Beschikbare bestanden */}
       <div className="p-4 bg-gray-50 border border-gray-200 rounded">
         <h3 className="text-sm font-semibold mb-2">Beschikbare bestanden</h3>
-        {uploads.length ? (
+        {uploads.length > 0 ? (
           <ul className="max-h-48 overflow-y-auto space-y-1">
             {uploads.map((item) => (
               <li
@@ -123,7 +128,7 @@ const FileSettings: FC<Props> = ({ comp, onUpdate }) => {
                 onClick={() => handleSelect(item)}
               >
                 <FileText className="w-5 h-5 mr-2 text-gray-600" />
-                <span className="flex-1 text-sm text-gray-800">
+                <span className="flex-1 text-sm text-gray-800 truncate">
                   {item.filename}
                 </span>
                 <button
@@ -139,11 +144,13 @@ const FileSettings: FC<Props> = ({ comp, onUpdate }) => {
             ))}
           </ul>
         ) : (
-          <div className="text-gray-500 italic text-sm">Geen bestanden gevonden</div>
+          <div className="text-gray-500 italic text-sm">
+            Geen bestanden gevonden
+          </div>
         )}
       </div>
 
-      {/* Custom Filename */}
+      {/* Naam aanpassen */}
       <div className="space-y-1">
         <label className="block text-sm font-medium">Bestandsnaam</label>
         <input
@@ -152,11 +159,11 @@ const FileSettings: FC<Props> = ({ comp, onUpdate }) => {
           onChange={(e) =>
             onUpdate({ ...comp, props: { ...p, filename: e.target.value } })
           }
-          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
         />
       </div>
 
-      {/* Toggle Filename Display */}
+      {/* Checkbox: naam tonen */}
       <div className="flex items-center space-x-2">
         <input
           type="checkbox"

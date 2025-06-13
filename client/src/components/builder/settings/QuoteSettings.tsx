@@ -1,5 +1,3 @@
-// File: src/components/settings/QuoteSettings.tsx
-
 import type { FC } from "react";
 import type { ComponentItem, QuoteProps } from "../../../types/types";
 
@@ -8,83 +6,80 @@ interface Props {
   onUpdate: (c: ComponentItem) => void;
 }
 
-const QuoteSettings: FC<Props> = ({ comp, onUpdate }) => {
-  // We proberen alle props uit comp.props te fetchen, maar valbacks naar lege string/nummer
-  const p = comp.props as Partial<QuoteProps>;
+const defaultProps: Required<QuoteProps> = {
+  text: "“Voorbeeldquote die indruk maakt.”",
+  fontFamily: "sans-serif",
+  author: "Auteur Naam",
+  fontSize: 16,
+  lineHeight: 1.5,
+  color: "#000000",
+  bg: "#ffffff",
+  align: "left",
+  bold: false,
+  italic: true,
+  underline: false,
+};
 
-  // Helper om één sleutel te updaten
+const QuoteSettings: FC<Props> = ({ comp, onUpdate }) => {
+  const p: QuoteProps = { ...defaultProps, ...(comp.props as QuoteProps) };
+
   const upd = (key: keyof QuoteProps, value: any) =>
-    onUpdate({
-      ...comp,
-      props: { 
-        // Kopieer bestaande props, en overschrijf enkel het key-veld
-        ...(p as QuoteProps), 
-        [key]: value 
-      },
-    });
+    onUpdate({ ...comp, props: { ...p, [key]: value } });
 
   return (
-    <div className="space-y-4">
-      {/* 1) Quote-tekst */}
+    <div className="space-y-6 p-4">
+      {/* Quote tekst */}
       <div>
-        <label className="block mb-1">Quote</label>
+        <label className="block mb-1 font-medium">Quote</label>
         <textarea
-          // Fallback naar lege string als p.text undefined is
-          value={p.text ?? ""}
+          value={p.text}
           onChange={(e) => upd("text", e.target.value)}
-          className="w-full border px-2 py-1 rounded"
+          className="w-full border border-gray-300 px-2 py-1 rounded"
+          rows={3}
         />
       </div>
 
-      {/* 2) Auteur */}
+      {/* Auteur */}
       <div>
-        <label className="block mb-1">Auteur</label>
+        <label className="block mb-1 font-medium">Auteur</label>
         <input
           type="text"
-          // Fallback naar lege string
-          value={p.author ?? ""}
+          value={p.author}
           onChange={(e) => upd("author", e.target.value)}
-          className="w-full border px-2 py-1 rounded"
+          className="w-full border border-gray-300 px-2 py-1 rounded"
         />
       </div>
 
-      {/* 3) Font-size */}
-      <div>
-        <label className="block mb-1">Grootte (px)</label>
-        <input
-          type="number"
-          min={14}
-          // Fallback naar 14 als p.fontSize undefined is
-          value={p.fontSize ?? 14}
-          onChange={(e) => {
-            const num = parseInt(e.target.value, 10);
-            // Als parseInt faalt (bv. lege waarde), val terug op 14
-            upd("fontSize", isNaN(num) ? 14 : num);
-          }}
-          className="w-full border px-2 py-1 rounded"
-        />
+      {/* Grootte + kleur */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block mb-1 font-medium">Tekengrootte (px)</label>
+          <input
+            type="number"
+            min={10}
+            value={p.fontSize}
+            onChange={(e) => upd("fontSize", +e.target.value)}
+            className="w-full border border-gray-300 px-2 py-1 rounded"
+          />
+        </div>
+        <div>
+          <label className="block mb-1 font-medium">Tekstkleur</label>
+          <input
+            type="color"
+            value={p.color}
+            onChange={(e) => upd("color", e.target.value)}
+            className="w-full h-10"
+          />
+        </div>
       </div>
 
-      {/* 4) Kleur */}
+      {/* Uitlijning */}
       <div>
-        <label className="block mb-1">Kleur</label>
-        <input
-          type="color"
-          // Fallback naar zwart ("#000000") als p.color undefined is
-          value={p.color ?? "#000000"}
-          onChange={(e) => upd("color", e.target.value)}
-          className="w-full h-10"
-        />
-      </div>
-
-      {/* 5) Uitlijning */}
-      <div>
-        <label className="block mb-1">Uitlijning</label>
+        <label className="block mb-1 font-medium">Uitlijning</label>
         <select
-          // Fallback naar "left" als p.align undefined is
-          value={p.align ?? "left"}
+          value={p.align}
           onChange={(e) => upd("align", e.target.value as QuoteProps["align"])}
-          className="w-full border px-2 py-1 rounded"
+          className="w-full border border-gray-300 px-2 py-1 rounded"
         >
           <option value="left">Links</option>
           <option value="center">Centreren</option>
@@ -92,16 +87,20 @@ const QuoteSettings: FC<Props> = ({ comp, onUpdate }) => {
         </select>
       </div>
 
-      {/* 6) Italic */}
-      <label className="flex items-center space-x-1">
-        <input
-          type="checkbox"
-          // Fallback naar false als p.italic undefined is
-          checked={p.italic ?? false}
-          onChange={(e) => upd("italic", e.target.checked)}
-        />
-        <span>Italic</span>
-      </label>
+      {/* Stijlopties */}
+      <div className="flex items-center gap-6">
+        {(["bold", "italic", "underline"] as const).map((style) => (
+          <label key={style} className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={p[style]}
+              onChange={(e) => upd(style, e.target.checked)}
+              className="h-4 w-4"
+            />
+            <span className="capitalize">{style}</span>
+          </label>
+        ))}
+      </div>
     </div>
   );
 };

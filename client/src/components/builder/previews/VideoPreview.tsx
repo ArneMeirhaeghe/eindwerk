@@ -1,30 +1,52 @@
-// File: src/components/builder/previews/VideoPreview.tsx
-import React from "react"
-import type { VideoProps } from "../../../types/types"
+import React from "react";
+import type { VideoProps } from "../../../types/types";
 
-const VideoPreview: React.FC<{ p: VideoProps }> = ({ p }) => {
-  if (!p.url) return <div className="italic text-gray-400 mb-2">Geen video</div>
+const defaultProps: Required<VideoProps> = {
+  url: "",
+  alt: "",
+  controls: true,
+  autoplay: false,
+  loop: false,
+  width: 300,
+  height: 200,
+  radius: 0,
+  shadow: false,
+  objectFit: "cover",
+  showAlt: false,
+};
+
+const VideoPreview: React.FC<{ p: Partial<VideoProps> }> = ({ p }) => {
+  const props = { ...defaultProps, ...p };
+
+  if (!props.url)
+    return (
+      <div className="italic text-gray-400 mb-2 text-center">
+        Geen video geselecteerd
+      </div>
+    );
+
   return (
-    <div className="mb-2">
+    <div className="mb-4 text-center">
       <video
-        src={p.url}
-        controls={p.controls}
-        autoPlay={p.autoplay}
-        loop={p.loop}
-        className="mx-auto rounded overflow-hidden"
+        src={props.url}
+        controls={props.controls}
+        autoPlay={props.autoplay}
+        loop={props.loop}
+        muted
+        className="mx-auto"
         style={{
-          width: p.width,
-          height: p.height,
-          borderRadius: p.radius,
-          objectFit: p.objectFit,
-          boxShadow: p.shadow ? "0 4px 6px rgba(0,0,0,0.1)" : undefined,
+          width: props.width,
+          height: props.height,
+          objectFit: props.objectFit,
+          borderRadius: props.radius,
+          boxShadow: props.shadow ? "0 4px 6px rgba(0,0,0,0.1)" : undefined,
         }}
       />
-      {p.showAlt && p.alt && (
-        <div className="text-sm text-gray-600 italic mt-1 text-center">{p.alt}</div>
+      {props.showAlt && props.alt && (
+        <div className="text-sm text-gray-600 italic mt-2">{props.alt}</div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default VideoPreview
+export default VideoPreview;

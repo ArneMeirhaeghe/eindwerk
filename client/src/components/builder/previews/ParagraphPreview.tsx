@@ -1,20 +1,37 @@
-// File: src/components/builder/previews/ParagraphPreview.tsx
-import React from "react"
-import type { ParagraphProps } from "../../../types/types"
+import React from "react";
+import type { ParagraphProps } from "../../../types/types";
 
-const ParagraphPreview: React.FC<{ p: ParagraphProps }> = ({ p }) => {
-  const style = {
-    fontFamily: p.fontFamily,
-    fontSize: p.fontSize,
-    lineHeight: p.lineHeight,
-    color: p.color,
-    backgroundColor: p.bg,
-    textAlign: p.align,
-    fontWeight: p.bold ? "bold" : "normal",
-    fontStyle: p.italic ? "italic" : "normal",
-    textDecoration: p.underline ? "underline" : "none",
-  }
-  return <p style={style}>{p.text}</p>
-}
+const defaultProps: Required<ParagraphProps> = {
+  text: "Voorbeeld paragraaftekst",
+  fontSize: 16,
+  lineHeight: 1.5,
+  color: "#000000",
+  bg: "#ffffff",
+  align: "left",
+  bold: false,
+  italic: false,
+  underline: false,
+  fontFamily: "",
+};
 
-export default ParagraphPreview
+const ParagraphPreview: React.FC<{ p: Partial<ParagraphProps> }> = ({ p }) => {
+  const props = { ...defaultProps, ...p };
+
+  const style: React.CSSProperties = {
+    fontFamily: props.fontFamily || undefined,
+    fontSize: props.fontSize,
+    lineHeight: props.lineHeight,
+    color: props.color,
+    backgroundColor: props.bg,
+    textAlign: props.align,
+    fontWeight: props.bold ? "bold" : "normal",
+    fontStyle: props.italic ? "italic" : "normal",
+    textDecoration: props.underline ? "underline" : "none",
+    padding: "0.25rem 0",
+    borderRadius: "0.25rem",
+  };
+
+  return <p style={style}>{props.text}</p>;
+};
+
+export default ParagraphPreview;

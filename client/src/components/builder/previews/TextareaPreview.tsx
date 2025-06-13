@@ -1,18 +1,35 @@
-// File: src/components/builder/previews/TextareaPreview.tsx
-import React from "react"
-import type { TextareaProps } from "../../../types/types"
+import React from "react";
+import type { TextareaProps } from "../../../types/types";
 
-const TextareaPreview: React.FC<{ p: TextareaProps }> = ({ p }) => (
-  <div className="mb-4">
-    <label className="block mb-1 font-medium">{p.label}{p.required && "*"}</label>
-    <textarea
-      disabled
-      rows={p.rows || 3}
-      placeholder={p.placeholder}
-      value={p.defaultValue || ""}
-      className="w-full border rounded px-2 py-1"
-    />
-  </div>
-)
+const defaultProps: Required<TextareaProps> = {
+  label: "Bericht",
+  placeholder: "Typ hier je bericht...",
+  required: false,
+  rows: 4,
+  defaultValue: "",
+};
 
-export default TextareaPreview
+const TextareaPreview: React.FC<{ p: Partial<TextareaProps> }> = ({ p }) => {
+  const props = { ...defaultProps, ...p };
+
+  return (
+    <div className="mb-4">
+      {props.label && (
+        <label className="block mb-1 font-medium">
+          {props.label}
+          {props.required && <span className="text-red-500"> *</span>}
+        </label>
+      )}
+      <textarea
+        disabled
+        rows={props.rows}
+        placeholder={props.placeholder}
+        value={props.defaultValue}
+        className="w-full border rounded px-2 py-1 bg-gray-100 resize-none"
+        aria-label={props.label}
+      />
+    </div>
+  );
+};
+
+export default TextareaPreview;

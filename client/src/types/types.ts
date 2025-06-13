@@ -12,19 +12,28 @@ export type ComponentType =
 
 // Props‐interfaces per component
 export interface TitleProps {
-  text: string
-  fontFamily?: string
-  fontSize?: number
-  lineHeight?: number | string
-  color?: string
-  bg?: string
-  align?: "left" | "center" | "right" | "justify"
-  bold?: boolean
-  italic?: boolean
-  underline?: boolean
+  text: string;
+  fontFamily: string;
+  fontSize: number;
+  lineHeight: number;
+  color: string;
+  bg: string;
+  align: "left" | "center" | "right";
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
 }
 
-export type SubheadingProps = TitleProps
+
+export interface SubheadingProps {
+  text: string;
+  fontSize: number;
+  color: string;
+  align: "left" | "center" | "right";
+  italic: boolean;
+  bold: boolean;
+  underline: boolean;
+}
 export type ParagraphProps = TitleProps
 export interface QuoteProps extends TitleProps {
   author?: string
@@ -92,16 +101,22 @@ export interface CheckboxListProps {
 }
 
 export interface RadioGroupProps {
-  label?: string
-  options: string[]
-  defaultValue?: string
-  required?: boolean
+  label: string;
+  options: string[];
+  required: boolean;
+  defaultValue: string;
+  layout: "vertical" | "horizontal"; // nieuw: keuze onder elkaar of naast elkaar
+  gap: number; // nieuw: afstand bij horizontale layout
 }
 
+
 export interface CheckboxGroupProps {
-  options: string[]
-  defaultValue?: string[]
+  label?: string;
+  options: string[];
+  defaultValue?: string[];
+  required?: boolean;
 }
+
 
 export interface DropdownProps {
   label?: string
@@ -112,11 +127,12 @@ export interface DropdownProps {
 }
 
 export interface TextInputProps {
-  label: string
-  placeholder?: string
-  defaultValue?: string
-  required?: boolean
+  label: string;
+  placeholder: string;
+  required: boolean;
+  defaultValue: string;
 }
+
 
 export interface TextareaProps {
   label: string
@@ -127,10 +143,18 @@ export interface TextareaProps {
 }
 
 export interface ButtonProps {
-  label: string
-  bgColor?: string
-  textColor?: string
+  label: string;
+  bgColor?: string;
+  textColor?: string;
+  radius?: number;
+  fontSize?: number;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  align?: "left" | "center" | "right";
 }
+
+
 export interface InventoryProps {
   templateId: string               // verwijzing naar gekozen template
 }
@@ -162,3 +186,11 @@ export interface InventoryProps {
 // 5 fases in een tour
 export type Fase = "voor" | "aankomst" | "terwijl" | "vertrek" | "na"
 export type FaseSections = Record<Fase, Section[]>
+
+export interface CheckboxListItem {
+  label: string;
+  good: boolean;
+}
+export interface CheckboxListProps {
+  items: CheckboxListItem[];
+}

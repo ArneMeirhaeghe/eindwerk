@@ -1,32 +1,30 @@
-// File: src/components/settings/VideoSettings.tsx
-
 import React, { useState, useEffect, type FC, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 import type { ComponentItem, VideoProps } from "../../../types/types";
 import type { MediaResponse } from "../../../api/media/types";
 import { deleteUpload, getUploads, uploadFile } from "../../../api/media";
 
-
 interface Props {
   comp: ComponentItem;
   onUpdate: (c: ComponentItem) => void;
 }
 
+const defaultProps: Required<VideoProps> = {
+  url: "",
+  alt: "",
+  controls: true,
+  autoplay: false,
+  loop: false,
+  width: 300,
+  height: 200,
+  radius: 0,
+  shadow: false,
+  objectFit: "cover",
+  showAlt: false,
+};
+
 const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
-  const defaults: Required<VideoProps> = {
-    url: "",
-    alt: "",
-    controls: true,
-    autoplay: false,
-    loop: false,
-    width: 300,
-    height: 200,
-    radius: 0,
-    shadow: false,
-    objectFit: "cover",
-    showAlt: false,
-  };
-  const p = { ...defaults, ...(comp.props as VideoProps) };
+  const p: Required<VideoProps> = { ...defaultProps, ...(comp.props as VideoProps) };
 
   const [uploads, setUploads] = useState<MediaResponse[]>([]);
   const [file, setFile] = useState<File | null>(null);
@@ -35,7 +33,6 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
   const upd = (key: keyof VideoProps, value: unknown) =>
     onUpdate({ ...comp, props: { ...p, [key]: value } });
 
-  // Fetch only mp4 videos
   const fetchVideos = async () => {
     try {
       const all = await getUploads();
@@ -59,10 +56,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
   };
 
   const handleUpload = async () => {
-    if (!file) {
-      toast.error("Selecteer eerst een video");
-      return;
-    }
+    if (!file) return toast.error("Selecteer eerst een video");
     setLoading(true);
     try {
       const res = await uploadFile(file, file.name, "video");
@@ -89,9 +83,9 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Upload Zone */}
-      <div className="p-4 border-2 border-dashed border-gray-400 rounded">
+    <div className="space-y-6 p-4">
+      {/* Upload zone */}
+      <div className="p-4 border-2 border-dashed border-gray-400 rounded bg-white">
         <input
           type="file"
           accept="video/mp4"
@@ -102,26 +96,26 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
           <button
             onClick={handleUpload}
             disabled={loading}
-            className="mt-2 px-4 py-2 bg-green-500 text-white rounded"
+            className="mt-2 w-full py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
           >
             {loading ? "Bezig..." : "Uploaden"}
           </button>
         )}
       </div>
 
-      {/* Browse Zone */}
+      {/* Video overzicht */}
       <div>
-        <div className="block mb-1 font-semibold">Beschikbare video’s</div>
+        <label className="block mb-1 font-semibold">Beschikbare video’s</label>
         <div className="grid grid-cols-2 gap-2 max-h-40 overflow-auto">
           {uploads.map((item) => (
             <div key={item.id} className="relative">
               <video
                 src={item.url}
+                muted
                 onClick={() => upd("url", item.url)}
-                className={`h-24 w-full rounded cursor-pointer border ${
+                className={`h-24 w-full object-cover rounded cursor-pointer border ${
                   p.url === item.url ? "ring-4 ring-blue-500" : "hover:ring-2"
                 }`}
-                muted
               />
               <button
                 onClick={() => handleDelete(item.id)}
@@ -134,7 +128,7 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
         </div>
       </div>
 
-      {/* Preview of selected */}
+      {/* Preview */}
       {p.url && (
         <div>
           <video
@@ -142,13 +136,13 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
             controls={p.controls}
             autoPlay={p.autoplay}
             loop={p.loop}
-            className="w-full h-auto mb-2 rounded overflow-hidden"
+            className="w-full h-auto mb-2"
             style={{
               width: `${p.width}px`,
               height: `${p.height}px`,
               objectFit: p.objectFit,
-              borderRadius: `${p.radius}px`,
-              ...(p.shadow ? { boxShadow: "0 4px 6px rgba(0,0,0,0.1)" } : {}),
+              borderRadius: p.radius,
+              boxShadow: p.shadow ? "0 4px 6px rgba(0,0,0,0.1)" : undefined,
             }}
           />
           {p.showAlt && p.alt && (
@@ -157,8 +151,8 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
         </div>
       )}
 
-      {/* Additional settings */}
-      <div className="space-y-2">
+      {/* Instellingen */}
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block mb-1">Alt-tekst</label>
           <input
@@ -168,90 +162,82 @@ const VideoSettings: FC<Props> = ({ comp, onUpdate }) => {
             className="w-full border rounded px-2 py-1"
           />
         </div>
-        <div className="flex space-x-4">
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={p.controls}
-              onChange={(e) => upd("controls", e.target.checked)}
-            />
-            <span>Controls</span>
-          </label>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={p.autoplay}
-              onChange={(e) => upd("autoplay", e.target.checked)}
-            />
-            <span>Autoplay</span>
-          </label>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={p.loop}
-              onChange={(e) => upd("loop", e.target.checked)}
-            />
-            <span>Loop</span>
-          </label>
+
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={p.controls}
+            onChange={(e) => upd("controls", e.target.checked)}
+          />
+          <span>Toon controls</span>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block mb-1">Breedte (px)</label>
-            <input
-              type="number"
-              min={50}
-              value={p.width}
-              onChange={(e) => upd("width", +e.target.value)}
-              className="w-full border rounded px-2 py-1"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Hoogte (px)</label>
-            <input
-              type="number"
-              min={50}
-              value={p.height}
-              onChange={(e) => upd("height", +e.target.value)}
-              className="w-full border rounded px-2 py-1"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Radius (px)</label>
-            <input
-              type="number"
-              min={0}
-              value={p.radius}
-              onChange={(e) => upd("radius", +e.target.value)}
-              className="w-full border rounded px-2 py-1"
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={p.shadow}
-              onChange={(e) => upd("shadow", e.target.checked)}
-            />
-            <span>Schaduw</span>
-          </div>
-          <div>
-            <label className="block mb-1">Object-fit</label>
-            <select
-              value={p.objectFit}
-              onChange={(e) => upd("objectFit", e.target.value as VideoProps["objectFit"])}
-              className="w-full border rounded px-2 py-1"
-            >
-              <option value="cover">Cover</option>
-              <option value="contain">Contain</option>
-            </select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={p.showAlt}
-              onChange={(e) => upd("showAlt", e.target.checked)}
-            />
-            <span>Toon alt-tekst</span>
-          </div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={p.autoplay}
+            onChange={(e) => upd("autoplay", e.target.checked)}
+          />
+          <span>Autoplay</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={p.loop}
+            onChange={(e) => upd("loop", e.target.checked)}
+          />
+          <span>Loop</span>
+        </div>
+
+        <div>
+          <label className="block mb-1">Breedte (px)</label>
+          <input
+            type="number"
+            min={50}
+            value={p.width}
+            onChange={(e) => upd("width", +e.target.value)}
+            className="w-full border rounded px-2 py-1"
+          />
+        </div>
+        <div>
+          <label className="block mb-1">Hoogte (px)</label>
+          <input
+            type="number"
+            min={50}
+            value={p.height}
+            onChange={(e) => upd("height", +e.target.value)}
+            className="w-full border rounded px-2 py-1"
+          />
+        </div>
+        <div>
+          <label className="block mb-1">Radius (px)</label>
+          <input
+            type="number"
+            min={0}
+            value={p.radius}
+            onChange={(e) => upd("radius", +e.target.value)}
+            className="w-full border rounded px-2 py-1"
+          />
+        </div>
+        <div>
+          <label className="block mb-1">Object-fit</label>
+          <select
+            value={p.objectFit}
+            onChange={(e) =>
+              upd("objectFit", e.target.value as VideoProps["objectFit"])
+            }
+            className="w-full border rounded px-2 py-1"
+          >
+            <option value="cover">Cover</option>
+            <option value="contain">Contain</option>
+          </select>
+        </div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={p.showAlt}
+            onChange={(e) => upd("showAlt", e.target.checked)}
+          />
+          <span>Toon alt-tekst</span>
         </div>
       </div>
     </div>
