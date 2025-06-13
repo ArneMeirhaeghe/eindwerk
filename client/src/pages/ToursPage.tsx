@@ -1,140 +1,137 @@
 // File: src/pages/ToursPage.tsx
-
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import {
-  getToursList,       // <<< aangepast
+  getToursList,
   createTour,
   deleteTour,
   updateTourNaam,
-  addSection,
-} from "../api/tours";
-import type { TourListDto } from "../api/tours/types";
+  addSection
+} from "../api/tours"
+import type { TourListDto } from "../api/tours/types"
 
 const ToursPage: React.FC = () => {
-  const [tours, setTours] = useState<TourListDto[]>([]);
-  const [newNaam, setNewNaam] = useState("");
-  const [loading, setLoading] = useState(false);
-  const fases = ["voor", "aankomst", "terwijl", "vertrek", "na"] as const;
+  const [tours, setTours] = useState<TourListDto[]>([])
+  const [newNaam, setNewNaam] = useState("")
+  const [loading, setLoading] = useState(false)
+  const fases = ["voor", "aankomst", "terwijl", "vertrek", "na"] as const
 
-  // Haal tours vanaf API
   const fetchTours = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const data = await getToursList(); // <<< hier
-      setTours(data);
+      const data = await getToursList()
+      setTours(data.reverse()) // Laatste bovenaan
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    fetchTours();
-  }, []);
+    fetchTours()
+  }, [])
 
-  // Maak nieuwe tour aan met per fase één sectie
   const handleCreate = async () => {
-    if (!newNaam.trim()) return;
-    setLoading(true);
+    if (!newNaam.trim()) return
+    setLoading(true)
     try {
-      const created = await createTour(newNaam.trim());
-      // Voeg in elke fase één section toe
+      const created = await createTour(newNaam.trim())
       await Promise.all(
         fases.map((fase) => addSection(created.id, fase, "Nieuwe sectie"))
-      );
-      setNewNaam("");
-      fetchTours();
+      )
+      setNewNaam("")
+      fetchTours()
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  // Verwijder tour na bevestiging
   const handleDelete = async (id: string) => {
-    if (!confirm("Weet je zeker dat je deze tour wilt verwijderen?")) return;
-    setLoading(true);
+    if (!confirm("Weet je zeker dat je deze tour wilt verwijderen?")) return
+    setLoading(true)
     try {
-      await deleteTour(id);
-      fetchTours();
+      await deleteTour(id)
+      fetchTours()
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  // Hernoem tour via prompt
   const handleRename = async (id: string, currentNaam: string) => {
-    const nieuweNaam = prompt("Nieuwe naam locatie:", currentNaam) ?? "";
-    if (!nieuweNaam.trim() || nieuweNaam.trim() === currentNaam) return;
-    setLoading(true);
+    const nieuweNaam = prompt("Nieuwe naam locatie:", currentNaam) ?? ""
+    if (!nieuweNaam.trim() || nieuweNaam.trim() === currentNaam) return
+    setLoading(true)
     try {
-      await updateTourNaam(id, nieuweNaam.trim());
-      fetchTours();
+      await updateTourNaam(id, nieuweNaam.trim())
+      fetchTours()
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Tours beheren</h2>
+    <div className="p-6 max-w-5xl mx-auto">
+      <h2 className="text-2xl font-bold mb-4">Rondleidingen beheren</h2>
 
-      {/* Input + knop om tour aan te maken */}
-      <div className="mb-4 flex gap-2">
+      {/* Nieuwe tour maken */}
+      <div className="flex items-center gap-2 mb-6">
         <input
-          className="flex-1 border px-2 py-1 rounded"
+          className="flex-1 border px-3 py-2 rounded text-sm"
           value={newNaam}
           onChange={(e) => setNewNaam(e.target.value)}
           placeholder="Naam locatie"
         />
         <button
-          className="bg-blue-500 text-white px-4 py-1 rounded disabled:opacity-50"
-          disabled={loading}
           onClick={handleCreate}
+          disabled={loading}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
         >
-          Toevoegen
+          + Nieuwe tour
         </button>
       </div>
 
       {loading && tours.length === 0 ? (
         <div>Laden…</div>
       ) : (
-        <ul className="space-y-2">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {tours.map((tour) => (
-            <li
+            <div
               key={tour.id}
-              className="border p-3 rounded flex justify-between items-center"
+              className="bg-white border rounded-xl shadow p-4 flex flex-col justify-between hover:shadow-md transition"
             >
-              <div className="flex flex-col">
-                <Link
-                  to={`/tours/${tour.id}`}
-                  className="text-blue-600 hover:underline text-lg"
-                >
+              <div>
+                <h3 className="text-lg font-semibold text-blue-600 truncate mb-1">
                   {tour.naamLocatie}
+                </h3>
+                <p className="text-xs text-gray-400 break-all mb-2">ID: {tour.id}</p>
+              </div>
+              <div className="flex gap-2 mt-auto">
+                <Link
+                  to={`/tours/${tour.id}/builder`}
+                  className="flex-1 bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700 text-center"
+                >
+                  Bewerken
                 </Link>
-                <span className="text-xs text-gray-500">ID: {tour.id}</span>
-              </div>
-              <div className="flex gap-2">
                 <button
-                  className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 transition"
                   onClick={() => handleRename(tour.id, tour.naamLocatie)}
+                  className="text-yellow-600 hover:underline text-sm"
                   disabled={loading}
                 >
-                  Hernoemen
+                  Naam
                 </button>
                 <button
-                  className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition"
                   onClick={() => handleDelete(tour.id)}
+                  className="text-red-600 hover:underline text-sm"
                   disabled={loading}
                 >
-                  Verwijderen
+                  Verwijder
                 </button>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default ToursPage;
+export default ToursPage

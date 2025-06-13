@@ -1,11 +1,11 @@
 import AppRoutes from "./routes/AppRoutes"
-import Navbar from "./components/Navbar"
 import { AuthProvider } from "./context/AuthContext"
+import Sidebar from "./components/Sidebar"
 
 function App() {
   return (
     <AuthProvider>
-      <Navbar />
+      <Sidebar />
       <AppRoutes />
     </AuthProvider>
   )

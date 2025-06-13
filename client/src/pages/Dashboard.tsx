@@ -1,97 +1,88 @@
 // File: src/pages/Dashboard.tsx
+import React, { useEffect, useState, useMemo } from "react"
+import Sidebar from "../components/Sidebar"
+import ActiveSessionsList from "../components/verhuur/ActiveSessionsList"
+import PastSessionsList from "../components/verhuur/PastSessionsList"
+import NewLiveSessionModal from "../components/verhuur/NewLiveSessionModal"
+import { getAllLiveSessions, getVerhuurperiodes } from "../api/verhuur"
+import { getToursList } from "../api/tours"
+import type { LiveSessionDto, VerhuurPeriode } from "../api/verhuur/types"
+import type { TourListDto } from "../api/tours/types"
 
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { getToursList } from "../api/tours"; 
-import type { TourListDto } from "../api/tours/types";
-
-interface Card {
-  label: string;
-  to: string;
-}
-
-const Dashboard: React.FC = () => {
-  // haal rol direct uit context (geen "user")
-  const { role } = useAuth();
-  const isAdmin = role === "Admin";
-
-  const [tours, setTours] = useState<TourListDto[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  // tours ophalen
-  const fetchTours = async () => {
-    setLoading(true);
-    try {
-      const data = await getToursList();
-      setTours(data);
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function Dashboard() {
+  const [sessions, setSessions] = useState<LiveSessionDto[]>([])
+  const [periodes, setPeriodes] = useState<VerhuurPeriode[]>([])
+  const [tours, setTours] = useState<TourListDto[]>([])
+  const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
-    fetchTours();
-  }, []);
+    ;(async () => {
+      const [all, pds, tls] = await Promise.all([
+        getAllLiveSessions(),
+        getVerhuurperiodes(),
+        getToursList(),
+      ])
+      setSessions(all)
+      setPeriodes(pds)
+      setTours(tls)
+    })()
+  }, [])
 
-  const cards: Card[] = [
-    { label: "Tours", to: "/tours" },
-    { label: "Inventory Manager", to: "/inventory" },
-    { label: "Upload Zone", to: "/upload-zone" },
-    { label: "Verhuur Overzicht", to: "/verhuur" },
-    { label: "Form Builder", to: "/formbuilder" },
-    ...(isAdmin ? [{ label: "Gebruikersbeheer", to: "/users" }] : []),
-  ];
+  const activeSessions = useMemo(
+    () => sessions.filter((s) => s.isActive),
+    [sessions]
+  )
+  const pastSessions = useMemo(
+    () => sessions.filter((s) => !s.isActive),
+    [sessions]
+  )
+
+  const handleEnd = (ended: LiveSessionDto) => {
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === ended.id ? { ...s, isActive: false } : s
+      )
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold mb-6">
-        {isAdmin ? "Admin Dashboard" : "Dashboard"}
-      </h1>
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {cards.map((card) => (
-          <div
-            key={card.to}
-            className="bg-white border border-gray-200 rounded-xl p-6 shadow hover:shadow-lg transition"
-          >
-            <Link
-              to={card.to}
-              className="block text-lg font-semibold text-gray-800 hover:underline"
+      <main className="flex-1 overflow-y-auto pt-8 pb-12">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-8">
+            <h1 className="text-3xl font-extrabold text-gray-800 text-center sm:text-left">
+              Live huuractiviteiten
+            </h1>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="mt-4 sm:mt-0 bg-blue-600 text-white px-5 py-2 rounded-lg shadow hover:bg-blue-700 transition"
             >
-              {card.label}
-            </Link>
-
-            {card.to === "/tours" && (
-              <div className="mt-3 space-y-1">
-                {loading ? (
-                  <div className="text-sm text-gray-500">Loading…</div>
-                ) : (
-                  tours.slice(0, 3).map((tour) => (
-                    <Link
-                      key={tour.id}
-                      to={`/tours/${tour.id}/builder`}
-                      className="block text-sm text-blue-600 hover:underline"
-                    >
-                      {tour.naamLocatie}
-                    </Link>
-                  ))
-                )}
-                {!loading && tours.length > 3 && (
-                  <Link
-                    to="/tours"
-                    className="text-xs text-gray-500 hover:underline"
-                  >
-                    Alle tours bekijken…
-                  </Link>
-                )}
-              </div>
-            )}
+              + Nieuwe huuractiviteit
+            </button>
           </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
-export default Dashboard;
+          <ActiveSessionsList
+            sessions={activeSessions}
+            onEnd={handleEnd}
+          />
+
+          <PastSessionsList sessions={pastSessions} />
+
+          <NewLiveSessionModal
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            periodes={periodes}
+            tours={tours}
+            activeSessions={activeSessions}
+            onSuccess={(s) => {
+              setSessions((prev) => [...prev, s])
+              setModalOpen(false)
+            }}
+          />
+        </div>
+      </main>
+    </div>
+  )
+}
