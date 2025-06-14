@@ -115,7 +115,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // 12) OPTIONELE URL'S
-app.Urls.Add("http://localhost:5000");
-app.Urls.Add("https://localhost:5001");
+app.Urls.Add("http://0.0.0.0:80");
+
 
 app.Run();
