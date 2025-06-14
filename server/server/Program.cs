@@ -13,7 +13,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1) CONFIGURATIE BINDEN
+// ─── 1) CONFIGURATIE BINDEN ─────────────────────────────────────────────
 builder.Services.Configure<MongoSettings>(
     builder.Configuration.GetSection("MongoSettings"));
 builder.Services.Configure<JwtSettings>(
@@ -21,7 +21,7 @@ builder.Services.Configure<JwtSettings>(
 builder.Services.Configure<AzureSettings>(
     builder.Configuration.GetSection("AzureSettings"));
 
-// 2) JWT‐HANDLER EN AUTHENTICATIE CONFIGUREREN
+// ─── 2) JWT‐HANDLER EN AUTHENTICATIE ────────────────────────────────────
 builder.Services.AddSingleton<JwtHandler>();
 var jwtConfig = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()!;
 var keyBytes = Encoding.ASCII.GetBytes(jwtConfig.Key);
@@ -47,7 +47,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// 3) MONGOCLIENT REGISTREREN
+// ─── 3) DATABASE & STORAGE ──────────────────────────────────────────────
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
     var cfg = sp.GetRequiredService<IOptions<MongoSettings>>().Value;
@@ -56,7 +56,6 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
     return new MongoClient(cfg.ConnectionString);
 });
 
-// 4) AZURE BLOBSERVICECLIENT REGISTREREN
 builder.Services.AddSingleton(sp =>
 {
     var azureCfg = sp.GetRequiredService<IOptions<AzureSettings>>().Value;
@@ -65,7 +64,7 @@ builder.Services.AddSingleton(sp =>
     return new BlobServiceClient(azureCfg.ConnectionString);
 });
 
-// 5) EIGEN SERVICES REGISTREREN
+// ─── 4) EIGEN SERVICES ─────────────────────────────────────────────────
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITourService, TourService>();
 builder.Services.AddScoped<ILiveSessionService, LiveSessionService>();
@@ -74,49 +73,54 @@ builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddScoped<IFormService, FormService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 
-// 6) CORS CONFIGUREREN
+// ─── 5) CORS CONFIGUREREN ───────────────────────────────────────────────
 builder.Services.AddCors(opts =>
 {
     opts.AddPolicy("CorsPolicy", policy =>
-        policy.WithOrigins("https://ksainv-frontend.onrender.com")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
+        policy
+          .WithOrigins("https://ksainv-frontend.onrender.com")
+          .AllowAnyHeader()
+          .AllowAnyMethod()
+          .AllowCredentials());
 });
 
-// 7) CONTROLLERS, SWAGGER & UPLOAD-LIMIET
+// ─── 6) CONTROLLERS, SWAGGER & UPLOAD ──────────────────────────────────
 builder.Services.AddControllers()
-    .AddJsonOptions(options =>
+    .AddJsonOptions(o =>
     {
-        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-        options.JsonSerializerOptions.Converters.Add(new BsonStringToBoolJsonConverter());
+        o.JsonSerializerOptions.Converters.Add(
+           new System.Text.Json.Serialization.JsonStringEnumConverter());
+        o.JsonSerializerOptions.Converters.Add(
+           new BsonStringToBoolJsonConverter());
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.Configure<FormOptions>(opts =>
-{
-    opts.MultipartBodyLengthLimit = long.MaxValue;
-});
+builder.Services.Configure<FormOptions>(o =>
+    o.MultipartBodyLengthLimit = long.MaxValue);
 
+// ─── APP BUILD & MIDDLEWARE ─────────────────────────────────────────────
 var app = builder.Build();
 
-// 8) ROUTING & SWAGGER UI
+// **1️⃣ Routing moet eerst**  
 app.UseRouting();
-app.UseSwagger();
-app.UseSwaggerUI();
 
-// 9) APPLY CORS-POLICY
+// **2️⃣ Daarna CORS**  
 app.UseCors("CorsPolicy");
 
-// 10) AUTHENTICATIE & AUTORISATIE
+// **3️⃣ Vervolgens Auth/Nonauth**  
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 11) MAP CONTROLLERS
+// **4️⃣ Swagger (optioneel)**  
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// **5️⃣ Dan controllers (endpoints)**  
 app.MapControllers();
 
-// ─── tijdelijke middleware om OPTIONS preflight te onderscheppen ───
-// Verwijder dit blok zodra je ziet dat CORS-headers (Access-Control-Allow-*) werken.
+// ─── 7) (Optioneel) Debug OPTIONS  
+//  Haal deze middleware weg zodra CORS werkt,  
+//  of plaats 'm helemaal onderaan zodat 'ie nooit vóór UseCors komt.
 app.Use(async (ctx, next) =>
 {
     if (ctx.Request.Method == "OPTIONS")
@@ -131,7 +135,7 @@ app.Use(async (ctx, next) =>
     await next();
 });
 
-// 12) OPTIONELE URL'S (Docker)
+// ─── 8) URL’s (Docker/Render) ───────────────────────────────────────────
 app.Urls.Add("http://0.0.0.0:80");
 
 app.Run();
