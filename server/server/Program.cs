@@ -78,7 +78,7 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();   // ← toeg
 builder.Services.AddCors(opts =>
 {
     opts.AddPolicy("CorsPolicy", policy =>
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins("https://ksainv-frontend.onrender.com")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
