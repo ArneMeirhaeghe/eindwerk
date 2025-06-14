@@ -1,5 +1,5 @@
 // File: src/components/livesession/inputs/FormResponseSummary.tsx
-import React, { type FC } from "react"
+import  { type FC } from "react"
 import type { FormDto, FieldDto } from "../../../api/forms/types"
 
 interface Props {

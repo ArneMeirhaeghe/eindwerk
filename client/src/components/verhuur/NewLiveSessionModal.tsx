@@ -1,5 +1,5 @@
 // File: src/components/verhuur/NewLiveSessionModal.tsx
-import React, { useState, useEffect, useMemo } from "react"
+import  { useState, useEffect, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { startLiveSession } from "../../api/verhuur"
 import type {

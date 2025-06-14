@@ -1,6 +1,4 @@
-// File: src/components/formbuilder/previews/TextInputPreview.tsx
-import React from "react";
-import type { FieldDto } from "../../../api/forms/types";
+
 
 interface Props {
   label: string;

@@ -1,6 +1,5 @@
 // File: src/components/formbuilder/ComponentPalette.tsx
-import React from "react"
-import { Edit, FileText, ChevronDown, Circle, CheckCircle } from "lucide-react"
+
 import type { FieldDto } from "../../api/forms/types"
 
 const TYPES = ["text-input", "textarea", "dropdown", "radio-group", "checkbox-group"] as const
@@ -12,13 +11,7 @@ const labelMap: Record<FieldDto["type"], string> = {
   "radio-group": "Radiogroep",
   "checkbox-group": "Checkbox-groep",
 }
-const iconMap: Record<FieldDto["type"], React.FC> = {
-  "text-input": Edit,
-  textarea: FileText,
-  dropdown: ChevronDown,
-  "radio-group": Circle,
-  "checkbox-group": CheckCircle,
-}
+
 
 export default function ComponentPalette({ onAdd }: { onAdd(type: FieldDto["type"]): void }) {
   return (
@@ -26,7 +19,6 @@ export default function ComponentPalette({ onAdd }: { onAdd(type: FieldDto["type
       <h3 className="text-sm font-semibold mb-3">Velden toevoegen</h3>
       <div className="space-y-2">
         {TYPES.map(type => {
-          const Icon = iconMap[type]
           return (
             <button
               key={type}

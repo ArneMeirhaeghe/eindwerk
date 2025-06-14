@@ -1,6 +1,6 @@
 // File: src/components/settings/GridSettings.tsx
 
-import React, { useState, useEffect, type FC, type ChangeEvent } from "react";
+import  { useState, useEffect, type FC, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 import { Plus, Image as ImageIcon } from "lucide-react";
 

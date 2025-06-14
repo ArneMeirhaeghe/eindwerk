@@ -1,7 +1,7 @@
 // File: src/components/livesession/LiveSection.tsx
-import React, { useState, type FC } from "react"
+import  { useState, type FC } from "react"
 import TitlePreview from "../builder/previews/TitlePreview"
-import SubheadingPreview from "../builder/previews/SubheadingPreview"
+//import SubheadingPreview from "../builder/previews/SubheadingPreview"
 import ParagraphPreview from "../builder/previews/ParagraphPreview"
 import QuotePreview from "../builder/previews/QuotePreview"
 import ImagePreview from "../builder/previews/ImagePreview"
@@ -20,7 +20,7 @@ import InventorySession from "./inputs/InventorySession"
 
 import type {
   TitleProps,
-  SubheadingProps,
+  // SubheadingProps,
   ParagraphProps,
   QuoteProps,
   ImageProps,
@@ -65,8 +65,8 @@ const LiveSection: FC<Props> = ({
             // Read‐only previews
             case "title":
               return <TitlePreview key={comp.id} p={comp.props as TitleProps} />
-            case "subheading":
-              return <SubheadingPreview key={comp.id} p={comp.props as SubheadingProps} />
+            // case "subheading":
+            //   return <SubheadingPreview key={comp.id} p={comp.props as SubheadingProps} />
             case "paragraph":
               return <ParagraphPreview key={comp.id} p={comp.props as ParagraphProps} />
             case "quote":

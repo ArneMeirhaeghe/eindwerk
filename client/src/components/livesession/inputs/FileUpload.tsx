@@ -6,7 +6,7 @@ interface Props {
   onUpload: (files: File[]) => Promise<void>;
 }
 
-const FileUpload: FC<Props> = ({ componentId, savedValue, onUpload }) => {
+const FileUpload: FC<Props> = ({ savedValue, onUpload }) => {
   const [mode, setMode] = useState<"upload" | "camera">("upload");
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(
     savedValue?.url

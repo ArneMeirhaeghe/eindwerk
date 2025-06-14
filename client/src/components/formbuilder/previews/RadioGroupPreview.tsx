@@ -1,5 +1,4 @@
 // File: src/components/formbuilder/previews/RadioGroupPreview.tsx
-import React from "react";
 
 interface Props {
   label: string;

@@ -1,5 +1,4 @@
 // File: src/pages/FormBuilderPage.tsx
-import React from "react"
 import { Trash2 } from "lucide-react"
 import LivePreview from "../components/formbuilder/LivePreview"
 import ComponentPalette from "../components/formbuilder/ComponentPalette"

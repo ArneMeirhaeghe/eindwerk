@@ -1,5 +1,5 @@
 // File: src/components/livesession/inputs/InventorySession.tsx
-import React, {  useEffect, useState, type FC } from "react"
+import  {  useEffect, useState, type FC } from "react"
 import { getInventoryTemplate } from "../../../api/inventory"
 import type { InventoryItem, InventoryTemplateDto, Lokaal, Subsection } from "../../../api/inventory/types"
 

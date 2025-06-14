@@ -1,5 +1,5 @@
 // File: src/components/livesession/inputs/InventoryResponseSummary.tsx
-import React, { type FC } from "react"
+import  { type FC } from "react"
 import type { InventoryItem, InventoryTemplateDto, Lokaal, Subsection } from "../../../api/inventory/types"
 
 interface Props {

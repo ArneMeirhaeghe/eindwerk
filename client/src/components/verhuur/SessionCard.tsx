@@ -1,5 +1,4 @@
 // File: src/components/verhuur/SessionCard.tsx
-import React from "react"
 import { Link } from "react-router-dom"
 import { endLiveSession } from "../../api/liveSession"
 import type { LiveSessionDto } from "../../api/verhuur/types"

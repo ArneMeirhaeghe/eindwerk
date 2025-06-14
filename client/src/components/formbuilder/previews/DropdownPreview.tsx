@@ -1,5 +1,4 @@
 // File: src/components/formbuilder/previews/DropdownPreview.tsx
-import React from "react";
 
 interface Props {
   label: string;

@@ -1,6 +1,5 @@
 // File: src/components/ActiveSessionsTable.tsx
 
-import { Link } from "react-router-dom";
 import type { LiveSessionDto } from "../../api/verhuur/types";
 
 interface ActiveSessionsTableProps {

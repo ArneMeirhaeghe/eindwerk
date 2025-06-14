@@ -1,4 +1,4 @@
-import React, { useEffect, useState, type FC } from "react";
+import  { useEffect, useState, type FC } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ComponentItem, InventoryProps } from "../../../types/types";
 import {
@@ -7,8 +7,7 @@ import {
 } from "../../../api/inventory";
 import type {
   InventoryTemplateDto,
-  Lokaal,
-  Subsection,
+
 } from "../../../api/inventory/types";
 
 interface Props {

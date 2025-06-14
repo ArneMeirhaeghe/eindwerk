@@ -1,5 +1,4 @@
 // File: src/components/formbuilder/SettingsPanel.tsx
-import React from "react"
 import type { FieldDto } from "../../api/forms/types"
 import TextInputSettings from "./settings/TextInputSettings"
 import TextareaSettings from "./settings/TextareaSettings"

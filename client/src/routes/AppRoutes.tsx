@@ -13,7 +13,7 @@ import TourBuilderPage from "../pages/TourBuilderPage"
 import UploadZone from "../pages/UploadZone"
 import PublicSessionPage from "../pages/PublicSessionPage" // Route voor publieke live-sessie
 import PublicEntryPage from "../pages/PublicEntryPage"
-import InventoryPage from "../pages/InventoryManagementPage"
+// import InventoryPage from "../pages/InventoryManagementPage"
 import SessionResponsesPage from "../pages/SessionResponsesPage"
 import FormBuilderPage from "../pages/FormBuilderPage"
 import InventoryManagementPage from "../pages/InventoryManagementPage"

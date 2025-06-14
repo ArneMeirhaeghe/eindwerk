@@ -1,5 +1,5 @@
 // File: src/components/verhuur/PastSessionsList.tsx
-import React, { useState, useMemo } from "react"
+import  { useState, useMemo } from "react"
 import { Link } from "react-router-dom"
 import type { LiveSessionDto } from "../../api/verhuur/types"
 

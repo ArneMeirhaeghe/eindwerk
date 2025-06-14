@@ -1,5 +1,4 @@
 // File: src/components/verhuur/ActiveSessionsList.tsx
-import React from "react"
 import type { LiveSessionDto } from "../../api/verhuur/types"
 import SessionCard from "./SessionCard"
 

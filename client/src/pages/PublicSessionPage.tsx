@@ -1,5 +1,5 @@
 // File: src/pages/PublicSessionPage.tsx
-import React, { useEffect, useState } from "react"
+import  { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import LoadingIndicator from "../components/LoadingIndicator"

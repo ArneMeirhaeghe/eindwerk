@@ -1,5 +1,4 @@
 // File: src/components/builder/BottomNav.tsx
-import React from "react";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import type { Fase, Section } from "../../types/types";
 

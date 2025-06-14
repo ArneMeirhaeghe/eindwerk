@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react"
+import  { useEffect, useState, useMemo } from "react"
 import Sidebar from "../components/Sidebar"
 import ActiveSessionsList from "../components/verhuur/ActiveSessionsList"
 import PastSessionsList from "../components/verhuur/PastSessionsList"

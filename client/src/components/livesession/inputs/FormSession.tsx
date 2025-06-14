@@ -1,5 +1,5 @@
 // File: src/components/livesession/inputs/FormSession.tsx
-import React, { useEffect, useState, type FC } from "react"
+import  { useEffect, useState, type FC } from "react"
 import type { FormDto, FieldDto } from "../../../api/forms/types"
 import { getForm } from "../../../api/forms"
 import TextInput from "./TextInput"
@@ -23,8 +23,6 @@ const FormSession: FC<Props> = ({
   formId,
   value = {},
   onChange,
-  sessionId,
-  sectionId,
   componentId,
   onUploadFile
 }) => {

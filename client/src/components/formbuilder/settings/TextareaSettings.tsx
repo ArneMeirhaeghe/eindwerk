@@ -1,5 +1,4 @@
 // File: src/components/formbuilder/settings/TextareaSettings.tsx
-import React from "react";
 import type { FieldDto } from "../../../api/forms/types";
 
 interface Props {

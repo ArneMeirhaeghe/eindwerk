@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import  { useState } from "react"
 import ComponentPalette from "../components/builder/ComponentPalette"
 import BuilderCanvas from "../components/builder/BuilderCanvas"
 import BottomNav from "../components/builder/BottomNav"

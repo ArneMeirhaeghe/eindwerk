@@ -1,4 +1,4 @@
-import React, { useState, useEffect, type FC, type ChangeEvent } from "react";
+import  { useState, useEffect, type FC, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 import type { ComponentItem, VideoProps } from "../../../types/types";
 import type { MediaResponse } from "../../../api/media/types";

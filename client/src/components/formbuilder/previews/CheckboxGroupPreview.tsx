@@ -1,5 +1,4 @@
 // File: src/components/formbuilder/previews/CheckboxGroupPreview.tsx
-import React from "react";
 
 interface Props {
   label: string;
