@@ -104,6 +104,8 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+app.UseRouting();
+
 // 9) CORS VÓÓR AUTHENTICATIE
 app.UseCors("CorsPolicy");
 
