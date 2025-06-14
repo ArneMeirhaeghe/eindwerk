@@ -72,7 +72,7 @@ builder.Services.AddScoped<ILiveSessionService, LiveSessionService>();
 builder.Services.AddScoped<IAzureBlobService, AzureBlobService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddScoped<IFormService, FormService>();
-builder.Services.AddScoped<IInventoryService, InventoryService>();   // ← toegevoegd
+builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 // 6) CORS CONFIGUREREN
 builder.Services.AddCors(opts =>
@@ -100,13 +100,12 @@ builder.Services.Configure<FormOptions>(opts =>
 
 var app = builder.Build();
 
-// 8) SWAGGER UI
+// 8) ROUTING & SWAGGER UI
+app.UseRouting();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseRouting();
-
-// 9) CORS VÓÓR AUTHENTICATIE
+// 9) APPLY CORS-POLICY
 app.UseCors("CorsPolicy");
 
 // 10) AUTHENTICATIE & AUTORISATIE
@@ -116,8 +115,23 @@ app.UseAuthorization();
 // 11) MAP CONTROLLERS
 app.MapControllers();
 
-// 12) OPTIONELE URL'S
-app.Urls.Add("http://0.0.0.0:80");
+// ─── tijdelijke middleware om OPTIONS preflight te onderscheppen ───
+// Verwijder dit blok zodra je ziet dat CORS-headers (Access-Control-Allow-*) werken.
+app.Use(async (ctx, next) =>
+{
+    if (ctx.Request.Method == "OPTIONS")
+    {
+        ctx.Response.Headers.Add("Access-Control-Allow-Origin", "https://ksainv-frontend.onrender.com");
+        ctx.Response.Headers.Add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+        ctx.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type,Authorization");
+        ctx.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+        ctx.Response.StatusCode = 204;
+        return;
+    }
+    await next();
+});
 
+// 12) OPTIONELE URL'S (Docker)
+app.Urls.Add("http://0.0.0.0:80");
 
 app.Run();
