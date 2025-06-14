@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿// File: Controllers/AdminController.cs
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using server.Models.DTOs.User;   // CreateUserDto, UpdateUserDto
@@ -7,7 +8,7 @@ using server.Services.Interfaces;
 namespace server.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/admin")]
     [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
@@ -51,8 +52,6 @@ namespace server.Controllers
 
             user.Email = dto.Email;
             user.Role = dto.Role;
-            // (Optioneel: wachtwoord resetten oid.)
-
             await _userService.UpdateAsync(user);
             return NoContent();
         }

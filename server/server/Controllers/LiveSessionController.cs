@@ -1,5 +1,4 @@
 ﻿// File: Controllers/LiveSessionController.cs
-
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -16,26 +15,26 @@ using server.Services.Interfaces;
 namespace server.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/livesession")]
     public class LiveSessionController : ControllerBase
     {
         private readonly ILiveSessionService _liveService;
         private readonly IMediaService _mediaService;
-        private readonly IAzureBlobService _blobService;        // voeg toe
+        private readonly IAzureBlobService _blobService;
         private readonly AzureSettings _azureSettings;
+
         public LiveSessionController(
             ILiveSessionService liveService,
             IMediaService mediaService,
-            IAzureBlobService blobService,          // DI
-        IOptions<AzureSettings> azureOpts)
+            IAzureBlobService blobService,
+            IOptions<AzureSettings> azureOpts)
         {
             _liveService = liveService;
             _mediaService = mediaService;
-            _blobService = blobService;            // sla op
+            _blobService = blobService;
             _azureSettings = azureOpts.Value;
         }
 
-        // POST /api/livesession/start
         [HttpPost("start")]
         [Authorize]
         public async Task<IActionResult> Start([FromBody] StartSessionDto dto)
@@ -61,14 +60,6 @@ namespace server.Controllers
                 );
                 return CreatedAtAction(nameof(GetById), new { id = session.Id }, session);
             }
-            catch (InvalidOperationException ioe)
-            {
-                return BadRequest(new { message = ioe.Message });
-            }
-            catch (KeyNotFoundException knf)
-            {
-                return BadRequest(new { message = knf.Message });
-            }
             catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] LiveSessionController.Start: {ex}");
@@ -76,7 +67,6 @@ namespace server.Controllers
             }
         }
 
-        // GET /api/livesession/active
         [HttpGet("active")]
         [Authorize]
         public async Task<IActionResult> GetActive()
@@ -85,56 +75,30 @@ namespace server.Controllers
             if (string.IsNullOrEmpty(creatorId))
                 return Unauthorized("Geen gebruiker gevonden");
 
-            try
-            {
-                var sessions = await _liveService.GetActiveSessionsAsync(creatorId);
-                return Ok(sessions);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ERROR] LiveSessionController.GetActive: {ex}");
-                return StatusCode(500, new { message = ex.ToString() });
-            }
+            var sessions = await _liveService.GetActiveSessionsAsync(creatorId);
+            return Ok(sessions);
         }
 
-        // GET /api/livesession/all
         [HttpGet("all")]
         [Authorize]
         public async Task<IActionResult> GetAll()
         {
             var creatorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(creatorId))
-                return Unauthorized("Geen gebruiker gevonden");
-
-            try
-            {
-                var sessions = await _liveService.GetAllSessionsAsync(creatorId);
-                return Ok(sessions);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ERROR] LiveSessionController.GetAll: {ex}");
-                return StatusCode(500, new { message = ex.ToString() });
-            }
+            var sessions = await _liveService.GetAllSessionsAsync(creatorId);
+            return Ok(sessions);
         }
 
-        // GET /api/livesession/{id}
         [HttpGet("{id:length(24)}")]
         [Authorize]
         public async Task<IActionResult> GetById(string id)
         {
             var session = await _liveService.GetByIdAsync(id);
-            if (session == null)
-                return NotFound();
-
+            if (session == null) return NotFound();
             var creatorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (creatorId == null || session.CreatorId != creatorId)
-                return Forbid();
-
+            if (session.CreatorId != creatorId) return Forbid();
             return Ok(session);
         }
 
-        // GET /api/livesession/public/{id}
         [HttpGet("public/{id:length(24)}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetPublic(string id)
@@ -142,36 +106,25 @@ namespace server.Controllers
             var session = await _liveService.GetByIdAsync(id);
             if (session == null || !session.IsActive)
                 return NotFound();
-
             return Ok(session);
         }
 
-        // PATCH /api/livesession/{id}/end
         [HttpPatch("{id:length(24)}/end")]
         [Authorize]
         public async Task<IActionResult> EndSession(string id)
         {
             var creatorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(creatorId))
-                return Unauthorized("Geen gebruiker gevonden");
-
             try
             {
                 await _liveService.EndSessionAsync(id, creatorId);
                 return NoContent();
             }
-            catch (KeyNotFoundException knf)
-            {
-                return BadRequest(new { message = knf.Message });
-            }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] LiveSessionController.EndSession: {ex}");
-                return StatusCode(500, new { message = ex.ToString() });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
-        // PATCH /api/livesession/{id}/sections/{sectionId}/components/{componentId}
         [HttpPatch("{id:length(24)}/sections/{sectionId}/components/{componentId}")]
         [AllowAnonymous]
         public async Task<IActionResult> SubmitField(
@@ -180,27 +133,17 @@ namespace server.Controllers
             string componentId,
             [FromBody] PatchFieldDto dto)
         {
-            if (dto == null)
-                return BadRequest("Geen payload.");
-
             var value = ConvertJsonElement(dto.Value);
-            if (value == null)
-                return BadRequest("Ongeldige waarde.");
-
+            if (value == null) return BadRequest("Ongeldige waarde.");
             await _liveService.AddOrUpdateResponseAsync(id, sectionId, componentId, value);
             return NoContent();
         }
 
-        // POST /api/livesession/{id}/responses/bulk
         [HttpPost("{id:length(24)}/responses/bulk")]
         [AllowAnonymous]
-        public async Task<IActionResult> BulkSubmit(
-            string id,
-            [FromBody] BulkResponsesDto dto)
+        public async Task<IActionResult> BulkSubmit(string id, [FromBody] BulkResponsesDto dto)
         {
-            if (dto?.Responses == null)
-                return BadRequest("Geen responses opgegeven.");
-
+            if (dto?.Responses == null) return BadRequest("Geen responses opgegeven.");
             var converted = new Dictionary<string, Dictionary<string, object>>();
             foreach (var sectionPair in dto.Responses)
             {
@@ -208,39 +151,25 @@ namespace server.Controllers
                 foreach (var compPair in sectionPair.Value)
                 {
                     var v = ConvertJsonElement(compPair.Value);
-                    if (v != null)
-                        compDict[compPair.Key] = v;
+                    if (v != null) compDict[compPair.Key] = v;
                 }
-                if (compDict.Count > 0)
-                    converted[sectionPair.Key] = compDict;
+                if (compDict.Count > 0) converted[sectionPair.Key] = compDict;
             }
-
             await _liveService.UpdateResponsesBulkAsync(id, converted);
             return NoContent();
         }
 
-        // POST /api/livesession/{id}/sections/{sectionId}/components/{componentId}/upload
         [HttpPost("{id:length(24)}/sections/{sectionId}/components/{componentId}/upload")]
         [AllowAnonymous]
         public async Task<IActionResult> UploadResponseFile(
-        string id,
-        string sectionId,
-        string componentId,
-        IFormFile file)
+            string id,
+            string sectionId,
+            string componentId,
+            IFormFile file)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest("Geen bestand geüpload.");
-
-            // 1) Upload via IMediaService:
             var mediaItem = await _mediaService.UploadFileAsync(file, $"responses/{id}", id);
-
-            // 2) Genereer SAS-url via IAzureBlobService (niet via _blobContainer!)
             var sasUri = _blobService.GetBlobSasUri(
-                mediaItem.BlobName,
-                _azureSettings.SasExpiryHours
-            );
-
-            // 3) Sla alleen de metadata (dictionary) op in de sessie
+                mediaItem.BlobName, _azureSettings.SasExpiryHours);
             var metadata = new Dictionary<string, object>
             {
                 ["url"] = sasUri.ToString(),
@@ -248,51 +177,29 @@ namespace server.Controllers
                 ["timestamp"] = mediaItem.Timestamp
             };
             await _liveService.AddOrUpdateResponseAsync(id, sectionId, componentId, metadata);
-
             return Ok(new { id = mediaItem.Id, url = sasUri });
         }
 
-
-        // ─────────────────────────────────────────────────────────────
-        // Helper methods to unwrap JsonElement into .NET types
-        // ─────────────────────────────────────────────────────────────
+        // in LiveSessionController.cs, onderaan de class:
         private static object? ConvertJsonElement(object? value)
         {
-            if (value is JsonElement je)
-            {
-                return je.ValueKind switch
-                {
-                    JsonValueKind.String => je.GetString(),
-                    JsonValueKind.Number => je.TryGetInt64(out var l) ? (object)l : je.GetDouble(),
-                    JsonValueKind.True => true,
-                    JsonValueKind.False => false,
-                    JsonValueKind.Null => null,
-                    JsonValueKind.Array => ConvertJsonArray(je),
-                    JsonValueKind.Object => ConvertJsonObject(je),
-                    _ => je.GetRawText()
-                };
-            }
-            return value;
-        }
+            if (value is not System.Text.Json.JsonElement je)
+                return value;
 
-        private static List<object?> ConvertJsonArray(JsonElement array)
-        {
-            var list = new List<object?>();
-            foreach (var item in array.EnumerateArray())
+            return je.ValueKind switch
             {
-                list.Add(ConvertJsonElement(item));
-            }
-            return list;
-        }
-
-        private static Dictionary<string, object?> ConvertJsonObject(JsonElement obj)
-        {
-            var dict = new Dictionary<string, object?>();
-            foreach (var prop in obj.EnumerateObject())
-            {
-                dict[prop.Name] = ConvertJsonElement(prop.Value);
-            }
-            return dict;
+                System.Text.Json.JsonValueKind.String => je.GetString(),
+                System.Text.Json.JsonValueKind.Number => je.GetDouble(),
+                System.Text.Json.JsonValueKind.True => true,
+                System.Text.Json.JsonValueKind.False => false,
+                System.Text.Json.JsonValueKind.Array => je.EnumerateArray()
+                                                              .Select(e => ConvertJsonElement(e))
+                                                              .Where(v => v is not null)
+                                                              .ToList(),
+                System.Text.Json.JsonValueKind.Object => je.EnumerateObject()
+                                                              .ToDictionary(p => p.Name, p => ConvertJsonElement(p.Value)!),
+                _ => je.GetRawText()
+            };
         }
     }
 }

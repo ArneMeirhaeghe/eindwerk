@@ -4,13 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using server.Models.Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 
 namespace server.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/fakeapi")]
     [Authorize]
     public class FakeApiController : ControllerBase
     {
@@ -37,18 +36,17 @@ namespace server.Controllers
             };
 
             var periodes = new List<VerhuurPeriode>();
-
             for (int i = 0; i < 10; i++)
             {
                 var groep = groepen[i];
                 var naam = namen[i];
                 var offset = i switch
                 {
-                    0 => -14, // 2 weken geleden
+                    0 => -14,
                     1 => -10,
                     2 => -7,
                     3 => -2,
-                    4 => 0,   // vandaag
+                    4 => 0,
                     5 => 1,
                     6 => 4,
                     7 => 7,
@@ -58,7 +56,6 @@ namespace server.Controllers
 
                 var aankomst = vandaag.AddDays(offset).Date.AddHours(16);
                 var vertrek = aankomst.AddDays(2 + random.Next(2, 5)).AddHours(11);
-
                 var verantwoordelijke = new Verantwoordelijke
                 {
                     Naam = naam,
@@ -72,11 +69,9 @@ namespace server.Controllers
                     Groep = groep,
                     Verantwoordelijke = verantwoordelijke,
                     Aankomst = aankomst,
-                    Vertrek = vertrek
+                    Vertrek = vertrek,
+                    Id = $"{verhuurderId}-{groep.Replace(" ", "")}-{aankomst:yyyyMMddHHmm}"
                 };
-
-                // Bouw een unieke ID op
-                periode.Id = $"{periode.VerhuurderId}-{groep.Replace(" ", "")}-{aankomst:yyyyMMddHHmm}";
                 periodes.Add(periode);
             }
 

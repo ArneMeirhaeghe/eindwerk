@@ -1,16 +1,15 @@
-﻿// File: server/Controllers/InventoryController.cs
+﻿// File: Controllers/InventoryController.cs
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using server.Mappings;
 using server.Models.DTOs.Inventory;
-using server.Models.Entities;
 using server.Services.Interfaces;
 
 namespace server.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/inventory")]
     public class InventoryController : ControllerBase
     {
         private readonly IInventoryService _svc;
@@ -24,15 +23,14 @@ namespace server.Controllers
         public async Task<ActionResult<List<InventoryTemplateDto>>> GetAll()
         {
             var list = await _svc.GetAllAsync();
-            return list.ConvertAll(InventoryMapper.ToDto);
+            return Ok(list.ConvertAll(InventoryMapper.ToDto));
         }
 
         [HttpGet("{id:length(24)}")]
         public async Task<ActionResult<InventoryTemplateDto>> GetById(string id)
         {
             var tmpl = await _svc.GetByIdAsync(id);
-            if (tmpl == null) return NotFound();
-            return InventoryMapper.ToDto(tmpl);
+            return tmpl == null ? NotFound() : Ok(InventoryMapper.ToDto(tmpl));
         }
 
         [HttpPost]

@@ -1,5 +1,4 @@
 ﻿// File: Controllers/MediaController.cs
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,9 +8,9 @@ using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using server.Helpers;                       // AzureSettings
-using server.Models.Entities;               // MediaItem
-using server.Services.Interfaces;           // IAzureBlobService, IMediaService
+using server.Helpers;
+using server.Models.Entities;
+using server.Services.Interfaces;
 
 namespace server.Controllers
 {
@@ -33,7 +32,6 @@ namespace server.Controllers
             _azureSettings = azureOptions.Value;
         }
 
-        // POST api/media/upload
         [HttpPost("upload")]
         [DisableRequestSizeLimit]
         [Authorize]
@@ -47,8 +45,7 @@ namespace server.Controllers
                 return BadRequest("Geen bestand geüpload");
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var folder = type switch
             {
@@ -56,12 +53,9 @@ namespace server.Controllers
                 "video" => "video",
                 _ => "files"
             };
-
             var blobName = $"{folder}/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-            await using (var stream = file.OpenReadStream())
-            {
-                await _blobSvc.UploadBlobAsync(stream, file.ContentType, blobName);
-            }
+            await using var stream = file.OpenReadStream();
+            await _blobSvc.UploadBlobAsync(stream, file.ContentType, blobName);
 
             var media = new MediaItem
             {
@@ -83,19 +77,17 @@ namespace server.Controllers
                 alt = media.Alt,
                 styles = media.Styles,
                 timestamp = media.Timestamp,
-                url = _blobSvc.GetBlobSasUri(media.BlobName, _azureSettings.SasExpiryHours).ToString()
+                url = _blobSvc.GetBlobSasUri(media.BlobName, _azureSettings.SasExpiryHours)
             };
             return Ok(dto);
         }
 
-        // GET api/media
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> List()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var items = await _mediaSvc.GetByUserAsync(userId);
             var dto = items
@@ -108,19 +100,17 @@ namespace server.Controllers
                     alt = x.Alt,
                     styles = x.Styles,
                     timestamp = x.Timestamp,
-                    url = _blobSvc.GetBlobSasUri(x.BlobName, _azureSettings.SasExpiryHours).ToString()
+                    url = _blobSvc.GetBlobSasUri(x.BlobName, _azureSettings.SasExpiryHours)
                 });
             return Ok(dto);
         }
 
-        // DELETE api/media/{id}
         [HttpDelete("{id:length(24)}")]
         [Authorize]
         public async Task<IActionResult> Delete(string id)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var mediaItem = await _mediaSvc.GetByIdAsync(id);
             if (mediaItem == null || mediaItem.UserId != userId)
@@ -128,10 +118,9 @@ namespace server.Controllers
 
             await _blobSvc.DeleteBlobAsync(mediaItem.BlobName);
             var removed = await _mediaSvc.DeleteAsync(id);
-            if (!removed)
-                return StatusCode(StatusCodes.Status500InternalServerError, "Verwijderen mislukt");
-
-            return NoContent();
+            return !removed
+                ? StatusCode(StatusCodes.Status500InternalServerError, "Verwijderen mislukt")
+                : NoContent();
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿// File: Controllers/AuthController.cs
+using Microsoft.AspNetCore.Mvc;
 using server.Helpers;
 using server.Models.Entities;
 using server.Services.Interfaces;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 namespace server.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -37,9 +38,7 @@ namespace server.Controllers
             if (existing != null)
                 return BadRequest("Email bestaat al.");
 
-            // Maak de gebruiker aan via CreateUserAsync
             var newUser = await _userService.CreateUserAsync(dto.Email, dto.Password);
-
             var jwt = _jwtHandler.GenerateToken(newUser);
             return Created("api/auth/login", new { token = jwt });
         }
