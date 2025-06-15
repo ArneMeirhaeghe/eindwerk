@@ -82,7 +82,7 @@ const InventorySettings: FC<Props> = ({ comp, onUpdate }) => {
       {/* Link naar beheerpagina */}
       <button
         type="button"
-        onClick={() => navigate("/admin/inventory")}
+        onClick={() => navigate("/inventory")}
         className="w-full mb-4 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
       >
         Beheer inventaris-templates
