@@ -2,10 +2,10 @@
 import React from "react"
 
 import TitlePreview from "./previews/TitlePreview"
-//import SubheadingPreview from "./previews/SubheadingPreview"
+import SubheadingPreview from "./previews/SubheadingPreview"
 import ParagraphPreview from "./previews/ParagraphPreview"
 import QuotePreview from "./previews/QuotePreview"
-//import ButtonPreview from "./previews/ButtonPreview"
+import ButtonPreview from "./previews/ButtonPreview"
 import ChecklistPreview from "./previews/ChecklistPreview"
 import DividerPreview from "./previews/DividerPreview"
 import ImagePreview from "./previews/ImagePreview"
@@ -14,7 +14,7 @@ import FilePreview from "./previews/FilePreview"
 import GridPreview from "./previews/GridPreview"
 import UploadZonePreview from "./previews/UploadZonePreview"
 import DropdownPreview from "./previews/DropdownPreview"
-//import FormPreview from "./previews/FormPreview"
+import FormPreview from "./previews/FormPreview"
 import InventoryPreview from "./previews/InventoryPreview"
 import type { ComponentItem } from "../../types/types"
 
@@ -24,10 +24,10 @@ interface Props {
 
 const previewMap: Record<string, React.ComponentType<any>> = {
   title:          TitlePreview,
-  //subheading:     SubheadingPreview,
+  subheading:     SubheadingPreview,
   paragraph:      ParagraphPreview,
   quote:          QuotePreview,
-  //button:         ButtonPreview,
+  button:         ButtonPreview,
   checklist:      ChecklistPreview,
   divider:        DividerPreview,
   image:          ImagePreview,
@@ -36,7 +36,7 @@ const previewMap: Record<string, React.ComponentType<any>> = {
   grid:           GridPreview,
   uploadzone:     UploadZonePreview,
   dropdown:       DropdownPreview,
-  //form:           FormPreview,
+  form:           FormPreview,
   inventory:      InventoryPreview,
 }
 
