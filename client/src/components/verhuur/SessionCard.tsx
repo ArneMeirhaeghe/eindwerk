@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom"
 import { endLiveSession } from "../../api/liveSession"
 import type { LiveSessionDto } from "../../api/verhuur/types"
+import { toast } from "react-toastify"
 
 interface SessionCardProps {
   session: LiveSessionDto
@@ -21,8 +22,7 @@ export default function SessionCard({
 
   let phase: "voor" | "terwijl" | "vertrek" | "na"
   if (now < start) phase = "voor"
-  else if (now >= start && now < end && !isSameDay(now, end))
-    phase = "terwijl"
+  else if (now >= start && now < end && !isSameDay(now, end)) phase = "terwijl"
   else if (isSameDay(now, end)) phase = "vertrek"
   else phase = "na"
 
@@ -42,8 +42,11 @@ export default function SessionCard({
     na: { label: "✅ Afgerond", color: "border-l-gray-400" },
   } as const
 
-  const copyToClipboard = (text: string) =>
-    navigator.clipboard.writeText(text).catch(() => {})
+  const copyToClipboard = (text: string, message: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => toast.success(message))
+      .catch(() => toast.error("Kopiëren mislukt"))
+  }
 
   const handleEnd = async () => {
     if (!confirm("Beëindig deze huuractiviteit?")) return
@@ -71,14 +74,16 @@ export default function SessionCard({
         </Link>
         <button
           onClick={() =>
-            copyToClipboard(`${window.location.origin}/#/public/${session.id}`)
+            copyToClipboard(`${window.location.origin}/#/public/${session.id}`, "Publieke link gekopieerd!")
           }
           className="flex justify-center items-center gap-2 text-gray-700 hover:underline"
         >
           📎 Link
         </button>
         <button
-          onClick={() => copyToClipboard(session.id)}
+          onClick={() =>
+            copyToClipboard(session.id, "Sessicode gekopieerd!")
+          }
           className="flex justify-center items-center gap-2 text-gray-700 hover:underline"
         >
           🔑 Code
@@ -91,5 +96,5 @@ export default function SessionCard({
         </button>
       </div>
     </div>
-)
+  )
 }

@@ -38,7 +38,7 @@ export default function FormBuilderPage() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b bg-white">
-        <div className="flex space-x-2">
+<div className="flex space-x-2 m-5 justify-end text-right">
           <button
             onClick={() => handlers.setPreviewMode(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded shadow"
