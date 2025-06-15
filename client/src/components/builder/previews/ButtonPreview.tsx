@@ -1,6 +1,9 @@
-import React from "react";
+import  { type FC } from "react";
 import type { ButtonProps } from "../../../types/types";
 
+interface Props {
+  p: Partial<ButtonProps>;
+}
 // Standaardwaarden
 const defaultProps: ButtonProps = {
   label: "Klik hier",
@@ -14,7 +17,7 @@ const defaultProps: ButtonProps = {
   align: "center",
 };
 
-const ButtonPreview: React.FC<{ p: ButtonProps }> = ({ p }) => {
+const ButtonPreview: FC<Props> = ({ p }) => {
   const props = { ...defaultProps, ...p };
 
   const alignmentClass =

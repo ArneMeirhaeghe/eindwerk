@@ -1,8 +1,12 @@
-import React from "react";
+import React, { type FC } from "react";
 import type { SubheadingProps } from "../../../types/types";
 
+interface Props {
+  p: Partial<SubheadingProps>;
+}
+
 const defaultProps: Required<SubheadingProps> = {
-  text: "Titel voorbeeld",
+  text: "sub voorbeeld",
   fontFamily: "sans-serif",
   fontSize: 28,
   lineHeight: 1.4,
@@ -14,9 +18,8 @@ const defaultProps: Required<SubheadingProps> = {
   underline: false,
 };
 
-const SubheadingPreview: React.FC<{ p: Partial<SubheadingProps> }> = ({ p }) => {
+const SubheadingPreview: FC<Props> = ({ p }) => {
   const props = { ...defaultProps, ...p };
-
   const style: React.CSSProperties = {
     fontSize: props.fontSize,
     color: props.color,
