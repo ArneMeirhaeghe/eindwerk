@@ -148,7 +148,7 @@ export default function UploadZone() {
   // Uploadzone UI
   const renderUploadZone = () => (
     <div className="mt-6 bg-white border-2 border-dashed border-gray-300 rounded-3xl shadow-md p-4 sm:p-6 flex flex-col items-center justify-center min-h-[200px] hover:bg-gray-50 transition">
-      <p className="mb-4 text-gray-800 text-base font-medium">Sleep hier of kies een bestand:</p>
+      <p className="mb-4 text-gray-900 text-base font-medium">Sleep hier of kies een bestand:</p>
       <div className="flex flex-col sm:flex-row gap-4 w-full">
         {activeTab !== 'files' && (
           <button
@@ -163,7 +163,7 @@ export default function UploadZone() {
         <button
           type="button"
           onClick={() => galleryInputRef.current?.click()}
-          className="w-full sm:w-auto flex justify-center items-center gap-3 bg-gray-100 hover:bg-gray-200 text-gray-800 text-lg font-semibold px-6 py-4 rounded-full shadow-sm transition-transform hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-indigo-300"
+          className="w-full sm:w-auto flex justify-center items-center gap-3 bg-gray-100 hover:bg-gray-200 text-gray-900 text-lg font-semibold px-6 py-4 rounded-full shadow-sm transition-transform hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-indigo-300"
         >
           {activeTab === 'files' ? '📁 Bestand kiezen' : activeTab === 'img' ? '🖼️ Foto kiezen' : '🎥 Video kiezen'}
         </button>
@@ -178,7 +178,7 @@ export default function UploadZone() {
       {selectedFile && (
         <div className="mt-4 flex items-center space-x-2 w-full sm:w-auto">
           <span className="text-gray-900 font-medium truncate leading-snug">{selectedFile.name}</span>
-          <button type="button" onClick={() => setSelectedFile(null)} className="text-red-600 hover:text-red-800 text-xl">✕</button>
+          <button type="button" onClick={() => setSelectedFile(null)} className="text-red-700 hover:text-red-900 text-xl">✕</button>
         </div>
       )}
       <input
@@ -187,12 +187,12 @@ export default function UploadZone() {
         value={alt}
         onChange={e => setAlt(e.target.value)}
         disabled={isUploading}
-        className="mt-4 w-full max-w-lg border border-gray-300 rounded-full px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
+        className="mt-4 w-full max-w-lg border border-gray-300 rounded-full px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
       />
       <button
         onClick={handleUpload}
         disabled={isUploading || !selectedFile}
-        className={`mt-4 w-full max-w-lg inline-flex justify-center items-center gap-2 px-6 py-3 rounded-full text-base font-semibold text-white transition \${
+        className={`mt-4 w-full max-w-lg inline-flex justify-center items-center gap-2 px-6 py-3 rounded-full text-base font-semibold text-white transition \$
           isUploading
             ? "bg-gray-400 cursor-not-allowed"
             : "bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 shadow-xl transform hover:-translate-y-1"
@@ -215,10 +215,10 @@ export default function UploadZone() {
           <button
             key={tab}
             onClick={() => { setActiveTab(tab); setSelectedFile(null) }}
-            className={`flex-none text-center py-3 rounded-3xl font-semibold text-base transition \${
+            className={`flex-none text-center py-3 rounded-3xl font-semibold text-base transition \$
               activeTab === tab
                 ? "bg-indigo-600 text-white ring-2 ring-indigo-300 shadow-xl"
-                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                : "bg-gray-50 text-gray-900 hover:bg-gray-100"
             }`}
           >
             {tab === 'img' ? 'FOTO' : tab === 'video' ? 'VIDEO' : 'BESTANDEN'}
@@ -232,7 +232,7 @@ export default function UploadZone() {
           <video ref={videoRef} className="w-full max-w-full rounded-3xl shadow-lg mb-6" autoPlay muted />
           <div className="flex flex-col sm:flex-row gap-4">
             {activeTab === 'img' ? (
-              <button onClick={capturePhoto} className="flex-1 text-center px-6 py-4 bg-white rounded-full font-semibold text-lg shadow-xl transition-transform hover:-translate-y-1">
+              <button onClick={capturePhoto} className="flex-1 text-center px-6 py-4 bg-white rounded-full font-semibold text-lg text-gray-900 shadow-xl transition-transform hover:-translate-y-1">
                 📸 Vastleggen
               </button>
             ) : recording ? (
@@ -240,11 +240,11 @@ export default function UploadZone() {
                 ⏹️ Stoppen
               </button>
             ) : (
-              <button onClick={startRecording} className="flex-1 text-center px-6 py-4 bg-white rounded-full font-semibold text-lg shadow-xl transition-transform hover:-translate-y-1">
+              <button onClick={startRecording} className="flex-1 text-center px-6 py-4 bg-white rounded-full font-semibold text-lg text-gray-900 shadow-xl transition-transform hover:-translate-y-1">
                 🔴 Opnemen
               </button>
             )}
-            <button onClick={cancelCamera} className="flex-1 text-center px-6 py-4 bg-gray-200 rounded-full font-semibold text-lg shadow-xl transition-transform hover:-translate-y-1">
+            <button onClick={cancelCamera} className="flex-1 text-center px-6 py-4.bg-gray-200 rounded-full font-semibold text-lg text-gray-900 shadow-xl transition-transform hover:-translate-y-1">
               ✕ Annuleren
             </button>
           </div>
@@ -261,7 +261,7 @@ export default function UploadZone() {
           <div key={item.id} className="relative bg-white rounded-3xl shadow p-4 hover:shadow-lg transition-transform hover:-translate-y-1">
             <button
               onClick={() => deleteUpload(item.id).then(fetchUploads)}
-              className="absolute top-3 right-3 text-red-600 hover:text-red-800 text-xl"
+              className="absolute top-3 right-3 text-red-700 hover:text-red-900 text-xl"
             >✕</button>
             {activeTab === "img" && (
               <img src={item.url} alt={item.alt} className="mx-auto max-h-40 rounded-3xl object-contain" />
