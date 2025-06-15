@@ -1,7 +1,6 @@
 // File: src/components/livesession/LiveSection.tsx
 import  { useState, type FC } from "react"
 import TitlePreview from "../builder/previews/TitlePreview"
-//import SubheadingPreview from "../builder/previews/SubheadingPreview"
 import ParagraphPreview from "../builder/previews/ParagraphPreview"
 import QuotePreview from "../builder/previews/QuotePreview"
 import ImagePreview from "../builder/previews/ImagePreview"
@@ -20,7 +19,7 @@ import InventorySession from "./inputs/InventorySession"
 
 import type {
   TitleProps,
-  // SubheadingProps,
+  SubheadingProps,
   ParagraphProps,
   QuoteProps,
   ImageProps,
@@ -30,6 +29,7 @@ import type {
 } from "../../types/types"
 import type { FlatSection } from "../../hooks/useLiveSession"
 import type { ComponentSnapshot } from "../../api/liveSession/types"
+import SubheadingPreview from "../builder/previews/SubheadingPreview"
 
 interface Props {
   sessionId: string
@@ -47,6 +47,7 @@ const LiveSection: FC<Props> = ({
   onUploadFile,
 }) => {
   const { section } = sectionData
+  console.log(section)
   const [local, setLocal] = useState<Record<string, any>>(saved)
 
   const handleSave = async (componentId: string, value: any) => {
@@ -65,8 +66,8 @@ const LiveSection: FC<Props> = ({
             // Read‐only previews
             case "title":
               return <TitlePreview key={comp.id} p={comp.props as TitleProps} />
-            // case "subheading":
-            //   return <SubheadingPreview key={comp.id} p={comp.props as SubheadingProps} />
+            case "subheading":
+              return <SubheadingPreview key={comp.id} p={comp.props as SubheadingProps} />
             case "paragraph":
               return <ParagraphPreview key={comp.id} p={comp.props as ParagraphProps} />
             case "quote":
