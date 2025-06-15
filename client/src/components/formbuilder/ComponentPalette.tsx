@@ -12,24 +12,21 @@ const labelMap: Record<FieldDto["type"], string> = {
   "checkbox-group": "Checkbox-groep",
 }
 
-
 export default function ComponentPalette({ onAdd }: { onAdd(type: FieldDto["type"]): void }) {
   return (
     <div className="p-4">
       <h3 className="text-sm font-semibold mb-3">Velden toevoegen</h3>
       <div className="space-y-2">
-        {TYPES.map(type => {
-          return (
-            <button
-              key={type}
-              onClick={() => onAdd(type)}
-              className="flex items-center w-full px-3 py-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
-            >
-              {/* <Icon size={18} className="mr-2 text-gray-600" /> */}
-              <span className="text-sm text-gray-800">{labelMap[type]}</span>
-            </button>
-          )
-        })}
+        {TYPES.map(type => (
+          <button
+            key={type}
+            onClick={() => onAdd(type)}
+            className="flex items-center w-full px-3 py-2 bg-gray-50 rounded-lg hover:bg-gray-100 text-sm transition"
+            aria-label={`Voeg ${labelMap[type]} toe`}
+          >
+            {labelMap[type]}
+          </button>
+        ))}
       </div>
     </div>
   )
