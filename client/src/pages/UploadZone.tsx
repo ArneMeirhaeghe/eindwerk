@@ -27,7 +27,7 @@ export default function UploadZone() {
   // refs for gallery input
   const galleryInputRef = useRef<HTMLInputElement>(null)
 
-  // haal uploads op mount
+  // Initial data fetch
   useEffect(() => { fetchUploads() }, [])
   useEffect(() => {
     if (success) {
@@ -36,7 +36,7 @@ export default function UploadZone() {
     }
   }, [success])
 
-  // start camera when gevraagd
+  // Start camera when requested
   useEffect(() => {
     if (!showCamera) return
     const constraints: MediaStreamConstraints =
@@ -55,12 +55,12 @@ export default function UploadZone() {
       .catch(err => setError(`Kon camera niet openen: ${err.message}`))
 
     return () => {
-      // stop alle camera tracks
       mediaStreamRef.current?.getTracks().forEach(t => t.stop())
       mediaStreamRef.current = null
     }
   }, [showCamera, activeTab])
 
+  // Fetch existing uploads
   const fetchUploads = async () => {
     try {
       const all = await getUploads()
@@ -69,8 +69,8 @@ export default function UploadZone() {
         const key = item.contentType.startsWith("image/")
           ? "img"
           : item.contentType.startsWith("video/")
-          ? "video"
-          : "files"
+            ? "video"
+            : "files"
         grouped[key].push(item)
       })
       setUploads(grouped)
@@ -79,19 +79,19 @@ export default function UploadZone() {
     }
   }
 
-  // selectie helper
+  // File selection helper
   const onFileSelect = (file: File) => {
     setSelectedFile(file)
     setAlt(file.name)
   }
 
-  // gallery input change
+  // Gallery input change handler
   const onGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) onFileSelect(file)
   }
 
-  // upload uitvoerende functie
+  // Upload handler
   const handleUpload = async () => {
     if (!selectedFile) return
     setIsUploading(true)
@@ -109,15 +109,15 @@ export default function UploadZone() {
     }
   }
 
-  // camera capture annuleren
+  // Cancel camera view
   const cancelCamera = () => {
     setShowCamera(false)
-    // tracks stoppen
     mediaStreamRef.current?.getTracks().forEach(t => t.stop())
     mediaStreamRef.current = null
+    setRecording(false)
   }
 
-  // foto nemen
+  // Capture photo from video stream
   const capturePhoto = () => {
     if (!videoRef.current) return
     const video = videoRef.current
@@ -135,7 +135,7 @@ export default function UploadZone() {
     }, 'image/jpeg')
   }
 
-  // opname starten
+  // Start video recording
   const startRecording = () => {
     if (!mediaStreamRef.current) return
     recordedChunksRef.current = []
@@ -149,43 +149,42 @@ export default function UploadZone() {
       const file = new File([blob], `video_${Date.now()}.webm`, { type: 'video/webm' })
       onFileSelect(file)
       cancelCamera()
-      setRecording(false)
     }
     recorder.start()
     setRecording(true)
   }
 
-  // opname stoppen
+  // Stop video recording
   const stopRecording = () => {
     mediaRecorderRef.current?.stop()
   }
 
-  // upload zone UI
+  // Styled upload zone UI
   const renderUploadZone = () => (
-    <div className="mt-6 bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl shadow-inner p-6 flex flex-col items-center justify-center min-h-[200px] hover:bg-gray-100 transition-colors">
-      <p className="mb-4 text-gray-600">Sleep hier of kies:</p>
+    <div className="mt-6 bg-gradient-to-br from-white to-gray-50 border-2 border-dashed border-gray-300 rounded-3xl shadow-lg p-6 flex flex-col items-center justify-center min-h-[220px] hover:from-gray-50 hover:to-white transition">
+      <p className="mb-4 text-gray-600 font-medium">Sleep hier of kies een bestand:</p>
       <div className="flex flex-col sm:flex-row gap-4">
-        {/* Camera / video knop */}
+        {/* Camera / video button */}
         {(activeTab === 'img' || activeTab === 'video') && (
           <button
             type="button"
             onClick={() => setShowCamera(true)}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition"
+            className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-2xl shadow-md transform hover:-translate-y-1 focus:ring-4 focus:ring-blue-200 transition"
           >
-            {activeTab === 'img' ? '📷 Maak foto' : '📹 Maak video'}
+            {activeTab === 'img' ? '📷 Maak Foto' : '📹 Maak Video'}
           </button>
         )}
-        {/* Gallery knop */}
+        {/* Gallery button */}
         <button
           type="button"
           onClick={() => galleryInputRef.current?.click()}
-          className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 px-4 py-2 rounded-lg shadow transition"
+          className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 px-5 py-2 rounded-2xl shadow-sm transform hover:-translate-y-1 focus:ring-4 focus:ring-blue-200 transition"
         >
           {activeTab === 'files'
-            ? '📁 Kies bestand'
+            ? '📁 Kies Bestand'
             : activeTab === 'img'
-            ? '🖼️ Kies foto'
-            : '🎥 Kies video'}
+              ? '🖼️ Kies Foto'
+              : '🎥 Kies Video'}
         </button>
       </div>
       {/* Hidden gallery input */}
@@ -196,10 +195,10 @@ export default function UploadZone() {
         onChange={onGalleryChange}
         className="hidden"
       />
-      {/* geselecteerde file */}
+      {/* Selected file preview */}
       {selectedFile && (
         <div className="mt-4 flex items-center space-x-3">
-          <span className="text-gray-800 truncate max-w-xs">{selectedFile.name}</span>
+          <span className="text-gray-800 truncate max-w-xs font-medium">{selectedFile.name}</span>
           <button
             type="button"
             onClick={() => setSelectedFile(null)}
@@ -207,105 +206,103 @@ export default function UploadZone() {
           >✕</button>
         </div>
       )}
-      {/* alt tekst invoer */}
+      {/* ALT text input */}
       <input
         type="text"
-        placeholder="Alternatieve tekst (bijv. 'Vrolijke teamfoto')"
+        placeholder="Alternatieve tekst (bijv. Vrolijke teamfoto)"
         value={alt}
         onChange={e => setAlt(e.target.value)}
         disabled={isUploading}
-        className="mt-4 w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
+        className="mt-4 w-full max-w-md border border-gray-200 rounded-2xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
       />
-      {/* upload knop */}
+      {/* Upload button */}
       <button
         onClick={handleUpload}
         disabled={isUploading || !selectedFile}
-        className={`mt-4 w-full inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl font-medium text-white transition \${
+        className={`mt-4 w-full max-w-md inline-flex justify-center items-center gap-2 px-6 py-3 rounded-2xl font-semibold text-white transition \${
           isUploading
             ? "bg-gray-400 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-md"
+            : "bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 shadow-md transform hover:-translate-y-1"
         }`}
       >
         {isUploading
-          ? <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-          : "Upload"}
+          ? <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          : "Uploaden"}
       </button>
     </div>
   )
 
   return (
-    <div className="container mx-auto px-4 py-6 relative">
-      {error && <p className="text-red-600 mb-4">{error}</p>}
-      {success && <p className="text-green-600 mb-4">Upload succesvol!</p>}
+    <div className="container mx-auto px-4 py-8 relative">
+      {error && <p className="text-red-600 mb-4 font-medium">{error}</p>}
+      {success && <p className="text-green-600 mb-4 font-medium">Upload succesvol!</p>}
 
       {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-lg ring-1 ring-gray-100 p-2 flex space-x-2 z-10 relative">
+      <div className="bg-white rounded-3xl shadow-lg ring-1 ring-gray-200 p-2 flex space-x-2 mb-4">
         {(['img','video','files'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => { setActiveTab(tab); setSelectedFile(null) }}
-            className={`flex-1 text-center py-2 rounded-lg font-medium transition \${
+            className={`flex-1 text-center py-2 rounded-2xl font-medium transition \${
               activeTab === tab
-                ? "bg-blue-600 text-white ring-2 ring-blue-300 shadow-md"
+                ? "bg-blue-500 text-white ring-2 ring-blue-300 shadow-md transform"
                 : "bg-white text-gray-700 hover:bg-gray-100"
             }`}
           >
-            {tab.toUpperCase()} ({uploads[tab].length})
+            {tab.toUpperCase()} <span className="text-xs bg-blue-100 text-blue-500 px-2 py-0.5 rounded-full ml-2">{uploads[tab].length}</span>
           </button>
         ))}
       </div>
 
-      {/* Camera / video capture overlay */}
+      {/* Camera / video overlay */}
       {showCamera && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center p-4 z-50">
-          <video ref={videoRef} className="w-full max-w-md rounded-lg mb-4" autoPlay muted />
-          <div className="flex space-x-4">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center p-6 z-50">
+          <video ref={videoRef} className="w-full max-w-xl rounded-2xl mb-6 shadow-lg" autoPlay muted />
+          <div className="flex space-x-6">
             {activeTab === 'img' ? (
-              <button onClick={capturePhoto} className="px-4 py-2 bg-white rounded-lg font-medium">
+              <button onClick={capturePhoto} className="px-6 py-3 bg-white rounded-2xl font-semibold shadow transition transform hover:-translate-y-1">
                 📸 Capture
               </button>
             ) : (
               recording ? (
-                <button onClick={stopRecording} className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium">
+                <button onClick={stopRecording} className="px-6 py-3 bg-red-600 text-white rounded-2xl font-semibold shadow transition transform hover:-translate-y-1">
                   ⏹️ Stop
                 </button>
               ) : (
-                <button onClick={startRecording} className="px-4 py-2 bg-white rounded-lg font-medium">
+                <button onClick={startRecording} className="px-6 py-3 bg-white rounded-2xl font-semibold shadow transition transform hover:-translate-y-1">
                   🔴 Record
                 </button>
               )
             )}
-            <button onClick={cancelCamera} className="px-4 py-2 bg-gray-200 rounded-lg font-medium">
-              ✕ Cancel
+            <button onClick={cancelCamera} className="px-6 py-3 bg-gray-200 rounded-2xl font-semibold shadow transition transform hover:-translate-y-1">
+              ✕ Annuleren
             </button>
           </div>
         </div>
       )}
 
-      {/* normale upload zone */}
+      {/* Main upload zone */}
       {!showCamera && renderUploadZone()}
 
       {/* Preview grid */}
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {uploads[activeTab].length === 0 && (
-          <p className="col-span-full text-center text-gray-500 italic">
-            Geen bestanden geüpload
-          </p>
+          <p className="col-span-full text-center text-gray-500 italic">Geen bestanden geüpload</p>
         )}
         {uploads[activeTab].map(item => (
-          <div key={item.id} className="relative bg-white rounded-xl shadow-md ring-1 ring-gray-100 p-4 hover:shadow-lg transition">
+          <div key={item.id} className="relative bg-white rounded-3xl shadow-lg ring-1 ring-gray-200 p-4 hover:shadow-2xl transition transform hover:-translate-y-1"> 
             <button
               onClick={() => deleteUpload(item.id).then(fetchUploads)}
-              className="absolute top-2 right-2 text-red-600 hover:text-red-700 transition"
+              className="absolute top-3 right-3 text-red-600 hover:text-red-700 transition"
             >×</button>
             {activeTab === "img" && (
-              <img src={item.url} alt={item.alt} className="mx-auto max-h-32 rounded-md shadow-inner" />
+              <img src={item.url} alt={item.alt} className="mx-auto max-h-40 rounded-2xl shadow-inner transition" />
             )}
             {activeTab === "video" && (
-              <video src={item.url} controls className="w-full max-h-48 rounded-md" />
+              <video src={item.url} controls className="w-full max-h-48 rounded-2xl transition" />
             )}
             {activeTab === "files" && (
-              <a href={item.url} target="_blank" rel="noopener noreferrer" className="block text-center text-blue-600 hover:underline mt-4">
+              <a href={item.url} target="_blank" rel="noopener noreferrer" className="block text-center text-blue-500 hover:underline mt-4 font-medium">
                 {item.filename}
               </a>
             )}
