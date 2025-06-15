@@ -115,7 +115,7 @@ export default function NewLiveSessionModal({
                 )
               }
             >
-              <option value="">Kies periode</option>
+              <option value="">Kies Groep</option>
               {availablePeriodes.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.groep} ({p.aankomst})

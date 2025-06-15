@@ -1,4 +1,6 @@
-import  { useState, useEffect } from "react"
+// File: src/components/Sidebar.tsx
+
+import { useState, useEffect } from "react"
 import {
   FaHome,
   FaClipboardList,
@@ -13,9 +15,7 @@ import {
 import { useAuth } from "../context/AuthContext"
 import { getToursList } from "../api/tours"
 import type { TourListDto } from "../api/tours/types"
-import { useLocation } from "react-router-dom"
-import { Link } from "react-router-dom"
-import { NavLink } from "react-router-dom"
+import { useLocation, Link, NavLink } from "react-router-dom"
 
 export default function Sidebar() {
   const { token, logout, role } = useAuth()
@@ -29,17 +29,14 @@ export default function Sidebar() {
 
   if (!token) return null
 
-  const isBuilderPage = location.pathname.includes("/builder")
-  const isFormbuiderPage = location.pathname.includes("/formbuilder")
+  const isCompactPage =
+    location.pathname.includes("/builder") ||
+    location.pathname.includes("/formbuilder")
   const isAdmin = role === "Admin"
 
   const payload = JSON.parse(atob(token.split(".")[1]))
   const email = payload?.unique_name || "gebruiker"
-  const id =
-    payload?.sub ||
-    payload?.id ||
-    payload?.nameid ||
-    "onbekend"
+  const id = payload?.sub || payload?.id || payload?.nameid || "onbekend"
 
   const linkClass = (active: boolean) =>
     `flex items-center gap-3 px-4 py-2 rounded transition text-sm ${
@@ -161,7 +158,7 @@ export default function Sidebar() {
     <>
       <button
         className={`fixed top-4 left-4 z-50 p-2 bg-blue-600 text-white rounded shadow ${
-          isBuilderPage ? "" : "lg:hidden"
+          isCompactPage ? "" : "lg:hidden"
         }`}
         onClick={() => setOpen(true)}
       >
@@ -174,23 +171,15 @@ export default function Sidebar() {
             className="fixed inset-0 bg-black bg-opacity-50 z-40"
             onClick={() => setOpen(false)}
           />
-
           <aside className="fixed inset-y-0 left-0 w-64 bg-white shadow-lg z-50 flex flex-col">
             <div className="flex justify-between items-center p-4 border-b">
               <div className="flex items-center gap-2">
-                <Link
-                  to="/"
-                  onClick={() => setOpen(false)}
-                  className="text-blue-600"
-                >
+                <Link to="/" onClick={() => setOpen(false)} className="text-blue-600">
                   <FaHome className="text-xl" />
                 </Link>
                 <span className="font-semibold">Menu</span>
               </div>
-              <button
-                onClick={() => setOpen(false)}
-                className="text-gray-600"
-              >
+              <button onClick={() => setOpen(false)} className="text-gray-600">
                 <FaTimes />
               </button>
             </div>
@@ -204,9 +193,7 @@ export default function Sidebar() {
                 <FaClipboardList /> Overzicht verhuur
               </NavLink>
 
-              <div className="mt-4 mb-1 text-xs text-gray-400 uppercase">
-                Rondleidingen
-              </div>
+              <div className="mt-4 mb-1 text-xs text-gray-400 uppercase">Rondleidingen</div>
               <NavLink
                 to="/tours"
                 className={({ isActive }) => linkClass(isActive)}
@@ -291,7 +278,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {!isBuilderPage && Desktop || Desktop && !isFormbuiderPage}
+      {!isCompactPage && Desktop}
       {Mobile}
     </>
   )
