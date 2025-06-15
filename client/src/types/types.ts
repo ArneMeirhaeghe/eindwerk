@@ -60,6 +60,12 @@ export interface FileProps {
   filename?: string
   showName?: boolean
 }
+export interface CheckboxGroupProps {
+  label?: string;
+  options?: string[];
+  defaultValue?: string[];  // toegevoegd
+  required?: boolean;
+}
 
 export interface GridProps {
   images?: string[]
@@ -71,9 +77,30 @@ export interface GridProps {
   radius?: number
   shadow?: boolean
 }
+export interface RadioGroupProps {
+  label?: string;
+  options: string[];
+  required?: boolean;
+  defaultValue?: string;
+  layout?: "vertical" | "horizontal";
+  gap?: number;
+}
 
 export interface UploadZoneProps {
   label?: string
+}
+export interface TextareaProps {
+  label?: string;
+  placeholder?: string;
+  required?: boolean;
+  rows?: number;
+  defaultValue?: string;
+}
+export interface TextInputProps {
+  label?: string;
+  placeholder?: string;
+  required?: boolean;
+  defaultValue?: string;
 }
 
 export interface DividerProps {
@@ -94,10 +121,17 @@ export interface DropdownProps {
 }
 
 export interface ButtonProps {
-  label: string
-  bgColor?: string
-  textColor?: string
+  label: string;
+  bgColor?: string;
+  textColor?: string;
+  radius?: number;
+  fontSize?: number;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  align?: "left" | "center" | "right";
 }
+
 
 export interface InventoryProps {
   templateId: string
@@ -128,6 +162,11 @@ export interface InventoryProps {
   selectedLokalen?: string[]
   selectedSubs?: Record<string, string[]>
   interactive?: boolean
+}
+export interface CheckboxGroupProps {
+  label?: string;
+  options?: string[];
+  required?: boolean;
 }
 
 // 5 fases in een tour
