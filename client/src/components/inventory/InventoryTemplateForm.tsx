@@ -41,7 +41,7 @@ const InventoryTemplateForm: FC<Props> = ({ initial, onSubmit }) => {
           type="text"
           value={naam}
           onChange={e => setNaam(e.target.value)}
-          placeholder="Bijv. Kantoorinventaris"
+          placeholder="Bijv. Naam verhuur eenheid"
           className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-300 transition"
           required
         />
@@ -92,7 +92,7 @@ const InventoryTemplateForm: FC<Props> = ({ initial, onSubmit }) => {
                   )
                   updateLokaal(li, { ...lokaal, subsections: newSubs })
                 }}
-                placeholder="Naam subsectie"
+                placeholder="bijv. kookgerief"
                 className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 transition"
                 required
               />
@@ -117,13 +117,13 @@ const InventoryTemplateForm: FC<Props> = ({ initial, onSubmit }) => {
                             )
                           })
                         }}
-                        placeholder="Bijv. Rechters"
+                        placeholder="Bijv. vorken"
                         className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 transition"
                         required
                       />
                     </div>
                     <div className="w-24">
-                      <label className="block text-xs font-medium text-gray-600">Gewenst</label>
+                      <label className="block text-xs font-medium text-gray-600">Aantal</label>
                       <input
                         type="number"
                         value={item.desired}
