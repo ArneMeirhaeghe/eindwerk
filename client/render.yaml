@@ -3,6 +3,7 @@ services:
     name: mijn-react-app
     env: static
     buildCommand: npm run build
+    publishPath: dist        # ← hier je Vite-uitvoer-map
     routes:
       - type: rewrite
         src: /(.*)
