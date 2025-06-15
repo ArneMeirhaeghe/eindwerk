@@ -84,7 +84,7 @@ export default function Login() {
         </form>
         <p className="text-center mt-4 text-sm">
           Nog geen account?{" "}
-          <Link to="/register" className="text-indigo-600 hover:underline">
+          <Link to="/#/register" className="text-indigo-600 hover:underline">
             Registreer hier
           </Link>
         </p>

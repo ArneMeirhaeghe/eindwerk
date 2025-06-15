@@ -74,7 +74,7 @@ if (payload) {
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("role");
     // Optioneel: redirect naar login
-    window.location.href = "/login";
+    window.location.href = "/#/login";
   };
 
   return (
