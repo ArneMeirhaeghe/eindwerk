@@ -2,10 +2,17 @@ services:
   - type: static
     name: ksainv-frontend
     env: static
-    root: client           # waar package.json & build output zitten
+    root: client
     buildCommand: npm run build
-    publishPath: dist      # Vite’s output-map binnen client/
+    publishPath: dist
     routes:
       - type: rewrite
         src: /(.*)
         dest: /index.html
+
+  - type: web
+    name: ksainv-backend
+    env: node       # of .NET, afhankelijk van je backend
+    root: server
+    buildCommand: npm install
+    startCommand: npm run start
