@@ -1,7 +1,9 @@
-﻿// File: Controllers/InventoryController.cs
+﻿// File: server/Controllers/InventoryController.cs
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using server.Mappings;
 using server.Models.DTOs.Inventory;
 using server.Services.Interfaces;
@@ -10,6 +12,7 @@ namespace server.Controllers
 {
     [ApiController]
     [Route("api/inventory")]
+    [Authorize]  // Alleen geauthenticeerde users
     public class InventoryController : ControllerBase
     {
         private readonly IInventoryService _svc;
@@ -22,36 +25,44 @@ namespace server.Controllers
         [HttpGet]
         public async Task<ActionResult<List<InventoryTemplateDto>>> GetAll()
         {
-            var list = await _svc.GetAllAsync();
+            // Haal user ID uit JWT claims
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+            var list = await _svc.GetAllAsync(userId);
             return Ok(list.ConvertAll(InventoryMapper.ToDto));
         }
 
         [HttpGet("{id:length(24)}")]
         public async Task<ActionResult<InventoryTemplateDto>> GetById(string id)
         {
-            var tmpl = await _svc.GetByIdAsync(id);
-            return tmpl == null ? NotFound() : Ok(InventoryMapper.ToDto(tmpl));
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+            var tmpl = await _svc.GetByIdAsync(id, userId);
+            return tmpl == null
+                ? NotFound()
+                : Ok(InventoryMapper.ToDto(tmpl));
         }
 
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] CreateInventoryTemplateDto dto)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
             var entity = InventoryMapper.FromCreateDto(dto);
-            await _svc.CreateAsync(entity);
+            await _svc.CreateAsync(entity, userId);
             return Created($"/api/inventory/{entity.Id}", InventoryMapper.ToDto(entity));
         }
 
         [HttpPut("{id:length(24)}")]
         public async Task<ActionResult> Update(string id, [FromBody] UpdateInventoryTemplateDto dto)
         {
-            var success = await _svc.UpdateAsync(id, dto);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+            var success = await _svc.UpdateAsync(id, dto, userId);
             return success ? NoContent() : NotFound();
         }
 
         [HttpDelete("{id:length(24)}")]
         public async Task<ActionResult> Delete(string id)
         {
-            var success = await _svc.DeleteAsync(id);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+            var success = await _svc.DeleteAsync(id, userId);
             return success ? NoContent() : NotFound();
         }
     }
