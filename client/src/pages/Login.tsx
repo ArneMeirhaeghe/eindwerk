@@ -1,5 +1,3 @@
-// File: src/pages/Login.tsx
-
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { FaEye, FaEyeSlash } from "react-icons/fa"
@@ -21,7 +19,6 @@ export default function Login() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-
     try {
       const token = await loginUser(email, password)
       login(token, remember)
@@ -34,15 +31,14 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
       {/* Info gedeelte */}
-      <div className="bg-indigo-600 text-white w-full lg:w-1/2 p-10 flex flex-col justify-center">
+      <div className="bg-blue-600 text-white w-full lg:w-1/2 p-10 flex flex-col justify-center">
         <h1 className="text-4xl font-bold mb-4">Welkom bij Vlot Verhuurd</h1>
         <p className="text-lg mb-6 max-w-md">
-          Een slimme webtool om jeugdlokalen, zalen of huisjes eenvoudig digitaal te verhuren. 
-          Beheer rondleidingen, inventarissen en communicatie volledig op maat – alles vanuit één dashboard.
+          Een slimme webtool om jeugdlokalen, zalen of huisjes eenvoudig digitaal te verhuren.
         </p>
-        <ul className="list-disc list-inside space-y-2 text-sm text-indigo-100">
+        <ul className="list-disc list-inside space-y-2 text-sm text-blue-100">
           <li>Stel digitale rondleidingen samen in 5 fases</li>
           <li>Laat huurders zelfstandig het gebouw ontdekken</li>
           <li>Bekijk live antwoorden, van wat je zelf wil weten</li>
@@ -51,15 +47,15 @@ export default function Login() {
       </div>
 
       {/* Login gedeelte */}
-      <div className="w-full lg:w-1/2 p-8 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-md p-8 w-full max-w-md border">
-          <h2 className="text-2xl font-bold mb-6 text-center">Inloggen</h2>
+      <div className="w-full lg:w-1/2 p-6 flex items-center justify-center">
+        <div className="bg-white rounded-xl shadow-md ring-1 ring-gray-100 p-6 w-full max-w-md">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Inloggen</h2>
           {error && <p className="text-red-600 mb-4 text-center">{error}</p>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="email"
               placeholder="E-mailadres"
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500"
+              className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -68,7 +64,7 @@ export default function Login() {
               <input
                 type={show ? "text" : "password"}
                 placeholder="Wachtwoord"
-                className="w-full px-4 py-2 border border-gray-300 rounded pr-10 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -87,25 +83,26 @@ export default function Login() {
                 type="checkbox"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-300 border-gray-300 rounded"
               />
               Ingelogd blijven
             </label>
             <button
               type="submit"
-              className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition disabled:opacity-50"
               disabled={loading}
+              className="w-full bg-blue-600 text-white py-2 rounded-lg shadow hover:bg-blue-700 transition disabled:opacity-50"
             >
               {loading ? "Bezig..." : "Inloggen"}
             </button>
           </form>
-          <p className="text-center mt-4 text-sm">
+          <p className="text-center mt-4 text-sm text-gray-600">
             Nog geen account?{" "}
-            <Link to="/register" className="text-indigo-600 hover:underline">
+            <Link to="/register" className="text-blue-600 hover:underline">
               Registreer hier
             </Link>
           </p>
         </div>
       </div>
     </div>
-  )
+)
 }
