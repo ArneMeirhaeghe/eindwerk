@@ -67,7 +67,7 @@ export default function SessionCard({
       </div>
       <div className="w-full grid grid-cols-2 gap-2">
         <Link
-          to={`/#/sessions/${session.id}/responses`}
+          to={`/sessions/${session.id}/responses`}
           className="flex justify-center items-center gap-2 text-blue-600 hover:underline"
         >
           🔍 Antwoorden
