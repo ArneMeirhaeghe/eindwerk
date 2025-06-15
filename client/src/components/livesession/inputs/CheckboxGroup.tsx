@@ -1,13 +1,12 @@
-// File: src/components/livesession/inputs/CheckboxGroup.tsx
-
-import type { FC } from "react";
+import type { FC } from "react"
+import { CheckIcon } from "lucide-react"
 
 interface Props {
-  label: string;
-  options: string[];
-  required?: boolean;
-  values?: string[];
-  onChange: (v: string[]) => void;
+  label: string
+  options: string[]
+  required?: boolean
+  values?: string[]
+  onChange: (v: string[]) => void
 }
 
 const CheckboxGroup: FC<Props> = ({
@@ -17,34 +16,35 @@ const CheckboxGroup: FC<Props> = ({
   values = [],
   onChange,
 }) => {
-  const toggle = (opt: string) => {
-    if (values.includes(opt)) {
-      onChange(values.filter((v) => v !== opt));
-    } else {
-      onChange([...values, opt]);
-    }
-  };
+  const toggle = (opt: string) =>
+    values.includes(opt)
+      ? onChange(values.filter(v => v !== opt))
+      : onChange([...values, opt])
+
   return (
-    <fieldset className="mb-4">
-      <legend className="font-medium mb-1">
+    <fieldset className="mb-6">
+      <legend className="block text-sm font-medium text-gray-700 mb-2">
         {label} {required && <span className="text-red-500">*</span>}
       </legend>
       <div className="space-y-2">
-        {options.map((opt) => (
-          <label key={opt} className="inline-flex items-center space-x-2">
-            <input
-              type="checkbox"
-              value={opt}
-              checked={values.includes(opt)}
-              onChange={() => toggle(opt)}
-              className="form-checkbox"
-            />
+        {options.map(opt => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => toggle(opt)}
+            className={`w-full flex justify-between items-center px-4 py-2 text-sm rounded-lg border transition ${
+              values.includes(opt)
+                ? "bg-blue-100 border-blue-300 text-blue-700"
+                : "bg-gray-50 border-gray-200 text-gray-800 hover:bg-gray-100"
+            }`}
+          >
             <span>{opt}</span>
-          </label>
+            {values.includes(opt) && <CheckIcon size={16} className="text-blue-600" />}
+          </button>
         ))}
       </div>
     </fieldset>
-  );
-};
+  )
+}
 
-export default CheckboxGroup;
+export default CheckboxGroup
