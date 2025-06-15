@@ -13,7 +13,9 @@ import {
 import { useAuth } from "../context/AuthContext"
 import { getToursList } from "../api/tours"
 import type { TourListDto } from "../api/tours/types"
-import { Link, NavLink, useLocation } from "react-router"
+import { useLocation } from "react-router-dom"
+import { Link } from "react-router-dom"
+import { NavLink } from "react-router-dom"
 
 export default function Sidebar() {
   const { token, logout, role } = useAuth()
