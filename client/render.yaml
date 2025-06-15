@@ -1,9 +1,10 @@
 services:
   - type: static
-    name: mijn-react-app
+    name: ksainv-frontend
     env: static
+    root: client             # óf stel dit in via de Render-dashboard
     buildCommand: npm run build
-    publishPath: dist        # ← hier je Vite-uitvoer-map
+    publishPath: dist        # ← Vite’s build-output
     routes:
       - type: rewrite
         src: /(.*)
