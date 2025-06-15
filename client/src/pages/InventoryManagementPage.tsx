@@ -24,9 +24,9 @@ export default function InventoryManagementPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Header met knop voor nieuw template */}
-      <div className="flex flex-col sm:flex-row justify-between items-center bg-white rounded-xl shadow-md p-6 mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-center bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">Inventaris Templates</h1>
         <Link
           to="/inventory/new"
@@ -40,31 +40,31 @@ export default function InventoryManagementPage() {
         <p className="text-center text-gray-500">Laden…</p>
       ) : (
         <div className="overflow-x-auto bg-white rounded-xl shadow-md">
-          <table className="w-full table-auto divide-y divide-gray-200">
+          <table className="min-w-full table-auto divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Naam</th>
-                <th className="px-6 py-3 text-center text-sm font-medium text-gray-700"># Lokalen</th>
-                <th className="px-6 py-3 text-center text-sm font-medium text-gray-700">Acties</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Naam</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-gray-700"># Lokalen</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Acties</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {templates.map(t => (
                 <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-sm text-gray-800">{t.naam}</td>
-                  <td className="px-6 py-4 text-center text-sm text-gray-800">{t.lokalen.length}</td>
-                  <td className="px-6 py-4 flex justify-center space-x-2">
+                  <td className="px-4 py-3 text-sm text-gray-800">{t.naam}</td>
+                  <td className="px-4 py-3 text-center text-sm text-gray-800">{t.lokalen.length}</td>
+                  <td className="px-4 py-3 flex justify-center space-x-2">
                     <button
                       onClick={() => navigate(`/inventory/${t.id}/edit`)}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition"
                     >
-                      Edit
+                      Bewerken
                     </button>
                     <button
                       onClick={() => handleDelete(t.id)}
-                      className="px-3 py-1.5 text-red-600 hover:text-red-700 rounded-lg transition"
+                      className="px-3 py-1.5 text-red-600 hover:text-red-700 rounded-lg text-sm transition"
                     >
-                      Delete
+                      Verwijderen
                     </button>
                   </td>
                 </tr>

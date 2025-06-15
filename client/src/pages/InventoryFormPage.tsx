@@ -16,7 +16,7 @@ export default function InventoryFormPage() {
     if (id) {
       getInventoryTemplate(id)
         .then(setInitial)
-        .catch(() => navigate("/inventory")) // bij fout terug naar overzicht
+        .catch(() => navigate("/inventory"))
         .finally(() => setLoading(false))
     }
   }, [id, navigate])
@@ -32,7 +32,7 @@ export default function InventoryFormPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 pb-24">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
       <h1 className="text-3xl font-extrabold text-gray-800 mb-6 text-center">
         {initial ? "Bewerk Inventaris Template" : "Nieuw Inventaris Template"}
       </h1>
@@ -40,7 +40,7 @@ export default function InventoryFormPage() {
       {loading ? (
         <p className="text-center text-gray-500">Laden…</p>
       ) : (
-        <div className="bg-white rounded-2xl shadow-lg ring-1 ring-gray-100 p-8 hover:shadow-2xl transition">
+        <div className="bg-white rounded-2xl shadow-lg ring-1 ring-gray-100 p-4 sm:p-8 hover:shadow-2xl transition">
           <InventoryTemplateForm initial={initial ?? undefined} onSubmit={handleSubmit} />
         </div>
       )}

@@ -8,7 +8,6 @@ interface Props {
   onSubmit: (data: CreateInventoryTemplateDto | UpdateInventoryTemplateDto) => void
 }
 
-// Helpers voor lege structuren
 const blankItem = (): InventoryItem => ({ name: "", desired: 0, actual: 0 })
 const blankSub = (): Subsection => ({ name: "", items: [blankItem()] })
 const blankLokaal = (): Lokaal => ({ name: "", subsections: [blankSub()] })
@@ -17,11 +16,8 @@ const InventoryTemplateForm: FC<Props> = ({ initial, onSubmit }) => {
   const [naam, setNaam] = useState(initial?.naam ?? "")
   const [lokalen, setLokalen] = useState<Lokaal[]>(initial?.lokalen ?? [blankLokaal()])
 
-  // Werk één lokaal bij
   const updateLokaal = (idx: number, l: Lokaal) =>
     setLokalen(ls => ls.map((old, i) => (i === idx ? l : old)))
-
-  // Voeg/verwijder lokalen
   const addLokaal = () => setLokalen(ls => [...ls, blankLokaal()])
   const removeLokaal = (idx: number) =>
     setLokalen(ls => ls.filter((_, i) => i !== idx))
@@ -32,27 +28,27 @@ const InventoryTemplateForm: FC<Props> = ({ initial, onSubmit }) => {
         e.preventDefault()
         onSubmit({ naam, lokalen })
       }}
-      className="space-y-8 relative"
+      className="space-y-6 relative"
     >
       {/* Naam template */}
-      <div className="bg-white rounded-2xl shadow-2xl ring-1 ring-gray-200 p-6 transition">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Naam template</label>
+      <div className="bg-white rounded-2xl shadow ring-1 ring-gray-200 p-4 sm:p-6">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Naam template</label>
         <input
           type="text"
           value={naam}
           onChange={e => setNaam(e.target.value)}
-          placeholder="Bijv. Naam verhuur eenheid"
-          className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-300 transition"
+          placeholder="Bijv. Kantoorinventaris"
+          className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 transition"
           required
         />
       </div>
 
       {/* Dynamische lokalen */}
       {lokalen.map((lokaal, li) => (
-        <div key={li} className="bg-gray-50 rounded-2xl shadow-2xl ring-1 ring-gray-200 p-6 space-y-6 transition">
-          <div className="flex justify-between items-center">
+        <div key={li} className="bg-gray-50 rounded-2xl shadow ring-1 ring-gray-200 p-4 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <h4 className="text-lg font-semibold text-gray-800">Lokaal #{li + 1}</h4>
-            <button type="button" onClick={() => removeLokaal(li)} className="text-red-600 hover:text-red-700">
+            <button type="button" onClick={() => removeLokaal(li)} className="text-red-600 hover:text-red-700 mt-2 sm:mt-0">
               Verwijder
             </button>
           </div>
@@ -72,13 +68,13 @@ const InventoryTemplateForm: FC<Props> = ({ initial, onSubmit }) => {
 
           {/* Subsecties */}
           {lokaal.subsections.map((sub, si) => (
-            <div key={si} className="bg-white rounded-xl shadow-lg ring-1 ring-gray-200 p-6 space-y-4 transition">
-              <div className="flex justify-between items-center">
+            <div key={si} className="bg-white rounded-xl shadow ring-1 ring-gray-200 p-4 sm:p-6 space-y-3">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                 <h5 className="text-md font-medium text-gray-800">Subsectie #{si + 1}</h5>
                 <button type="button" onClick={() => {
                   const newSubs = lokaal.subsections.filter((_, i) => i !== si)
                   updateLokaal(li, { ...lokaal, subsections: newSubs })
-                }} className="text-red-600 hover:text-red-700">
+                }} className="text-red-600 hover:text-red-700 mt-1 sm:mt-0">
                   Verwijder
                 </button>
               </div>
@@ -92,7 +88,7 @@ const InventoryTemplateForm: FC<Props> = ({ initial, onSubmit }) => {
                   )
                   updateLokaal(li, { ...lokaal, subsections: newSubs })
                 }}
-                placeholder="bijv. kookgerief"
+                placeholder="Bijv. kookgerief"
                 className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 transition"
                 required
               />
@@ -100,8 +96,8 @@ const InventoryTemplateForm: FC<Props> = ({ initial, onSubmit }) => {
               {/* Items */}
               <div className="space-y-4 divide-y divide-gray-200 pt-4">
                 {sub.items.map((item, ii) => (
-                  <div key={ii} className="flex flex-wrap items-end gap-3">
-                    <div className="flex-1">
+                  <div key={ii} className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
+                    <div className="flex-1 w-full sm:w-auto">
                       <label className="block text-xs font-medium text-gray-600">Item naam</label>
                       <input
                         type="text"
@@ -122,7 +118,7 @@ const InventoryTemplateForm: FC<Props> = ({ initial, onSubmit }) => {
                         required
                       />
                     </div>
-                    <div className="w-24">
+                    <div className="w-full sm:w-24">
                       <label className="block text-xs font-medium text-gray-600">Aantal</label>
                       <input
                         type="number"
@@ -184,12 +180,12 @@ const InventoryTemplateForm: FC<Props> = ({ initial, onSubmit }) => {
         </div>
       ))}
 
-      {/* Sticky actie­balk */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-between">
-        <button type="button" onClick={addLokaal} className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-xl">
+      {/* Sticky actie­balk mobiel-friendly */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0 z-50">
+        <button type="button" onClick={addLokaal} className="w-full sm:w-auto inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-xl">
           <FaPlus /> Lokaal toevoegen
         </button>
-        <button type="submit" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-2xl">
+        <button type="submit" className="w-full sm:w-auto inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-2xl">
           <FaSave /> Opslaan
         </button>
       </div>
