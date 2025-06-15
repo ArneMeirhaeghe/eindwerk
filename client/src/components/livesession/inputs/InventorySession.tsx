@@ -1,7 +1,7 @@
 import { useEffect, useState, type FC } from "react"
 import { getInventoryTemplate } from "../../../api/inventory"
 import type {
-  InventoryItem,
+  
   InventoryTemplateDto,
   Lokaal,
   Subsection,
