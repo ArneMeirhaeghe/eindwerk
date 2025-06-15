@@ -1,5 +1,4 @@
-// File: src/components/livesession/inputs/FormSession.tsx
-import  { useEffect, useState, type FC } from "react"
+import { useEffect, useState, type FC } from "react"
 import type { FormDto, FieldDto } from "../../../api/forms/types"
 import { getForm } from "../../../api/forms"
 import TextInput from "./TextInput"
@@ -13,8 +12,6 @@ interface Props {
   formId: string
   value?: Record<string, any>
   onChange: (newValues: Record<string, any>) => void
-  sessionId: string
-  sectionId: string
   componentId: string
   onUploadFile: (file: File, fieldId: string) => Promise<void>
 }
@@ -37,7 +34,7 @@ const FormSession: FC<Props> = ({
     setLocal(value)
   }, [value])
 
-  if (!form) return <p className="text-sm text-gray-500">Formulier laden…</p>
+  if (!form) return <p className="text-sm text-gray-500 italic">Formulier laden…</p>
 
   const handleFieldChange = (fieldId: string, v: any) => {
     const updated = { ...local, [fieldId]: v }
@@ -46,63 +43,67 @@ const FormSession: FC<Props> = ({
   }
 
   return (
-    <div className="space-y-4 mb-6 p-4 bg-white rounded shadow">
-      <h3 className="text-lg font-semibold">{form.name}</h3>
-      {form.fields.map((f: FieldDto) => {
-        const val = local[f.id] ?? ""
-        const common = {
-          label: f.label,
-          placeholder: f.settings.placeholder,
-          required: f.settings.required,
-          value: val,
-          onChange: (v: any) => handleFieldChange(f.id, v)
-        }
-        switch (f.type) {
-          case "text-input":
-            return <TextInput key={f.id} {...common} />
-          case "textarea":
-            return <Textarea key={f.id} {...common} rows={f.settings.rows} />
-          case "dropdown":
-            return (
-              <Dropdown
-                key={f.id}
-                {...common}
-                options={f.settings.options || []}
-              />
-            )
-          case "radio-group":
-            return (
-              <RadioGroup
-                key={f.id}
-                {...common}
-                options={f.settings.options || []}
-              />
-            )
-          case "checkbox-group":
-            return (
-              <CheckboxGroup
-                key={f.id}
-                {...common}
-                options={f.settings.options || []}
-                values={Array.isArray(val) ? val : []}
-              />
-            )
-          case "uploadzone":
-            return (
-              <FileUpload
-                key={f.id}
-                componentId={componentId}
-                savedValue={val}
-                onUpload={async files => {
-                  await onUploadFile(files[0], f.id)
-                  handleFieldChange(f.id, URL.createObjectURL(files[0]))
-                }}
-              />
-            )
-          default:
-            return null
-        }
-      })}
+    <div className="space-y-6 mb-6">
+      <div className="bg-white rounded-2xl shadow-md ring-1 ring-gray-200 p-6 hover:shadow-lg transition">
+        <h3 className="text-2xl font-semibold text-gray-800 mb-4">{form.name}</h3>
+        <div className="space-y-5">
+          {form.fields.map((f: FieldDto) => {
+            const val = local[f.id] ?? ""
+            const common = {
+              label: f.label,
+              placeholder: f.settings.placeholder,
+              required: f.settings.required,
+              value: val,
+              onChange: (v: any) => handleFieldChange(f.id, v)
+            }
+            switch (f.type) {
+              case "text-input":
+                return <TextInput key={f.id} {...common} />
+              case "textarea":
+                return <Textarea key={f.id} {...common} rows={f.settings.rows} />
+              case "dropdown":
+                return (
+                  <Dropdown
+                    key={f.id}
+                    {...common}
+                    options={f.settings.options || []}
+                  />
+                )
+              case "radio-group":
+                return (
+                  <RadioGroup
+                    key={f.id}
+                    {...common}
+                    options={f.settings.options || []}
+                  />
+                )
+              case "checkbox-group":
+                return (
+                  <CheckboxGroup
+                    key={f.id}
+                    {...common}
+                    options={f.settings.options || []}
+                    values={Array.isArray(val) ? val : []}
+                  />
+                )
+              case "uploadzone":
+                return (
+                  <FileUpload
+                    key={f.id}
+                    componentId={componentId}
+                    savedValue={val}
+                    onUpload={async files => {
+                      await onUploadFile(files[0], f.id)
+                      handleFieldChange(f.id, URL.createObjectURL(files[0]))
+                    }}
+                  />
+                )
+              default:
+                return null
+            }
+          })}
+        </div>
+      </div>
     </div>
   )
 }
