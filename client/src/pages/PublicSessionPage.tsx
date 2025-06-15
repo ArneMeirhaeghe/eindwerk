@@ -74,37 +74,38 @@ export default function PublicSessionPage() {
           )}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
-          {!isSummary ? (
-            <LiveSection
-              sessionId={id!}
-              sectionData={current}
-              saved={saved}
-              // async wrapper zorgt voor Promise<void> return
-              onFieldSave={async (compId, v) => {
-                saveField(current.section.id, compId, v)
-              }}
-              onUploadFile={async (file, compId) => {
-                await uploadFile(current.section.id, compId, file)
-              }}
-            />
-          ) : (
-            <div className="p-6 space-y-4">
-              {flatSections.map(({ phase, section }) => (
-                <div key={section.id} className="space-y-1">
-                  <h3 className="text-sm font-medium text-gray-600 uppercase">
-                    {phase}
-                  </h3>
-                  <h4 className="font-semibold">{section.naam}</h4>
-                  <pre className="text-xs bg-gray-100 p-2 rounded">
-                    {JSON.stringify(responses[section.id] || {}, null, 2)}
-                  </pre>
-                </div>
-              ))}
-            </div>
-          )}
+      {/* Content */}
+<div className="flex-1 overflow-y-auto">
+  {!isSummary ? (
+    <LiveSection
+      sessionId={id!}
+      sectionData={current}
+      saved={saved}
+      // async wrapper zorgt voor Promise<void> return
+      onFieldSave={async (compId, v) => {
+        saveField(current.section.id, compId, v)
+      }}
+      onUploadFile={async (file, compId) => {
+        await uploadFile(current.section.id, compId, file)
+      }}
+      collapsible={false}     // <<< hier toevoegen
+    />
+  ) : (
+    <div className="p-6 space-y-4">
+      {flatSections.map(({ phase, section }) => (
+        <div key={section.id} className="space-y-1">
+          <h3 className="text-sm font-medium text-gray-600 uppercase">
+            {phase}
+          </h3>
+          <h4 className="font-semibold">{section.naam}</h4>
+          <pre className="text-xs bg-gray-100 p-2 rounded">
+            {JSON.stringify(responses[section.id] || {}, null, 2)}
+          </pre>
         </div>
+      ))}
+    </div>
+  )}
+</div>
 
         {/* Navigation */}
         <div className="flex justify-between items-center p-3 bg-gray-100 rounded-b-2xl">

@@ -30,6 +30,7 @@ const InventorySession: FC<Props> = ({
   useEffect(() => {
     getInventoryTemplate(templateId).then(tpl => {
       setTemplate(tpl)
+      // initialize missing
       const init = { ...value }
       tpl.lokalen.forEach((l: Lokaal) => {
         if (!init[l.name]) init[l.name] = {}
@@ -46,17 +47,17 @@ const InventorySession: FC<Props> = ({
   }, [templateId])
 
   const handleItem = (
-    lName: string,
-    sName: string,
-    itName: string,
+    lokaalName: string,
+    subName: string,
+    itemName: string,
     v: number
   ) => {
     setLocalVals(prev => {
       const next = {
         ...prev,
-        [lName]: {
-          ...prev[lName],
-          [sName]: { ...prev[lName][sName], [itName]: v },
+        [lokaalName]: {
+          ...prev[lokaalName],
+          [subName]: { ...prev[lokaalName][subName], [itemName]: v },
         },
       }
       onChange(next)
@@ -67,35 +68,39 @@ const InventorySession: FC<Props> = ({
   if (!template)
     return <p className="text-sm text-gray-500 italic">Inventaris laden…</p>
 
-  const lokals = template.lokalen.filter(l => selectedLokalen.includes(l.name))
+  const lokals = template.lokalen.filter(l =>
+    selectedLokalen.includes(l.name)
+  )
 
   return (
     <div className="bg-white rounded-2xl shadow-md ring-1 ring-gray-200 p-6 space-y-6">
       <h3 className="text-xl font-semibold text-gray-800">{template.naam}</h3>
-      {lokals.map(lokaal => (
-        <details
-          key={lokaal.name}
-          className="border border-gray-200 rounded-lg overflow-hidden"
-        >
-          <summary className="px-4 py-2 bg-gray-100 cursor-pointer text-gray-800 font-medium">
-            {lokaal.name}
-          </summary>
-          <div className="p-4 space-y-4">
-            {lokaal.subsections
-              .filter(s => (selectedSubs[lokaal.name] || []).includes(s.name))
-              .map(sub => (
+      {lokals.map(lokaal => {
+        const subs = lokaal.subsections.filter(s =>
+          (selectedSubs[lokaal.name] || []).includes(s.name)
+        )
+        return (
+          <details
+            key={lokaal.name}
+            className="border border-gray-200 rounded-lg overflow-hidden"
+          >
+            <summary className="px-4 py-2 bg-gray-100 cursor-pointer text-gray-800 font-medium">
+              {lokaal.name}
+            </summary>
+            <div className="p-4 space-y-4">
+              {subs.map(sub => (
                 <div key={sub.name} className="space-y-3">
-                  <h4 className="text-lg font-medium text-gray-700">{sub.name}</h4>
+                  <h4 className="text-lg font-medium text-gray-700">
+                    {sub.name}
+                  </h4>
                   <div className="overflow-x-auto">
                     <table className="w-full table-auto border-collapse text-sm">
                       <thead>
                         <tr className="bg-gray-200">
                           <th className="px-3 py-2 text-left">Item</th>
-                          <th className="px-3 py-2 text-left">Gewenst</th>
-                          <th className="px-3 py-2 text-left">Eigenlijk</th>
-                          {interactive && (
-                            <th className="px-3 py-2 text-left">Invullen</th>
-                          )}
+                          <th className="px-3 py-2 text-left">
+                            {interactive ? "Invullen" : "Aantal"}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -108,10 +113,8 @@ const InventorySession: FC<Props> = ({
                               className={interactive ? "hover:bg-gray-50" : ""}
                             >
                               <td className="px-3 py-2">{it.name}</td>
-                              <td className="px-3 py-2">{it.desired}</td>
-                              <td className="px-3 py-2">{actual}</td>
-                              {interactive && (
-                                <td className="px-3 py-2">
+                              <td className="px-3 py-2">
+                                {interactive ? (
                                   <input
                                     type="number"
                                     value={actual}
@@ -123,10 +126,12 @@ const InventorySession: FC<Props> = ({
                                         Number(e.target.value)
                                       )
                                     }
-                                    className="w-16 border border-gray-200 rounded-lg px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+                                    className="w-20 border border-gray-200 rounded-lg px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
                                   />
-                                </td>
-                              )}
+                                ) : (
+                                  it.desired
+                                )}
+                              </td>
                             </tr>
                           )
                         })}
@@ -135,9 +140,10 @@ const InventorySession: FC<Props> = ({
                   </div>
                 </div>
               ))}
-          </div>
-        </details>
-      ))}
+            </div>
+          </details>
+        )
+      })}
     </div>
   )
 }
