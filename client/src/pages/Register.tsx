@@ -19,7 +19,7 @@ export default function Register() {
     try {
       await registerUser(email, password)
       setSuccess("Registratie gelukt. Je wordt doorgestuurd...")
-      setTimeout(() => (window.location.href = "/login"), 1500)
+      setTimeout(() => (window.location.href = "/#/login"), 1500)
     } catch (err: any) {
       setError(err.response?.data || "Registratie mislukt")
     } finally {

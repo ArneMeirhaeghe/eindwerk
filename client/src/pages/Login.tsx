@@ -39,7 +39,7 @@ export default function Login() {
       <div className="bg-indigo-600 text-white w-full lg:w-1/2 p-10 flex flex-col justify-center">
         <h1 className="text-4xl font-bold mb-4">Welkom bij Vlot Verhuurd</h1>
         <p className="text-lg mb-6 max-w-md">
-          Eén slimme webtool om jeugdlokalen, zalen of huisjes eenvoudig digitaal te verhuren. 
+          Een slimme webtool om jeugdlokalen, zalen of huisjes eenvoudig digitaal te verhuren. 
           Beheer rondleidingen, inventarissen en communicatie volledig op maat – alles vanuit één dashboard.
         </p>
         <ul className="list-disc list-inside space-y-2 text-sm text-indigo-100">
