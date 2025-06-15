@@ -1,8 +1,8 @@
-// File: src/components/builder/SettingsPanel.tsx
+// src/components/builder/SettingsPanel.tsx
 import type { FC } from "react";
 
 import TitleSettings from "./settings/TitleSettings";
-// import SubheadingSettings from "./settings/SubheadingSettings";
+import SubheadingSettings from "./settings/SubheadingSettings"; // toegevoegd
 import ParagraphSettings from "./settings/ParagraphSettings";
 import QuoteSettings from "./settings/QuoteSettings";
 import ButtonSettings from "./settings/ButtonSettings";
@@ -36,8 +36,8 @@ const SettingsPanel: FC<Props> = ({ comp, onUpdate }) => {
             switch (comp.type) {
               case "title":
                 return <TitleSettings comp={comp} onUpdate={onUpdate} />;
-              // case "subheading":
-              //   return <SubheadingSettings comp={comp} onUpdate={onUpdate} />;
+              case "subheading":
+                return <SubheadingSettings comp={comp} onUpdate={onUpdate} />;
               case "paragraph":
                 return <ParagraphSettings comp={comp} onUpdate={onUpdate} />;
               case "quote":
