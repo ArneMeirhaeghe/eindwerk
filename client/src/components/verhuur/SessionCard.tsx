@@ -71,7 +71,7 @@ export default function SessionCard({
         </Link>
         <button
           onClick={() =>
-            copyToClipboard(`${window.location.origin}/public/${session.id}`)
+            copyToClipboard(`${window.location.origin}/#/public/${session.id}`)
           }
           className="flex justify-center items-center gap-2 text-gray-700 hover:underline"
         >
