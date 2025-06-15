@@ -23,7 +23,6 @@ export default function SessionResponsesPage() {
     ;(async () => {
       try {
         const s = await getLiveSession(id!)
-        console.log(s)
         setSession(s)
         // Prefetch forms
         const formIds = new Set<string>()
@@ -64,53 +63,52 @@ export default function SessionResponsesPage() {
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-12">
-      {/* Pagina titel */}
+      {/* Pagina-titel */}
       <h1 className="text-3xl font-bold text-center text-blue-600">
-        Antwoorden voor: <span className="text-gray-800">{session.groep}</span>
+        Antwoorden: <span className="text-gray-800">{session.groep}</span>
       </h1>
 
+      {/* Fases */}
       {Object.entries(session.fases).map(([fase, secs]) => (
         <section key={fase} className="space-y-8">
-          {/* Fase titel */}
           <h2 className="text-2xl font-semibold text-blue-600 border-b-2 border-blue-200 pb-2">
             {fase.charAt(0).toUpperCase() + fase.slice(1)}
           </h2>
-
           <div className="space-y-6">
             {secs.map(sec => (
-              <div key={sec.id} className="bg-white rounded-xl shadow-md ring-1 ring-gray-100 p-6 hover:shadow-lg transition">
-                {/* Sectie naam */}
-                <h3 className="text-xl font-medium text-gray-800 mb-4">{sec.naam}</h3>
-
-                <div className="space-y-6">
+              <div 
+                key={sec.id} 
+                className="bg-white rounded-xl shadow-md ring-1 ring-gray-100 p-6 hover:shadow-lg transition"
+              >
+                <h3 className="text-xl font-medium text-gray-800 mb-4">
+                  {sec.naam}
+                </h3>
+                <div className="space-y-8">
                   {sec.components.map((comp: ComponentSnapshot) => {
                     const resp = session.responses[sec.id]?.[comp.id]
                     if (resp == null) return null
 
-                    // FORM component
+                    const title = comp.props.label || comp.type
+
+                    // Formulier antwoorden
                     if (comp.type === "form") {
                       const formDto = forms[comp.props.formId]
-                      if (!formDto) {
-                        return <p key={comp.id} className="text-sm text-gray-500">Formulier laden…</p>
-                      }
-                      return (
+                      return formDto ? (
                         <div key={comp.id} className="bg-gray-50 rounded-lg p-4">
-                          <FormResponseSummary
-                            form={formDto}
-                            values={resp as Record<string, any>}
-                          />
+                          <h4 className="text-lg font-semibold text-gray-700 mb-2">{title}</h4>
+                          <FormResponseSummary form={formDto} values={resp as Record<string, any>} />
                         </div>
+                      ) : (
+                        <p key={comp.id} className="text-sm text-gray-500">Formulier laden…</p>
                       )
                     }
 
-                    // INVENTORY component
+                    // Inventaris antwoorden
                     if (comp.type === "inventory") {
                       const tpl = inventories[comp.props.templateId]
-                      if (!tpl) {
-                        return <p key={comp.id} className="text-sm text-gray-500">Inventaris laden…</p>
-                      }
-                      return (
+                      return tpl ? (
                         <div key={comp.id} className="bg-gray-50 rounded-lg p-4">
+                          <h4 className="text-lg font-semibold text-gray-700 mb-2">{title}</h4>
                           <InventoryResponseSummary
                             template={tpl}
                             selectedLokalen={comp.props.selectedLokalen}
@@ -118,18 +116,20 @@ export default function SessionResponsesPage() {
                             values={resp as Record<string, any>}
                           />
                         </div>
+                      ) : (
+                        <p key={comp.id} className="text-sm text-gray-500">Inventaris laden…</p>
                       )
                     }
 
-                    // UPLOAD component
+                    // Bestand of upload
                     if ((resp as any).url) {
                       return (
-                        <div key={comp.id} className="space-y-2">
-                          <div className="text-blue-600 font-medium">{comp.props.label || comp.type}</div>
+                        <div key={comp.id} className="bg-gray-50 rounded-lg p-4">
+                          <h4 className="text-lg font-semibold text-gray-700 mb-2">{title}</h4>
                           <img
                             src={(resp as any).url}
                             alt={(resp as any).fileName}
-                            className="w-full rounded-lg shadow-sm"
+                            className="w-full rounded-lg shadow-inner mb-2"
                           />
                           <a
                             href={(resp as any).url}
@@ -142,23 +142,25 @@ export default function SessionResponsesPage() {
                       )
                     }
 
-                    // MEERDERE WAARDEN
+                    // Meerdere waarden (checkbox / dropdown)
                     if (Array.isArray(resp)) {
                       return (
-                        <div key={comp.id} className="space-y-2">
-                          <div className="text-blue-600 font-medium">{comp.props.label || comp.type}</div>
-                          <ul className="list-disc list-inside text-gray-700">
-                            {(resp as any[]).map((v, i) => <li key={i}>{v}</li>)}
+                        <div key={comp.id} className="bg-gray-50 rounded-lg p-4">
+                          <h4 className="text-lg font-semibold text-gray-700 mb-2">{title}</h4>
+                          <ul className="list-disc list-inside text-gray-800">
+                            {(resp as any[]).map((v, i) => (
+                              <li key={i}>{v}</li>
+                            ))}
                           </ul>
                         </div>
                       )
                     }
 
-                    // EENVOUDIGE WAARDE
+                    // Eenvoudige waarde (text, number)
                     return (
-                      <div key={comp.id} className="space-y-1">
-                        <div className="text-blue-600 font-medium">{comp.props.label || comp.type}</div>
-                        <div className="text-gray-800 break-words">{String(resp)}</div>
+                      <div key={comp.id} className="bg-gray-50 rounded-lg p-4">
+                        <h4 className="text-lg font-semibold text-gray-700 mb-2">{title}</h4>
+                        <p className="text-gray-800">{String(resp)}</p>
                       </div>
                     )
                   })}
