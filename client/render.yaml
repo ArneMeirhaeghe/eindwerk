@@ -2,9 +2,9 @@ services:
   - type: static
     name: ksainv-frontend
     env: static
-    root: client             # óf stel dit in via de Render-dashboard
+    root: client           # waar je package.json & render.yaml staan
     buildCommand: npm run build
-    publishPath: dist        # ← Vite’s build-output
+    publishPath: dist      # wélke map je serveert *binnen* root
     routes:
       - type: rewrite
         src: /(.*)
