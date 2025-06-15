@@ -1,5 +1,15 @@
 // File: src/components/livesession/LiveSection.tsx
 import  { useState, type FC } from "react"
+import { ChevronDown, ChevronRight } from "lucide-react"
+import type { FlatSection } from "../../hooks/useLiveSession"
+import FormSession from "./inputs/FormSession"
+import InventorySession from "./inputs/InventorySession"
+import TextInput from "./inputs/TextInput"
+import Textarea from "./inputs/Textarea"
+import Dropdown from "./inputs/Dropdown"
+import RadioGroup from "./inputs/RadioGroup"
+import CheckboxGroup from "./inputs/CheckboxGroup"
+import FileUpload from "./inputs/FileUpload"
 import TitlePreview from "../builder/previews/TitlePreview"
 import SubheadingPreview from "../builder/previews/SubheadingPreview"
 import ParagraphPreview from "../builder/previews/ParagraphPreview"
@@ -11,33 +21,22 @@ import GridPreview from "../builder/previews/GridPreview"
 import ChecklistPreview from "../builder/previews/ChecklistPreview"
 import ButtonPreview from "../builder/previews/ButtonPreview"
 
-import FormSession from "./inputs/FormSession"
-import InventorySession from "./inputs/InventorySession"
-import TextInput from "./inputs/TextInput"
-import Textarea from "./inputs/Textarea"
-import Dropdown from "./inputs/Dropdown"
-import RadioGroup from "./inputs/RadioGroup"
-import CheckboxGroup from "./inputs/CheckboxGroup"
-import FileUpload from "./inputs/FileUpload"
-
-import type { ComponentSnapshot } from "../../api/liveSession/types"
-import type { FlatSection } from "../../hooks/useLiveSession"
-import { ChevronDown, ChevronRight } from "lucide-react"
-
 interface Props {
   sessionId: string
   sectionData: FlatSection
   saved: Record<string, any>
   onFieldSave: (componentId: string, value: any) => Promise<void>
   onUploadFile: (file: File, componentId: string) => Promise<void>
+  /** zet op false om section altijd geopend te tonen */
+  collapsible?: boolean
 }
 
 const LiveSection: FC<Props> = ({
-  
   sectionData,
   saved,
   onFieldSave,
   onUploadFile,
+  collapsible = true,
 }) => {
   const { section } = sectionData
   const [local, setLocal] = useState<Record<string, any>>(saved)
@@ -53,22 +52,27 @@ const LiveSection: FC<Props> = ({
 
   return (
     <div className="bg-white rounded-xl shadow-md ring-1 ring-gray-100 mb-6 overflow-hidden">
-      <button
-        onClick={toggle}
-        className="w-full flex items-center justify-between px-6 py-4 bg-blue-50 hover:bg-blue-100 transition font-semibold text-blue-600"
-      >
-        <div className="flex items-center space-x-2">
-          {open ? <ChevronDown /> : <ChevronRight />}
-          <span className="text-lg">{section.naam}</span>
+      {collapsible ? (
+        <button
+          onClick={toggle}
+          className="w-full flex items-center justify-between px-6 py-4 bg-blue-50 hover:bg-blue-100 transition font-semibold text-blue-600"
+        >
+          <div className="flex items-center space-x-2">
+            {open ? <ChevronDown /> : <ChevronRight />}
+            <span className="text-lg">{section.naam}</span>
+          </div>
+        </button>
+      ) : (
+        <div className="px-6 py-4 bg-blue-50 font-semibold text-blue-600">
+          {section.naam}
         </div>
-      </button>
+      )}
 
-      {open && (
+      {(open || !collapsible) && (
         <div className="p-6 space-y-8">
-          {section.components.map((comp: ComponentSnapshot) => {
+          {section.components.map(comp => {
             const val = local[comp.id]
             switch (comp.type) {
-              // Read-only previews
               case "title":
                 return <TitlePreview key={comp.id} p={comp.props} />
               case "subheading":
@@ -90,7 +94,6 @@ const LiveSection: FC<Props> = ({
               case "button":
                 return <ButtonPreview key={comp.id} p={comp.props} />
 
-              // Interactive inputs
               case "text-input":
                 return (
                   <TextInput
