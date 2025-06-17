@@ -11,7 +11,7 @@ export default function UploadZone() {
   const [uploads, setUploads] = useState<Record<string, MediaResponse[]>>({
     img: [], video: [], files: []
   })
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [alt, setAlt] = useState("")
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -71,22 +71,29 @@ export default function UploadZone() {
     }
   }
 
-  const onFileSelect = (file: File) => {
-    setSelectedFile(file)
-    setAlt(file.name)
+  const onFileSelect = (files: File[]) => {
+    setSelectedFiles(files)
+    if (files.length === 1) setAlt(files[0].name)
+    else setAlt("")
   }
+
   const onGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) onFileSelect(file)
+    const files = e.target.files
+    if (files && files.length > 0) {
+      onFileSelect(Array.from(files))
+    }
   }
 
   const handleUpload = async () => {
-    if (!selectedFile) return
+    if (selectedFiles.length === 0) return
     setIsUploading(true)
     setError(null)
     try {
-      await uploadFile(selectedFile, alt || selectedFile.name, activeTab)
-      setSelectedFile(null)
+      for (const file of selectedFiles) {
+        const altText = selectedFiles.length === 1 ? (alt || file.name) : file.name
+        await uploadFile(file, altText, activeTab)
+      }
+      setSelectedFiles([])
       setAlt("")
       setSuccess(true)
       await fetchUploads()
@@ -115,7 +122,7 @@ export default function UploadZone() {
     canvas.toBlob(blob => {
       if (blob) {
         const file = new File([blob], `foto_${Date.now()}.jpg`, { type: "image/jpeg" })
-        onFileSelect(file)
+        onFileSelect([file])
         cancelCamera()
       }
     }, "image/jpeg")
@@ -130,12 +137,13 @@ export default function UploadZone() {
     recorder.onstop = () => {
       const blob = new Blob(recordedChunksRef.current, { type: "video/webm" })
       const file = new File([blob], `video_${Date.now()}.webm`, { type: "video/webm" })
-      onFileSelect(file)
+      onFileSelect([file])
       cancelCamera()
     }
     recorder.start()
     setRecording(true)
   }
+
   const stopRecording = () => mediaRecorderRef.current?.stop()
 
   return (
@@ -147,7 +155,7 @@ export default function UploadZone() {
         {(["img","video","files"] as const).map(tab => (
           <button
             key={tab}
-            onClick={() => { setActiveTab(tab); setSelectedFile(null) }}
+            onClick={() => { setActiveTab(tab); setSelectedFiles([]) }}
             className={`flex-1 text-center py-2 rounded-lg font-medium transition ${
               activeTab === tab
                 ? "bg-blue-600 text-white ring-2 ring-blue-300 shadow-md"
@@ -198,7 +206,7 @@ export default function UploadZone() {
         </div>
       ) : (
         <div className="bg-white rounded-xl shadow-md ring-1 ring-gray-100 p-6 flex flex-col items-center">
-          <p className="mb-4 text-gray-600">Sleep hier of kies een bestand:</p>
+          <p className="mb-4 text-gray-600">Sleep hier of kies één of meerdere bestanden:</p>
           <div className="flex flex-col sm:flex-row gap-4 w-full">
             {activeTab !== "files" && (
               <button
@@ -212,36 +220,50 @@ export default function UploadZone() {
               onClick={() => galleryInputRef.current?.click()}
               className="flex-1 bg-gray-50 text-gray-700 py-3 rounded-lg shadow hover:bg-gray-100 transition"
             >
-              {activeTab === "files" ? "📁 Bestand kiezen" : activeTab === "img" ? "🖼️ Foto kiezen" : "🎥 Video kiezen"}
+              {activeTab === "files" ? "📁 Bestanden kiezen" : activeTab === "img" ? "🖼️ Foto's kiezen" : "🎥 Video kiezen"}
             </button>
           </div>
           <input
             ref={galleryInputRef}
             type="file"
+            multiple={activeTab === "img"}
             accept={activeTab === "files" ? "*/*" : activeTab === "img" ? "image/*" : "video/*"}
             onChange={onGalleryChange}
             className="hidden"
           />
-          {selectedFile && (
-            <div className="mt-4 flex items-center space-x-2">
-              <span className="text-gray-800 truncate">{selectedFile.name}</span>
-              <button onClick={() => setSelectedFile(null)} className="text-red-600">✕</button>
+          {selectedFiles.length > 0 && (
+            <div className="mt-4 w-full space-y-1">
+              {selectedFiles.map((file, idx) => (
+                <div key={idx} className="flex items-center justify-between">
+                  <span className="text-gray-800 truncate">{file.name}</span>
+                  <button
+                    onClick={() =>
+                      setSelectedFiles(selectedFiles.filter((_, i) => i !== idx))
+                    }
+                    className="text-red-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
             </div>
           )}
-          <input
-            type="text"
-            placeholder="Korte beschrijving"
-            value={alt}
-            onChange={e => setAlt(e.target.value)}
-            disabled={isUploading}
-            className="mt-4 w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
-          />
+          {selectedFiles.length === 1 && (
+            <input
+              type="text"
+              placeholder="Korte beschrijving"
+              value={alt}
+              onChange={e => setAlt(e.target.value)}
+              disabled={isUploading}
+              className="mt-4 w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+            />
+          )}
           <button
             onClick={handleUpload}
-            disabled={isUploading || !selectedFile}
-            className={`mt-4 w-full bg-blue-600 text-white py-2 rounded-lg shadow hover:bg-blue-700 transition disabled:opacity-50`}
+            disabled={isUploading || selectedFiles.length === 0}
+            className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg shadow hover:bg-blue-700 transition disabled:opacity-50"
           >
-            {isUploading ? "Bezig..." : "Uploaden"}
+            {isUploading ? "Bezig..." : `Uploaden (${selectedFiles.length})`}
           </button>
         </div>
       )}
@@ -273,5 +295,5 @@ export default function UploadZone() {
         ))}
       </div>
     </div>
-)
+  )
 }
