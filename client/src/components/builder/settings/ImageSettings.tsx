@@ -1,193 +1,310 @@
-import { useState, useEffect, useRef, type FC, type ChangeEvent } from "react";
-import { toast } from "react-toastify";
-import type { ComponentItem, ImageProps } from "../../../types/types";
-import type { MediaResponse } from "../../../api/media/types";
-import { deleteUpload, getUploads, uploadFile } from "../../../api/media";
+import React, { useState, useEffect, useRef } from "react"
+import {
+  uploadFile,
+  getUploads,
+  deleteUpload,
+} from "../api/media"
+import type { MediaResponse } from "../api/media/types"
 
-interface Props {
-  comp: ComponentItem;
-  onUpdate: (c: ComponentItem) => void;
-}
+export default function UploadZone() {
+  const [activeTab, setActiveTab] = useState<"img" | "video" | "files">("img")
+  const [uploads, setUploads] = useState<Record<string, MediaResponse[]>>({
+    img: [], video: [], files: []
+  })
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [alt, setAlt] = useState("")
+  const [isUploading, setIsUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const [showCamera, setShowCamera] = useState(false)
+  const [recording, setRecording] = useState(false)
 
-const defaultProps: Required<ImageProps> = {
-  url: "",
-  alt: "",
-  width: 300,
-  height: 200,
-  borderWidth: 0,
-  borderColor: "#000000",
-  radius: 0,
-  shadow: false,
-  objectFit: "cover",
-  showAlt: false,
-};
+  // 🎚️ Nieuwe state voor radiobuttons
+  const [photoMode, setPhotoMode] = useState<"upload" | "capture">("upload")
 
-const ImageSettings: FC<Props> = ({ comp, onUpdate }) => {
-  const p = { ...defaultProps, ...(comp.props as ImageProps) };
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const mediaStreamRef = useRef<MediaStream | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const recordedChunksRef = useRef<Blob[]>([])
+  const galleryInputRef = useRef<HTMLInputElement>(null)
 
-  const [uploads, setUploads] = useState<MediaResponse[]>([]);
-  const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
+  useEffect(() => { fetchUploads() }, [])
+  useEffect(() => {
+    if (success) {
+      const id = setTimeout(() => setSuccess(false), 3000)
+      return () => clearTimeout(id)
+    }
+  }, [success])
 
-  // **Nieuwe state + ref voor radiobuttons & camera-trigger**
-  const [mode, setMode] = useState<"upload" | "capture">("upload");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // 🔄 Sync photoMode met showCamera (alleen voor afbeeldingen)
+  useEffect(() => {
+    if (activeTab === "img") {
+      setShowCamera(photoMode === "capture")
+    }
+  }, [photoMode, activeTab])
 
-  // Ruimt afbeeldingen in state op
-  const fetchImages = async () => {
+  useEffect(() => {
+    if (!showCamera) return
+    const constraints: MediaStreamConstraints =
+      activeTab === "img"
+        ? { video: { facingMode: "environment" } }
+        : { video: { facingMode: "environment" }, audio: true }
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(stream => {
+        mediaStreamRef.current = stream
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+          videoRef.current.play()
+        }
+      })
+      .catch(err => setError(`Kan camera niet openen: ${err.message}`))
+    return () => {
+      mediaStreamRef.current?.getTracks().forEach(t => t.stop())
+      mediaStreamRef.current = null
+    }
+  }, [showCamera, activeTab])
+
+  const fetchUploads = async () => {
     try {
-      const all = await getUploads();
-      setUploads(all.filter((m) => m.contentType.startsWith("image/")));
-    } catch {
-      toast.error("Media laden mislukt");
+      const all = await getUploads()
+      const grouped: Record<string, MediaResponse[]> = { img: [], video: [], files: [] }
+      all.forEach(item => {
+        const key = item.contentType.startsWith("image/")
+          ? "img"
+          : item.contentType.startsWith("video/")
+          ? "video"
+          : "files"
+        grouped[key].push(item)
+      })
+      setUploads(grouped)
+    } catch (err: any) {
+      setError(err.response?.data || "Fout bij laden van media")
     }
-  };
+  }
 
-  useEffect(() => {
-    fetchImages();
-  }, []);
-
-  // Zodra je “Foto maken” kiest, triggert de camera
-  useEffect(() => {
-    if (mode === "capture" && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  }, [mode]);
-
-  const upd = (key: keyof ImageProps, value: any) =>
-    onUpdate({ ...comp, props: { ...p, [key]: value } });
-
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const chosen = e.target.files?.[0] ?? null;
-    setFile(chosen);
-    if (chosen) {
-      upd("url", URL.createObjectURL(chosen));
-      upd("alt", chosen.name);
-    }
-  };
+  const onFileSelect = (file: File) => {
+    setSelectedFile(file)
+    setAlt(file.name)
+  }
+  const onGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) onFileSelect(file)
+  }
 
   const handleUpload = async () => {
-    if (!file) return;
-    setLoading(true);
+    if (!selectedFile) return
+    setIsUploading(true)
+    setError(null)
     try {
-      const res = await uploadFile(file, file.name, "img");
-      upd("url", res.url);
-      upd("alt", res.alt || file.name);
-      setFile(null);
-      await fetchImages();
-      toast.success("Upload geslaagd");
-    } catch {
-      toast.error("Upload mislukt");
+      await uploadFile(selectedFile, alt || selectedFile.name, activeTab)
+      setSelectedFile(null)
+      setAlt("")
+      setSuccess(true)
+      await fetchUploads()
+    } catch (err: any) {
+      setError(err.response?.data || "Upload mislukt")
     } finally {
-      setLoading(false);
+      setIsUploading(false)
     }
-  };
+  }
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteUpload(id);
-      await fetchImages();
-      toast.success("Verwijderd");
-    } catch {
-      toast.error("Verwijderen mislukt");
+  const cancelCamera = () => {
+    setShowCamera(false)
+    mediaStreamRef.current?.getTracks().forEach(t => t.stop())
+    mediaStreamRef.current = null
+    setRecording(false)
+    // als je terug wil naar upload-mode bij annuleren:
+    setPhotoMode("upload")
+  }
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return
+    const video = videoRef.current
+    const canvas = document.createElement("canvas")
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext("2d")
+    ctx?.drawImage(video, 0, 0)
+    canvas.toBlob(blob => {
+      if (blob) {
+        const file = new File([blob], `foto_${Date.now()}.jpg`, { type: "image/jpeg" })
+        onFileSelect(file)
+        cancelCamera()
+      }
+    }, "image/jpeg")
+  }
+
+  const startRecording = () => {
+    if (!mediaStreamRef.current) return
+    recordedChunksRef.current = []
+    const recorder = new MediaRecorder(mediaStreamRef.current)
+    mediaRecorderRef.current = recorder
+    recorder.ondataavailable = e => e.data.size > 0 && recordedChunksRef.current.push(e.data)
+    recorder.onstop = () => {
+      const blob = new Blob(recordedChunksRef.current, { type: "video/webm" })
+      const file = new File([blob], `video_${Date.now()}.webm`, { type: "video/webm" })
+      onFileSelect(file)
+      cancelCamera()
     }
-  };
+    recorder.start()
+    setRecording(true)
+  }
+  const stopRecording = () => mediaRecorderRef.current?.stop()
 
   return (
-    <div className="space-y-6 p-4">
-      {/* ➤ Radiobuttons kiezen tussen uploaden of camera */}
-      <div className="flex space-x-6 mb-4">
-        <label className="inline-flex items-center">
-          <input
-            type="radio"
-            name="mode"
-            value="upload"
-            checked={mode === "upload"}
-            onChange={() => setMode("upload")}
-            className="mr-2"
-          />
-          Foto uploaden
-        </label>
-        <label className="inline-flex items-center">
-          <input
-            type="radio"
-            name="mode"
-            value="capture"
-            checked={mode === "capture"}
-            onChange={() => setMode("capture")}
-            className="mr-2"
-          />
-          Foto maken
-        </label>
-      </div>
+    <div className="container mx-auto px-4 py-6">
+      {/* ✨ Radiobuttons voor Foto uploaden / Foto maken (alleen bij img-tab) */}
+      {activeTab === "img" && (
+        <div className="flex space-x-4 mb-4">
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              name="photoMode"
+              value="upload"
+              checked={photoMode === "upload"}
+              onChange={() => setPhotoMode("upload")}
+              className="mr-2"
+            />
+            Foto uploaden
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              name="photoMode"
+              value="capture"
+              checked={photoMode === "capture"}
+              onChange={() => setPhotoMode("capture")}
+              className="mr-2"
+            />
+            Foto maken
+          </label>
+        </div>
+      )}
 
-      {/* Upload-zone */}
-      <div className="p-4 border-2 border-dashed border-gray-300 rounded bg-white">
-        {/* Één verborgen input, met capture attribuut alleen in capture-mode */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture={mode === "capture" ? "environment" : undefined}
-          onChange={handleFileChange}
-          className={mode === "upload" ? "w-full text-sm" : "hidden"}
-        />
+      {error && <p className="text-red-600 mb-4">{error}</p>}
+      {success && <p className="text-green-600 mb-4">Upload succesvol!</p>}
 
-        {/* Upload-knop verschijnt zodra er een bestand/foto gekozen is */}
-        {file && (
+      {showCamera ? (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center p-6 z-50">
+          <video ref={videoRef} className="w-full max-w-md rounded-xl shadow-lg mb-6" autoPlay muted />
+          <div className="flex flex-col sm:flex-row gap-4">
+            {activeTab === "img" ? (
+              <button
+                onClick={capturePhoto}
+                className="flex-1 bg-blue-600 text-white py-3 rounded-lg shadow hover:bg-blue-700 transition"
+              >
+                📸 Vastleggen
+              </button>
+            ) : recording ? (
+              <button
+                onClick={stopRecording}
+                className="flex-1 bg-red-600 text-white py-3 rounded-lg shadow hover:bg-red-700 transition"
+              >
+                ⏹️ Stoppen
+              </button>
+            ) : (
+              <button
+                onClick={startRecording}
+                className="flex-1 bg-blue-600 text-white py-3 rounded-lg shadow hover:bg-blue-700 transition"
+              >
+                🔴 Opnemen
+              </button>
+            )}
+            <button
+              onClick={cancelCamera}
+              className="flex-1 bg-gray-50 text-gray-700 py-3 rounded-lg shadow hover:bg-gray-100 transition"
+            >
+              ✕ Annuleren
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow-md ring-1 ring-gray-100 p-6 flex flex-col items-center">
+          <p className="mb-4 text-gray-600">Sleep hier of kies een bestand:</p>
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
+            {/* blijft bestaan, maar camera kan nu ook via radiobuttons */}
+            {activeTab !== "files" && (
+              <button
+                onClick={() => setShowCamera(true)}
+                className="flex-1 bg-blue-600 text-white py-3 rounded-lg shadow hover:bg-blue-700 transition"
+              >
+                {activeTab === "img" ? "📸 Foto maken" : "📹 Video maken"}
+              </button>
+            )}
+            <button
+              onClick={() => galleryInputRef.current?.click()}
+              className="flex-1 bg-gray-50 text-gray-700 py-3 rounded-lg shadow hover:bg-gray-100 transition"
+            >
+              {activeTab === "files"
+                ? "📁 Bestand kiezen"
+                : activeTab === "img"
+                ? "🖼️ Foto kiezen"
+                : "🎥 Video kiezen"}
+            </button>
+          </div>
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept={
+              activeTab === "files"
+                ? "*/*"
+                : activeTab === "img"
+                ? "image/*"
+                : "video/*"
+            }
+            onChange={onGalleryChange}
+            className="hidden"
+          />
+          {selectedFile && (
+            <div className="mt-4 flex items-center space-x-2">
+              <span className="text-gray-800 truncate">{selectedFile.name}</span>
+              <button onClick={() => setSelectedFile(null)} className="text-red-600">✕</button>
+            </div>
+          )}
+          <input
+            type="text"
+            placeholder="Korte beschrijving"
+            value={alt}
+            onChange={e => setAlt(e.target.value)}
+            disabled={isUploading}
+            className="mt-4 w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+          />
           <button
             onClick={handleUpload}
-            disabled={loading}
-            className="mt-3 w-full py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+            disabled={isUploading || !selectedFile}
+            className={`mt-4 w-full bg-blue-600 text-white py-2 rounded-lg shadow hover:bg-blue-700 transition disabled:opacity-50`}
           >
-            {loading ? "Bezig met uploaden..." : "Uploaden"}
+            {isUploading ? "Bezig..." : "Uploaden"}
           </button>
+        </div>
+      )}
+
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {uploads[activeTab].length === 0 && (
+          <p className="col-span-full text-center text-gray-600 italic">Nog geen uploads</p>
         )}
-      </div>
-
-      {/* Beschikbare afbeeldingen */}
-      <div>
-        <p className="text-sm font-medium mb-2">Media bibliotheek</p>
-        <div className="grid grid-cols-3 gap-2">
-          {uploads.map((item) => (
-            <div key={item.id} className="relative">
-              <img
-                src={item.url}
-                alt={item.alt || ""}
-                onClick={() => upd("url", item.url)}
-                className={`h-20 w-full object-cover rounded border cursor-pointer ${
-                  p.url === item.url
-                    ? "ring-4 ring-blue-500"
-                    : "hover:ring-2 hover:ring-blue-300"
-                }`}
-              />
-              <button
-                onClick={() => handleDelete(item.id)}
-                className="absolute top-1 right-1 text-red-500 bg-white rounded-full p-1"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Instellingen */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block mb-1">Breedte (px)</label>
-          <input
-            type="number"
-            min={50}
-            value={p.width}
-            onChange={(e) => upd("width", +e.target.value)}
-            className="w-full border rounded px-2 py-1"
-          />
-        </div>
-        {/* … de rest van de settings ongewijzigd … */}
+        {uploads[activeTab].map(item => (
+          <div key={item.id} className="relative bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition">
+            <button
+              onClick={() => deleteUpload(item.id).then(fetchUploads)}
+              className="absolute top-2 right-2 text-red-600"
+            >
+              ✕
+            </button>
+            {activeTab === "img" && (
+              <img src={item.url} alt={item.alt} className="mx-auto max-h-40 rounded-lg" />
+            )}
+            {activeTab === "video" && (
+              <video src={item.url} controls className="w-full max-h-48 rounded-lg" />
+            )}
+            {activeTab === "files" && (
+              <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline block mt-2">
+                {item.filename}
+              </a>
+            )}
+          </div>
+        ))}
       </div>
     </div>
-  );
-};
-
-export default ImageSettings;
+  )
+}
