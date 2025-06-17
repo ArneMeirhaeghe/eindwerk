@@ -1,4 +1,4 @@
-import { useState, useEffect, type FC, type ChangeEvent } from "react";
+import { useState, useEffect, useRef, type FC, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 import type { ComponentItem, ImageProps } from "../../../types/types";
 import type { MediaResponse } from "../../../api/media/types";
@@ -29,9 +29,11 @@ const ImageSettings: FC<Props> = ({ comp, onUpdate }) => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const upd = (key: keyof ImageProps, value: any) =>
-    onUpdate({ ...comp, props: { ...p, [key]: value } });
+  // **Nieuwe state + ref voor radiobuttons & camera-trigger**
+  const [mode, setMode] = useState<"upload" | "capture">("upload");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Ruimt afbeeldingen in state op
   const fetchImages = async () => {
     try {
       const all = await getUploads();
@@ -44,6 +46,16 @@ const ImageSettings: FC<Props> = ({ comp, onUpdate }) => {
   useEffect(() => {
     fetchImages();
   }, []);
+
+  // Zodra je “Foto maken” kiest, triggert de camera
+  useEffect(() => {
+    if (mode === "capture" && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, [mode]);
+
+  const upd = (key: keyof ImageProps, value: any) =>
+    onUpdate({ ...comp, props: { ...p, [key]: value } });
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const chosen = e.target.files?.[0] ?? null;
@@ -83,23 +95,45 @@ const ImageSettings: FC<Props> = ({ comp, onUpdate }) => {
 
   return (
     <div className="space-y-6 p-4">
-      {/* Upload */}
+      {/* ➤ Radiobuttons kiezen tussen uploaden of camera */}
+      <div className="flex space-x-6 mb-4">
+        <label className="inline-flex items-center">
+          <input
+            type="radio"
+            name="mode"
+            value="upload"
+            checked={mode === "upload"}
+            onChange={() => setMode("upload")}
+            className="mr-2"
+          />
+          Foto uploaden
+        </label>
+        <label className="inline-flex items-center">
+          <input
+            type="radio"
+            name="mode"
+            value="capture"
+            checked={mode === "capture"}
+            onChange={() => setMode("capture")}
+            className="mr-2"
+          />
+          Foto maken
+        </label>
+      </div>
+
+      {/* Upload-zone */}
       <div className="p-4 border-2 border-dashed border-gray-300 rounded bg-white">
-        {/* Kies bestand */}
+        {/* Één verborgen input, met capture attribuut alleen in capture-mode */}
         <input
+          ref={fileInputRef}
           type="file"
           accept="image/*"
+          capture={mode === "capture" ? "environment" : undefined}
           onChange={handleFileChange}
-          className="w-full text-sm"
+          className={mode === "upload" ? "w-full text-sm" : "hidden"}
         />
-        {/* Neem foto (camera) */}
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handleFileChange}
-          className="w-full text-sm"
-        />
+
+        {/* Upload-knop verschijnt zodra er een bestand/foto gekozen is */}
         {file && (
           <button
             onClick={handleUpload}
