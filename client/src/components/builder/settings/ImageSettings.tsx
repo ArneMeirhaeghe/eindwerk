@@ -24,7 +24,6 @@ const defaultProps: Required<ImageProps> = {
 
 const ImageSettings: FC<Props> = ({ comp, onUpdate }) => {
   const p = { ...defaultProps, ...(comp.props as ImageProps) };
-
   const [uploads, setUploads] = useState<MediaResponse[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
@@ -37,11 +36,11 @@ const ImageSettings: FC<Props> = ({ comp, onUpdate }) => {
   const upd = (key: keyof ImageProps, value: any) =>
     onUpdate({ ...comp, props: { ...p, [key]: value } });
 
-  // Fetch media library
+  // fetch media library
   const fetchImages = async () => {
     try {
       const all = await getUploads();
-      setUploads(all.filter((m) => m.contentType.startsWith("image/")));
+      setUploads(all.filter(m => m.contentType.startsWith("image/")));
     } catch {
       toast.error("Media laden mislukt");
     }
@@ -51,54 +50,41 @@ const ImageSettings: FC<Props> = ({ comp, onUpdate }) => {
     fetchImages();
   }, []);
 
-  const startCamera = () => {
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: "environment" } })
-      .then((stream) => {
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-        }
-      })
-      .catch(() => {
-        toast.error("Kan camera niet openen");
-        setActiveTab("upload");
-      });
-  };
-
-  const stopCamera = () => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-  };
-
-  // Handle tab changes
+  // start/stop camera when switching tabs
   useEffect(() => {
-    if (activeTab === "camera") {
-      if (!file) startCamera();
+    if (activeTab === "camera" && !file) {
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => {
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play();
+          }
+        })
+        .catch(() => {
+          toast.error("Kan camera niet openen");
+          setActiveTab("upload");
+        });
     } else {
-      stopCamera();
-      setFile(null);
-      setPreview("");
+      streamRef.current?.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
     }
-  }, [activeTab]);
+  }, [activeTab, file]);
 
-  // File select from disk
+  // choose file from disk
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const chosen = e.target.files?.[0] ?? null;
-    if (chosen) {
-      const url = URL.createObjectURL(chosen);
-      setFile(chosen);
+    const f = e.target.files?.[0] ?? null;
+    if (f) {
+      const url = URL.createObjectURL(f);
+      setFile(f);
       setPreview(url);
       upd("url", url);
-      upd("alt", chosen.name);
+      upd("alt", f.name);
     }
   };
 
-  // Capture snapshot
+  // take snapshot
   const capturePhoto = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
@@ -106,22 +92,19 @@ const ImageSettings: FC<Props> = ({ comp, onUpdate }) => {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext("2d")?.drawImage(video, 0, 0);
-    canvas.toBlob((blob) => {
+    canvas.toBlob(blob => {
       if (blob) {
-        const imgFile = new File([blob], `photo_${Date.now()}.jpg`, {
-          type: "image/jpeg",
-        });
+        const imgFile = new File([blob], `photo_${Date.now()}.jpg`, { type: "image/jpeg" });
         const url = URL.createObjectURL(imgFile);
         setFile(imgFile);
         setPreview(url);
         upd("url", url);
         upd("alt", imgFile.name);
       }
-      stopCamera();
     }, "image/jpeg");
   };
 
-  // Upload selected or captured photo
+  // upload file
   const handleUpload = async () => {
     if (!file) return;
     setLoading(true);
@@ -141,41 +124,56 @@ const ImageSettings: FC<Props> = ({ comp, onUpdate }) => {
     }
   };
 
-  // Retake photo
+  // retake snapshot
   const handleRetake = () => {
     setFile(null);
     setPreview("");
-    startCamera();
+    // stay in camera tab
   };
 
-// Delete from library
-const handleDelete = async (id: string) => {
-  try {
-    await deleteUpload(id);
-    await fetchImages();
-    toast.success("Verwijderd");
-  } catch {
-    toast.error("Verwijderen mislukt");
-  }
-};
+  // delete from library
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteUpload(id);
+      await fetchImages();
+      toast.success("Verwijderd");
+    } catch {
+      toast.error("Verwijderen mislukt");
+    }
+  };
 
-return (
+  return (
     <div className="space-y-6 p-4">
       {/* tabs */}
       <div className="flex space-x-3 mb-4">
         <button
-          className={`px-4 py-2 rounded ${activeTab==="upload" ? "bg-blue-600 text-white":"bg-gray-200 text-gray-700"}`}
-          onClick={()=>{ setActiveTab("upload"); setFile(null); setPreview(""); }}
-        >Foto uploaden</button>
+          className={`px-4 py-2 rounded ${
+            activeTab === "upload"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+          onClick={() => { setActiveTab("upload"); setFile(null); setPreview(""); }}
+        >
+          Foto uploaden
+        </button>
         <button
-          className={`px-4 py-2 rounded ${activeTab==="camera" ? "bg-blue-600 text-white":"bg-gray-200 text-gray-700"}`}
-          onClick={()=>setActiveTab("camera")}
-        >Foto maken</button>
+          className={`px-4 py-2 rounded ${
+            activeTab === "camera"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+          onClick={() => setActiveTab("camera")}
+        >
+          Foto maken
+        </button>
       </div>
 
-      {activeTab==="upload" ? (
+      {activeTab === "upload" ? (
+        // upload zone
         <div className="p-4 border-2 border-dashed rounded bg-white">
-          <input type="file" accept="image/*"
+          <input
+            type="file"
+            accept="image/*"
             onChange={handleFileChange}
             className="w-full text-sm"
           />
@@ -185,37 +183,62 @@ return (
               disabled={loading}
               className="mt-3 w-full py-2 bg-green-600 text-white rounded hover:bg-green-700 transition flex justify-center"
             >
-              {loading
-                ? <div className="animate-spin h-5 w-5 border-4 border-blue-500 border-t-transparent rounded-full"/>
-                : "Uploaden"
-              }
+              {loading ? (
+                <div className="animate-spin h-5 w-5 border-4 border-blue-500 border-t-transparent rounded-full" />
+              ) : (
+                "Uploaden"
+              )}
             </button>
           )}
         </div>
       ) : file ? (
+        // preview + upload / retake
         <div className="p-4 border rounded bg-white flex flex-col items-center">
-          <img src={preview} alt={p.alt} className="max-h-64 w-full object-contain rounded mb-4" />
+          <img
+            src={preview}
+            alt={p.alt}
+            className="max-h-64 w-full object-contain rounded mb-4"
+          />
           <div className="flex space-x-3">
             <button
-              onClick={handleUpload} disabled={loading}
+              onClick={handleUpload}
+              disabled={loading}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center justify-center"
             >
-              {loading
-                ? <div className="animate-spin h-5 w-5 border-4 border-white border-t-transparent rounded-full"/>
-                : "Uploaden"
-              }
+              {loading ? (
+                <div className="animate-spin h-5 w-5 border-4 border-white border-t-transparent rounded-full" />
+              ) : (
+                "Uploaden"
+              )}
             </button>
             <button
-              onClick={handleRetake} disabled={loading}
+              onClick={handleRetake}
+              disabled={loading}
               className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-            >Neem opnieuw</button>
+            >
+              Neem opnieuw
+            </button>
           </div>
         </div>
       ) : (
-        <div className="relative">
-          <video ref={videoRef} className="w-full rounded bg-black" autoPlay muted playsInline />
+        // inline camera view as photo frame
+        <div className="relative w-full pb-[75%] overflow-hidden rounded-lg border-4 border-white shadow-lg mx-auto max-w-sm">
+          <video
+            ref={videoRef}
+            className="absolute top-0 left-0 w-full h-full object-cover"
+            autoPlay
+            muted
+            playsInline
+          />
+          {/* grid overlay */}
+          <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
+            <div className="col-start-2 border-l border-white opacity-50"></div>
+            <div className="col-start-3 border-l border-white opacity-50"></div>
+            <div className="row-start-2 border-t border-white opacity-50"></div>
+            <div className="row-start-3 border-t border-white opacity-50"></div>
+          </div>
+          {/* capture button */}
           <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
-            {/* improved capture button */}
             <button
               onClick={capturePhoto}
               aria-label="Foto vastleggen"
@@ -227,87 +250,99 @@ return (
         </div>
       )}
 
-<div>
-  <p className="text-sm font-medium mb-2">Media bibliotheek</p>
-  <div className="grid grid-cols-3 gap-2">
-    {uploads.map((item) => (
-      <div key={item.id} className="relative">
-        <img
-          src={item.url}
-          alt={item.alt || ""}
-          onClick={() => upd("url", item.url)}
-          className={`h-20 w-full object-cover rounded border cursor-pointer ${
-            p.url === item.url
-              ? "ring-4 ring-blue-500"
-              : "hover:ring-2 hover:ring-blue-300"
-          }`}
-        />
-        <button
-          onClick={() => handleDelete(item.id)}
-          className="absolute top-1 right-1 text-red-500 bg-white rounded-full p-1"
-        >
-          ×
-        </button>
+      {/* media library */}
+      <div>
+        <p className="text-sm font-medium mb-2">Media bibliotheek</p>
+        <div className="grid grid-cols-3 gap-2">
+          {uploads.map(item => (
+            <div key={item.id} className="relative">
+              <img
+                src={item.url}
+                alt={item.alt || ""}
+                onClick={() => upd("url", item.url)}
+                className={`h-20 w-full object-cover rounded border cursor-pointer ${
+                  p.url === item.url
+                    ? "ring-4 ring-blue-500"
+                    : "hover:ring-2 hover:ring-blue-300"
+                }`}
+              />
+              <button
+                onClick={() => handleDelete(item.id)}
+                className="absolute top-1 right-1 text-red-500 bg-white rounded-full p-1"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
-    ))}
-  </div>
-</div>
 
-      {/* overige settings */}
+      {/* overige instellingen */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block mb-1">Alt tekst</label>
           <input
             type="text"
             value={p.alt}
-            onChange={e=>upd("alt", e.target.value)}
+            onChange={e => upd("alt", e.target.value)}
             className="w-full border rounded px-2 py-1"
           />
         </div>
         <div>
           <label className="block mb-1">Breedte (px)</label>
           <input
-            type="number" min={50} value={p.width}
-            onChange={e=>upd("width", +e.target.value)}
+            type="number"
+            min={50}
+            value={p.width}
+            onChange={e => upd("width", +e.target.value)}
             className="w-full border rounded px-2 py-1"
           />
         </div>
         <div>
           <label className="block mb-1">Hoogte (px)</label>
           <input
-            type="number" min={50} value={p.height}
-            onChange={e=>upd("height", +e.target.value)}
+            type="number"
+            min={50}
+            value={p.height}
+            onChange={e => upd("height", +e.target.value)}
             className="w-full border rounded px-2 py-1"
           />
         </div>
         <div>
           <label className="block mb-1">Border dikte (px)</label>
           <input
-            type="number" min={0} value={p.borderWidth}
-            onChange={e=>upd("borderWidth", +e.target.value)}
+            type="number"
+            min={0}
+            value={p.borderWidth}
+            onChange={e => upd("borderWidth", +e.target.value)}
             className="w-full border rounded px-2 py-1"
           />
         </div>
         <div>
           <label className="block mb-1">Border kleur</label>
           <input
-            type="color" value={p.borderColor}
-            onChange={e=>upd("borderColor", e.target.value)}
+            type="color"
+            value={p.borderColor}
+            onChange={e => upd("borderColor", e.target.value)}
             className="w-full h-8 p-0 border rounded"
           />
         </div>
         <div>
           <label className="block mb-1">Radius (px)</label>
           <input
-            type="number" min={0} value={p.radius}
-            onChange={e=>upd("radius", +e.target.value)}
+            type="number"
+            min={0}
+            value={p.radius}
+            onChange={e => upd("radius", +e.target.value)}
             className="w-full border rounded px-2 py-1"
           />
         </div>
         <div className="flex items-center space-x-2">
           <input
-            type="checkbox" checked={p.shadow}
-            onChange={e=>upd("shadow", e.target.checked)} id="shadow"
+            type="checkbox"
+            checked={p.shadow}
+            onChange={e => upd("shadow", e.target.checked)}
+            id="shadow"
           />
           <label htmlFor="shadow">Schaduw</label>
         </div>
@@ -315,7 +350,7 @@ return (
           <label className="block mb-1">Object fit</label>
           <select
             value={p.objectFit}
-            onChange={e=>upd("objectFit", e.target.value)}
+            onChange={e => upd("objectFit", e.target.value)}
             className="w-full border rounded px-2 py-1"
           >
             <option value="cover">cover</option>
@@ -327,8 +362,10 @@ return (
         </div>
         <div className="flex items-center space-x-2">
           <input
-            type="checkbox" checked={p.showAlt}
-            onChange={e=>upd("showAlt", e.target.checked)} id="showAlt"
+            type="checkbox"
+            checked={p.showAlt}
+            onChange={e => upd("showAlt", e.target.checked)}
+            id="showAlt"
           />
           <label htmlFor="showAlt">Toon alt</label>
         </div>
